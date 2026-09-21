@@ -14,6 +14,7 @@ import { bindActionCreators } from 'redux';
 import AddCircle from '@material-ui/icons/Add';
 import _ from 'lodash';
 import AdvancedFiltersRowValue from './AdvancedFiltersRowValue';
+import PayrollProjectPicker from './PayrollProjectPicker';
 import { BENEFIT_PLAN } from '../../constants';
 import { isBase64Encoded } from '../../utils/advanced-filters-utils';
 
@@ -40,6 +41,9 @@ function FilterDialog({
 }) {
   const [selectedProjects, setSelectedProjects] = useState([]);
   const [selectedLocations, setSelectedLocations] = useState([]);
+  const [district, setDistrict] = useState(null);
+  const [traditionalAuthority, setTraditionalAuthority] = useState(null);
+  const [microCatchment, setMicroCatchment] = useState(null);
   const [advancedFilters, setAdvancedFilters] = useState([]);
   const isInitializing = useRef(true);
 
@@ -116,6 +120,26 @@ function FilterDialog({
     setSelectedProjects(projects || []);
   };
 
+  const handleDistrictChange = (value) => {
+    setDistrict(value);
+    setTraditionalAuthority(null);
+    setMicroCatchment(null);
+    setSelectedProjects([]);
+    setSelectedLocations([]);
+  };
+
+  const handleTraditionalAuthorityChange = (value) => {
+    setTraditionalAuthority(value);
+    setMicroCatchment(null);
+    setSelectedProjects([]);
+    setSelectedLocations(value ? [value] : []);
+  };
+
+  const handleMicroCatchmentChange = (value) => {
+    setMicroCatchment(value);
+    setSelectedProjects([]);
+  };
+
   const handleLocationsChange = (locations) => {
     setSelectedLocations(locations || []);
   };
@@ -188,27 +212,43 @@ function FilterDialog({
         </div>
       </div>
       <Grid container className={classes.item} style={{ paddingTop: 0 }}>
-        <Grid item xs={6} className={classes.item}>
+        <Grid item xs={3} className={classes.item}>
           <PublishedComponent
-            pubRef="socialProtection.ProjectPicker"
+            pubRef="location.MwDistrictPicker"
+            value={district}
+            onChange={handleDistrictChange}
+            readOnly={readOnly}
+            required
+          />
+        </Grid>
+        <Grid item xs={3} className={classes.item}>
+          <PublishedComponent
+            pubRef="location.MwTAPicker"
+            value={traditionalAuthority}
+            parentLocation={district}
+            onChange={handleTraditionalAuthorityChange}
+            readOnly={readOnly || !district}
+            required
+          />
+        </Grid>
+        <Grid item xs={3} className={classes.item}>
+          <PublishedComponent
+            pubRef="location.MicroCatchmentPicker"
+            value={microCatchment}
+            district={district}
+            traditionalAuthority={traditionalAuthority}
+            onChange={handleMicroCatchmentChange}
+            readOnly={readOnly || !traditionalAuthority}
+            required
+          />
+        </Grid>
+        <Grid item xs={3} className={classes.item}>
+          <PayrollProjectPicker
             benefitPlanId={benefitPlanId}
-            status="COMPLETED"
+            microCatchment={microCatchment}
             value={selectedProjects}
             onChange={handleProjectsChange}
             readOnly={readOnly}
-            multiple
-            withLabel
-            withPlaceholder
-          />
-        </Grid>
-        <Grid item xs={6} className={classes.item}>
-          <PublishedComponent
-            pubRef="location.LocationCascader"
-            value={selectedLocations}
-            onChange={handleLocationsChange}
-            readOnly={readOnly}
-            multiple
-            label={formatMessage(intl, 'payroll', 'filterCriteria.locations')}
           />
         </Grid>
       </Grid>
