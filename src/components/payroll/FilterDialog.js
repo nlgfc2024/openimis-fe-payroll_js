@@ -42,7 +42,6 @@ function FilterDialog({
   const [selectedProjects, setSelectedProjects] = useState([]);
   const [selectedLocations, setSelectedLocations] = useState([]);
   const [district, setDistrict] = useState(null);
-  const [traditionalAuthority, setTraditionalAuthority] = useState(null);
   const [microCatchment, setMicroCatchment] = useState(null);
   const [advancedFilters, setAdvancedFilters] = useState([]);
   const isInitializing = useRef(true);
@@ -122,14 +121,6 @@ function FilterDialog({
 
   const handleDistrictChange = (value) => {
     setDistrict(value);
-    setTraditionalAuthority(null);
-    setMicroCatchment(null);
-    setSelectedProjects([]);
-    setSelectedLocations([]);
-  };
-
-  const handleTraditionalAuthorityChange = (value) => {
-    setTraditionalAuthority(value);
     setMicroCatchment(null);
     setSelectedProjects([]);
     setSelectedLocations(value ? [value] : []);
@@ -138,10 +129,6 @@ function FilterDialog({
   const handleMicroCatchmentChange = (value) => {
     setMicroCatchment(value);
     setSelectedProjects([]);
-  };
-
-  const handleLocationsChange = (locations) => {
-    setSelectedLocations(locations || []);
   };
 
   const handleAdvancedFiltersChange = (filters) => {
@@ -212,37 +199,24 @@ function FilterDialog({
         </div>
       </div>
       <Grid container className={classes.item} style={{ paddingTop: 0 }}>
-        <Grid item xs={3} className={classes.item}>
+        <Grid item xs={4} className={classes.item}>
           <PublishedComponent
             pubRef="location.MwDistrictPicker"
             value={district}
             onChange={handleDistrictChange}
             readOnly={readOnly}
-            required
           />
         </Grid>
-        <Grid item xs={3} className={classes.item}>
-          <PublishedComponent
-            pubRef="location.MwTAPicker"
-            value={traditionalAuthority}
-            parentLocation={district}
-            onChange={handleTraditionalAuthorityChange}
-            readOnly={readOnly || !district}
-            required
-          />
-        </Grid>
-        <Grid item xs={3} className={classes.item}>
+        <Grid item xs={4} className={classes.item}>
           <PublishedComponent
             pubRef="location.MicroCatchmentPicker"
             value={microCatchment}
             district={district}
-            traditionalAuthority={traditionalAuthority}
             onChange={handleMicroCatchmentChange}
-            readOnly={readOnly || !traditionalAuthority}
-            required
+            readOnly={readOnly}
           />
         </Grid>
-        <Grid item xs={3} className={classes.item}>
+        <Grid item xs={4} className={classes.item}>
           <PayrollProjectPicker
             benefitPlanId={benefitPlanId}
             microCatchment={microCatchment}

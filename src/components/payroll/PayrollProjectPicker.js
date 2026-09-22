@@ -26,7 +26,7 @@ const PayrollProjectPicker = ({
       }
     `,
     { search, benefitPlanId, microCatchmentId },
-    { skip: !benefitPlanId || !microCatchmentId },
+    { skip: !benefitPlanId },
   );
   const projects = (data?.project?.edges || []).map(({ node }) => ({
     ...node,
@@ -35,13 +35,12 @@ const PayrollProjectPicker = ({
 
   return (
     <Autocomplete
-      required
       withLabel
       withPlaceholder
       multiple
       label={formatMessage('project.picker.label')}
       placeholder={formatMessage('project.picker.placeholder')}
-      readOnly={readOnly || !microCatchmentId}
+      readOnly={readOnly}
       error={error}
       isLoading={isLoading}
       options={projects}
