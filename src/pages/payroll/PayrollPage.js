@@ -121,17 +121,12 @@ function PayrollPage({
   useEffect(() => () => clearPayroll(), []);
 
   const mandatoryFieldsEmpty = () => {
-    const jsonExt = typeof editedPayroll?.jsonExt === 'string'
-      ? JSON.parse(editedPayroll.jsonExt || '{}')
-      : editedPayroll?.jsonExt || {};
-    const hasSelectedProject = jsonExt?.filter_criteria?.project_ids?.length > 0;
     if (
       editedPayroll?.paymentPlan
       && editedPayroll?.paymentCycle
       && editedPayroll?.dateValidFrom
       && editedPayroll?.dateValidTo
       && editedPayroll?.paymentMethod
-      && hasSelectedProject
       && !editedPayroll?.isDeleted) return false;
     return true;
   };
