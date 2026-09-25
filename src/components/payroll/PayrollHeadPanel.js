@@ -9,7 +9,6 @@ import {
   formatMessage,
   FormPanel,
   PublishedComponent,
-  TextInput,
   withModulesManager,
 } from '@openimis/fe-core';
 import FilterDialog from './FilterDialog';
@@ -41,16 +40,6 @@ class PayrollHeadPanel extends FormPanel {
     return (
       <>
         <Grid container className={classes.item}>
-          <Grid item xs={3} className={classes.item}>
-            <TextInput
-              module="payroll"
-              label="paymentPoint.name"
-              value={payroll?.name}
-              required
-              onChange={(name) => this.updateAttribute('name', name)}
-              readOnly={isPayrollFromFailedInvoices ? !isPayrollFromFailedInvoices : readOnly}
-            />
-          </Grid>
           <Grid item xs={3} className={classes.item}>
             <PublishedComponent
               pubRef="contributionPlan.PaymentPlanPicker"

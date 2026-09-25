@@ -122,8 +122,7 @@ function PayrollPage({
 
   const mandatoryFieldsEmpty = () => {
     if (
-      editedPayroll?.name
-      && editedPayroll?.paymentPlan
+      editedPayroll?.paymentPlan
       && editedPayroll?.paymentCycle
       && editedPayroll?.dateValidFrom
       && editedPayroll?.dateValidTo
