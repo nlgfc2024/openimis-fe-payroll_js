@@ -93,10 +93,17 @@ const PAYROLL_SEARCHER_PROJECTION = (modulesManager) => [
 ];
 
 const CSV_RECONCILIATION_PROJECTION = () => [
-  'fileName',
-  'status',
-  'error',
-  'jsonExt',
+  "id",
+  "fileName",
+  "status",
+  "dateCreated",
+  "totalRecords",
+  "matchedRecords",
+  "paidRecords",
+  "unpaidRecords",
+  "unmatchedRecords",
+  "error",
+  "jsonExt",
 ];
 
 const PAYMENT_METHOD_PROJECTION = () => [

@@ -25,6 +25,7 @@ function AdditionalFieldsDialog({
   classes,
   jsonExt,
   individualJsonExt,
+  additionalData,
   buttonLabel,
   title,
 }) {
@@ -51,6 +52,7 @@ function AdditionalFieldsDialog({
   const jsonExtFields = createFieldsBasedOnJSON(JSON.stringify({
     ...individualExtraInfo,
     ...benefitExtraInfo,
+    ...parseJson(additionalData),
   }));
 
   return (
