@@ -90,6 +90,9 @@ function BenefitConsumptionSearcherModal({
     'benefitConsumption.photo',
     'benefitConsumption.individual.firstName',
     'benefitConsumption.individual.lastName',
+    'benefitConsumption.nationalId',
+    'benefitConsumption.formNumber',
+    'benefitConsumption.phoneNumber',
     'benefitConsumption.amount',
     'benefitConsumption.receipt',
     'benefitConsumption.dateDue',
@@ -134,6 +137,9 @@ function BenefitConsumptionSearcherModal({
     ),
     (benefitAttachment) => benefitAttachment?.benefit?.individual?.firstName,
     (benefitAttachment) => benefitAttachment?.benefit?.individual?.lastName,
+    (benefitAttachment) => benefitAttachment?.benefit?.nationalId,
+    (benefitAttachment) => benefitAttachment?.benefit?.formNumber,
+    (benefitAttachment) => benefitAttachment?.benefit?.phoneNumber,
     (benefitAttachment) => benefitAttachment?.bill?.amountTotal,
     (benefitAttachment) => benefitAttachment?.benefit?.receipt,
     (benefitAttachment) => benefitAttachment?.benefit?.dateDue,
@@ -147,6 +153,7 @@ function BenefitConsumptionSearcherModal({
     (benefitAttachment) => (
       <AdditionalFieldsDialog
         jsonExt={benefitAttachment?.benefit?.jsonExt}
+        individualJsonExt={benefitAttachment?.benefit?.individual?.jsonExt}
         buttonLabel="payroll.additonalFields.showAdditionalFields"
         title="payroll.additonalFields.label"
       />
