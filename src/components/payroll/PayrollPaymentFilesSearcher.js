@@ -61,18 +61,20 @@ function PayrollPaymentFilesSearcher({
 
   const fetchFiles = (params) => fetchPayrollPaymentFiles(modulesManager, params);
 
-  const rowIdentifier = (file) => file.fileName;
+  const rowIdentifier = (file) => file.id;
 
   const formatErrors = (error) => {
     let reasonsByRow = error;
-    if (typeof error === "string") {
+    if (typeof error === 'string') {
       try {
         reasonsByRow = JSON.parse(error);
       } catch (parseError) {
         return error;
       }
     }
-    if (!reasonsByRow || Object.keys(reasonsByRow).length === 0) return "No mismatches";
+    if (!reasonsByRow || Object.keys(reasonsByRow).length === 0) {
+      return formatMessage('payroll.payrollPaymentFile.noMismatches');
+    }
     return Object.entries(reasonsByRow).map(([row, reasons]) => {
       const detail = Array.isArray(reasons) ? reasons.join(", ") : JSON.stringify(reasons);
       return `Row ${row}: ${detail}`;
@@ -88,6 +90,7 @@ function PayrollPaymentFilesSearcher({
           onClick={() => download(payrollUuid, file.fileName, decodeId(file.id))}
           disabled={![PAYROLL_PAYMENT_FILE_STATUS.SUCCESS,
             PAYROLL_PAYMENT_FILE_STATUS.PENDING_REVIEW,
+            PAYROLL_PAYMENT_FILE_STATUS.WAITING_FOR_VERIFICATION,
             PAYROLL_PAYMENT_FILE_STATUS.PARTIAL_SUCCESS,
             PAYROLL_PAYMENT_FILE_STATUS.DUPLICATE].includes(file.status)}
         >

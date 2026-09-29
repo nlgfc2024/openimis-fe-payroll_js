@@ -141,6 +141,7 @@
   "payroll.payrollPaymentFile.unpaidRecords": "Unpaid",
   "payroll.payrollPaymentFile.unmatchedRecords": "Unmatched",
   "payroll.payrollPaymentFile.error": "Mismatch Reasons",
+  "payroll.payrollPaymentFile.noMismatches": "No mismatches",
   "payrollPaymentFile.download": "Download",
   "payroll.payrollPaymentFilesSearcher.results": "{totalCount} Files Found",
   "payroll.PayrollPaymentFilesTab.label": "Payment Files",

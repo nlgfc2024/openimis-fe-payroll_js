@@ -26,6 +26,17 @@ import { mutationLabel } from '../../utils/string-utils';
 import AdditionalFieldsDialog from './dialogs/AdditionalFieldsDialog';
 import PayrollBenefitPrintTemplate from '../PayrollBenefitPrintTemplate';
 
+const individualJsonExtValue = (individual, field) => {
+  if (!individual?.jsonExt) return '';
+  try {
+    const jsonExt = typeof individual.jsonExt === 'string'
+      ? JSON.parse(individual.jsonExt) : individual.jsonExt;
+    return jsonExt?.[field] ?? '';
+  } catch (error) {
+    return '';
+  }
+};
+
 function BenefitConsumptionSearcherModal({
   fetchBenefitAttachments,
   fetchingBenefitAttachments,
@@ -137,9 +148,9 @@ function BenefitConsumptionSearcherModal({
     ),
     (benefitAttachment) => benefitAttachment?.benefit?.individual?.firstName,
     (benefitAttachment) => benefitAttachment?.benefit?.individual?.lastName,
-    (benefitAttachment) => benefitAttachment?.benefit?.nationalId,
-    (benefitAttachment) => benefitAttachment?.benefit?.formNumber,
-    (benefitAttachment) => benefitAttachment?.benefit?.phoneNumber,
+    (benefitAttachment) => individualJsonExtValue(benefitAttachment?.benefit?.individual, 'national_id'),
+    (benefitAttachment) => individualJsonExtValue(benefitAttachment?.benefit?.individual, 'form_number'),
+    (benefitAttachment) => individualJsonExtValue(benefitAttachment?.benefit?.individual, 'household_mobile_number'),
     (benefitAttachment) => benefitAttachment?.bill?.amountTotal,
     (benefitAttachment) => benefitAttachment?.benefit?.receipt,
     (benefitAttachment) => benefitAttachment?.benefit?.dateDue,
