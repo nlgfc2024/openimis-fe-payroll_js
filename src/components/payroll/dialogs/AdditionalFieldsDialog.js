@@ -24,7 +24,6 @@ function AdditionalFieldsDialog({
   intl,
   classes,
   jsonExt,
-  individualJsonExt,
   additionalData,
   buttonLabel,
   title,
@@ -48,9 +47,7 @@ function AdditionalFieldsDialog({
     setIsOpen(false);
   };
   const benefitExtraInfo = parseJson(jsonExt).extra_info || {};
-  const individualExtraInfo = parseJson(individualJsonExt);
   const jsonExtFields = createFieldsBasedOnJSON(JSON.stringify({
-    ...individualExtraInfo,
     ...benefitExtraInfo,
     ...parseJson(additionalData),
   }));

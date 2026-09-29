@@ -20,17 +20,6 @@ import BenefitConsumptionFilter from './BenefitConsumptionFilter';
 import AdditionalFieldsDialog from './dialogs/AdditionalFieldsDialog';
 import PayrollPrintTemplate from '../PayrollPrintTemplate';
 
-const individualJsonExtValue = (individual, field) => {
-  if (!individual?.jsonExt) return '';
-  try {
-    const jsonExt = typeof individual.jsonExt === 'string'
-      ? JSON.parse(individual.jsonExt) : individual.jsonExt;
-    return jsonExt?.[field] ?? '';
-  } catch (error) {
-    return '';
-  }
-};
-
 function BenefitConsumptionSearcher({
   fetchBenefitConsumptions,
   fetchingBenefitConsumptions,
@@ -85,9 +74,9 @@ function BenefitConsumptionSearcher({
   const itemFormatters = () => [
     (benefitConsumption) => benefitConsumption?.individual?.firstName,
     (benefitConsumption) => benefitConsumption?.individual?.lastName,
-    (benefitConsumption) => individualJsonExtValue(benefitConsumption?.individual, 'national_id'),
-    (benefitConsumption) => individualJsonExtValue(benefitConsumption?.individual, 'form_number'),
-    (benefitConsumption) => individualJsonExtValue(benefitConsumption?.individual, 'household_mobile_number'),
+    (benefitConsumption) => benefitConsumption?.nationalId,
+    (benefitConsumption) => benefitConsumption?.formNumber,
+    (benefitConsumption) => benefitConsumption?.phoneNumber,
     (benefitConsumption) => (
       benefitConsumption.receipt ? (
         <PhotoCameraOutlinedIcon style={{ fontSize: 150 }} />
@@ -109,7 +98,6 @@ function BenefitConsumptionSearcher({
     (benefitConsumption) => (
       <AdditionalFieldsDialog
         jsonExt={benefitConsumption?.jsonExt}
-        individualJsonExt={benefitConsumption?.individual?.jsonExt}
         buttonLabel="payroll.additonalFields.showAdditionalFields"
         title="payroll.additonalFields.label"
       />
