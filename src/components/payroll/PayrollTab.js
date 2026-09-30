@@ -3,11 +3,13 @@ import React, { useState } from 'react';
 import { Paper, Grid } from '@material-ui/core';
 import {
   Contributions,
+  coreAlert,
   useModulesManager,
   useTranslations,
 } from '@openimis/fe-core';
 import { makeStyles } from '@material-ui/styles';
 import Button from '@material-ui/core/Button';
+import { useDispatch } from 'react-redux';
 import {
   BENEFIT_CONSUMPTION_LIST_TAB_VALUE,
   PAYROLL_TABS_LABEL_CONTRIBUTION_KEY,
@@ -45,6 +47,8 @@ function PayrollTab({
   const classes = useStyles();
 
   const [activeTab, setActiveTab] = useState(BENEFIT_CONSUMPTION_LIST_TAB_VALUE);
+  const dispatch = useDispatch();
+  const [reconciliationRevision, setReconciliationRevision] = useState(0);
 
   const isSelected = (tab) => tab === activeTab;
 
@@ -53,7 +57,15 @@ function PayrollTab({
   const handleChange = (_, tab) => setActiveTab(tab);
 
   const modulesManager = useModulesManager();
-  const { formatMessage } = useTranslations(MODULE_NAME, modulesManager);
+  const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
+
+  const handleUploadResult = (result) => {
+    dispatch(coreAlert(
+      formatMessage(`payroll.paymentData.upload.title.${result.severity}`),
+      formatMessageWithValues(`payroll.paymentData.upload.${result.key}`, result.values ?? {}),
+    ));
+    setReconciliationRevision((revision) => revision + 1);
+  };
 
   const downloadPayrollData = (payrollUuid, payrollName) => {
     downloadPayroll(payrollUuid, payrollName);
@@ -95,12 +107,14 @@ function PayrollTab({
                 && (
                 <PayrollPaymentDataUploadDialog
                   payrollUuid={payrollUuid}
+                  onUploadResult={handleUploadResult}
                 />
                 )}
           </div>
         </div>
       </Grid>
       <Contributions
+        key={`${payrollUuid}-${reconciliationRevision}`}
         contributionKey={PAYROLL_TABS_PANEL_CONTRIBUTION_KEY}
         rights={rights}
         value={activeTab}
