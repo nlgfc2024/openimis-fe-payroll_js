@@ -24,12 +24,20 @@ function AdditionalFieldsDialog({
   intl,
   classes,
   jsonExt,
+  additionalData,
   buttonLabel,
   title,
 }) {
-  // eslint-disable-next-line no-param-reassign
-  if (!jsonExt) jsonExt = '{}';
   const [isOpen, setIsOpen] = useState(false);
+
+  const parseJson = (value) => {
+    if (!value) return {};
+    try {
+      return typeof value === 'string' ? JSON.parse(value) : value;
+    } catch (error) {
+      return {};
+    }
+  };
 
   const handleOpen = () => {
     setIsOpen(true);
@@ -38,7 +46,11 @@ function AdditionalFieldsDialog({
   const handleClose = () => {
     setIsOpen(false);
   };
-  const jsonExtFields = createFieldsBasedOnJSON(JSON.stringify(JSON.parse(jsonExt).extra_info));
+  const benefitExtraInfo = parseJson(jsonExt).extra_info || {};
+  const jsonExtFields = createFieldsBasedOnJSON(JSON.stringify({
+    ...benefitExtraInfo,
+    ...parseJson(additionalData),
+  }));
 
   return (
     <>

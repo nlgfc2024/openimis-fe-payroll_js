@@ -44,6 +44,9 @@ function BenefitConsumptionSearcher({
   const headers = () => [
     'benefitConsumption.individual.firstName',
     'benefitConsumption.individual.lastName',
+    'benefitConsumption.nationalId',
+    'benefitConsumption.formNumber',
+    'benefitConsumption.phoneNumber',
     'benefitConsumption.photo',
     'benefitConsumption.code',
     'benefitConsumption.dateDue',
@@ -71,6 +74,9 @@ function BenefitConsumptionSearcher({
   const itemFormatters = () => [
     (benefitConsumption) => benefitConsumption?.individual?.firstName,
     (benefitConsumption) => benefitConsumption?.individual?.lastName,
+    (benefitConsumption) => benefitConsumption?.nationalId,
+    (benefitConsumption) => benefitConsumption?.formNumber,
+    (benefitConsumption) => benefitConsumption?.phoneNumber,
     (benefitConsumption) => (
       benefitConsumption.receipt ? (
         <PhotoCameraOutlinedIcon style={{ fontSize: 150 }} />

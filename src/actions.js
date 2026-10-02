@@ -34,6 +34,9 @@ const BENEFIT_CONSUMPTION_PROJECTION = () => [
   'id',
   'code',
   'individual {firstName, lastName}',
+  'nationalId',
+  'formNumber',
+  'phoneNumber',
   'benefitAttachment {bill {id, code, terms, datePayed}}',
   'receipt',
   'photo',
@@ -55,7 +58,7 @@ const BENEFIT_CONSUMPTION_SUMMARY_PROJECTION = () => [
 ];
 
 const BENEFIT_ATTACHMENT_PROJECTION = () => [
-  'benefit{id, status, code, dateDue, receipt, individual {firstName, lastName}, jsonExt, type, status, amount, receipt}',
+  'benefit{id, status, code, dateDue, receipt, nationalId, formNumber, phoneNumber, individual {firstName, lastName}, jsonExt, type, status, amount, receipt}',
   'bill{id, code, terms, amountTotal, datePayed}',
 ];
 
@@ -90,10 +93,17 @@ const PAYROLL_SEARCHER_PROJECTION = (modulesManager) => [
 ];
 
 const CSV_RECONCILIATION_PROJECTION = () => [
-  'fileName',
-  'status',
-  'error',
-  'jsonExt',
+  "id",
+  "fileName",
+  "status",
+  "dateCreated",
+  "totalRecords",
+  "matchedRecords",
+  "paidRecords",
+  "unpaidRecords",
+  "unmatchedRecords",
+  "error",
+  "jsonExt",
 ];
 
 const PAYMENT_METHOD_PROJECTION = () => [

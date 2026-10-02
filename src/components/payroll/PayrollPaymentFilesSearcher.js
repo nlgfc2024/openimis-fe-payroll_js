@@ -7,6 +7,7 @@ import DownloadIcon from '@material-ui/icons/CloudDownload';
 
 import {
   Searcher,
+  decodeId,
   useModulesManager,
   useTranslations,
 } from '@openimis/fe-core';
@@ -34,7 +35,6 @@ function PayrollPaymentFilesSearcher({
   const headers = () => [
     'payrollPaymentFile.fileName',
     'payrollPaymentFile.status',
-    'payrollPaymentFile.error',
     'payrollPaymentFile.download',
     '',
   ];
@@ -55,24 +55,44 @@ function PayrollPaymentFilesSearcher({
     return filters;
   };
 
-  const download = (payrollId, fileName) => {
-    downloadPayroll(payrollId, fileName, false);
+  const download = (payrollId, fileName, uploadId) => {
+    downloadPayroll(payrollId, fileName, false, uploadId);
   };
 
   const fetchFiles = (params) => fetchPayrollPaymentFiles(modulesManager, params);
 
-  const rowIdentifier = (file) => file.fileName;
+  const rowIdentifier = (file) => file.id;
+
+  const formatErrors = (error) => {
+    let reasonsByRow = error;
+    if (typeof error === 'string') {
+      try {
+        reasonsByRow = JSON.parse(error);
+      } catch (parseError) {
+        return error;
+      }
+    }
+    if (!reasonsByRow || Object.keys(reasonsByRow).length === 0) {
+      return formatMessage('payroll.payrollPaymentFile.noMismatches');
+    }
+    return Object.entries(reasonsByRow).map(([row, reasons]) => {
+      const detail = Array.isArray(reasons) ? reasons.join(", ") : JSON.stringify(reasons);
+      return `Row ${row}: ${detail}`;
+    }).join("; ");
+  };
 
   const itemFormatters = () => [
     (file) => file.fileName,
     (file) => file.status,
-    (file) => file.error,
     (file) => (
       <Tooltip title={formatMessage('tooltip.download')}>
         <IconButton
-          onClick={() => download(payrollUuid, file.fileName)}
+          onClick={() => download(payrollUuid, file.fileName, decodeId(file.id))}
           disabled={![PAYROLL_PAYMENT_FILE_STATUS.SUCCESS,
-            PAYROLL_PAYMENT_FILE_STATUS.PARTIAL_SUCCESS].includes(file.status)}
+            PAYROLL_PAYMENT_FILE_STATUS.PENDING_REVIEW,
+            PAYROLL_PAYMENT_FILE_STATUS.WAITING_FOR_VERIFICATION,
+            PAYROLL_PAYMENT_FILE_STATUS.PARTIAL_SUCCESS,
+            PAYROLL_PAYMENT_FILE_STATUS.DUPLICATE].includes(file.status)}
         >
           <DownloadIcon />
         </IconButton>
@@ -81,6 +101,7 @@ function PayrollPaymentFilesSearcher({
     (file) => (
       <AdditionalFieldsDialog
         jsonExt={file?.jsonExt}
+        additionalData={{ mismatchReasons: formatErrors(file.error) }}
         buttonLabel="payroll.summaryUpload"
         title="payroll.summaryUpload"
       />
