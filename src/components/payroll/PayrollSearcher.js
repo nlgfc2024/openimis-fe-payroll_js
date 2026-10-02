@@ -3,6 +3,7 @@ import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
 
 import { IconButton, Tooltip } from '@material-ui/core';
+import AddIcon from '@material-ui/icons/Add';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import DeleteIcon from '@material-ui/icons/Delete';
 
@@ -18,6 +19,7 @@ import {
 import PayrollFilter from './PayrollFilter';
 import {
   DEFAULT_PAGE_SIZE, MODULE_NAME, PAYROLL_PAYROLL_ROUTE,
+  RIGHT_PAYROLL_CREATE,
   RIGHT_PAYROLL_SEARCH, ROWS_PER_PAGE_OPTIONS, PAYROLL_STATUS,
 } from '../../constants';
 import { mutationLabel, pageTitle } from '../../utils/string-utils';
@@ -42,6 +44,17 @@ function PayrollSearcher({
   const modulesManager = useModulesManager();
   const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
   const rights = useSelector((store) => store.core.user.i_user.rights ?? []);
+  const onCreate = () => history.push(
+    `/${modulesManager.getRef(PAYROLL_PAYROLL_ROUTE)}`,
+  );
+
+  const searcherActions = () => [{
+    label: formatMessage('payroll.createButton.label'),
+    icon: <AddIcon />,
+    authorized: rights.includes(RIGHT_PAYROLL_CREATE),
+    onClick: onCreate,
+    variant: 'contained',
+  }];
 
   const [payrollToDelete, setPayrollToDelete] = useState(null);
   const [deletedPayrollUuids, setDeletedPayrollUuids] = useState([]);
@@ -174,6 +187,9 @@ function PayrollSearcher({
       defaultFilters={defaultFilters()}
       rowDisabled={isRowDisabled}
       rowLocked={isRowDisabled}
+      enableActionButtons
+      searcherActionsPosition="header-right"
+      searcherActions={searcherActions()}
     />
   );
 }
