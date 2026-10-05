@@ -1,12 +1,13 @@
 import { baseApiUrl } from '@openimis/fe-core';
 
-export default function downloadPayroll(payrollId, payrollFileName, blank = true) {
+export default function downloadPayroll(payrollId, payrollFileName, blank = true, uploadId = null) {
   const url = new URL(
     `${window.location.origin}${baseApiUrl}/payroll/csv_reconciliation/`,
   );
   url.searchParams.append('payroll_id', payrollId);
   url.searchParams.append('blank', blank);
   url.searchParams.append('payroll_file_name', payrollFileName);
+  if (uploadId) url.searchParams.append('upload_id', uploadId);
 
   fetch(url)
     .then((response) => response.blob())
