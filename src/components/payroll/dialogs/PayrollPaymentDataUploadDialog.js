@@ -1,79 +1,120 @@
-import React, { useState } from 'react';
-import { Input, Grid } from '@material-ui/core';
-import { injectIntl } from 'react-intl';
-import Button from '@material-ui/core/Button';
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogTitle from '@material-ui/core/DialogTitle';
+import React, { useRef, useState } from 'react';
 import {
-  apiHeaders,
-  baseApiUrl,
-  formatMessage,
-} from '@openimis/fe-core';
-import { withTheme, withStyles } from '@material-ui/core/styles';
-import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
+  Button, Dialog, DialogActions, DialogContent, DialogTitle,
+  Input, LinearProgress, Typography,
+} from '@material-ui/core';
+import Alert from '@material-ui/lab/Alert';
+import { injectIntl } from 'react-intl';
+import { apiHeaders, baseApiUrl, formatMessage } from '@openimis/fe-core';
 
-const styles = (theme) => ({
-  item: theme.paper.item,
-});
-
-function PayrollPaymentDataUploadDialog({
-  intl,
-  classes,
-  payrollUuid,
-}) {
+function PayrollPaymentDataUploadDialog({ intl, payrollUuid, onUploadResult }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [forms, setForms] = useState({});
+  const [file, setFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [notice, setNotice] = useState(null);
+  const submitting = useRef(false);
+  const message = (key) => formatMessage(intl, 'payroll', `payroll.paymentData.upload.${key}`);
 
   const handleOpen = () => {
+    setFile(null);
+    setNotice(null);
     setIsOpen(true);
   };
 
   const handleClose = () => {
-    setForms({});
+    if (submitting.current) return;
+    setFile(null);
+    setNotice(null);
     setIsOpen(false);
   };
 
-  const handleFieldChange = (formName, fieldName, value) => {
-    setForms({
-      ...forms,
-      [formName]: {
-        ...(forms[formName] ?? {}),
-        [fieldName]: value,
-      },
-    });
-  };
-
-  const onSubmit = async (values) => {
-    const fileFormat = values.file.type;
-    const formData = new FormData();
-
-    formData.append('file', values.file);
-
-    let urlImport;
-    if (fileFormat.includes('/csv')) {
-      urlImport = `${baseApiUrl}/payroll/csv_reconciliation/?payroll_id=${payrollUuid}`;
+  const onSubmit = async (event) => {
+    event.preventDefault();
+    if (submitting.current) return;
+    if (!payrollUuid || !file) {
+      setNotice({ severity: 'error', key: 'required' });
+      return;
+    }
+    if (!/\.csv$/i.test(file.name)) {
+      setNotice({ severity: 'error', key: 'invalidFile' });
+      return;
+    }
+    if (file.size === 0) {
+      setNotice({ severity: 'error', key: 'emptyFile' });
+      return;
     }
 
+    submitting.current = true;
+    setIsUploading(true);
+    setNotice(null);
+    let completedResult = null;
+
     try {
-      const response = await fetch(urlImport, {
-        headers: apiHeaders,
-        body: formData,
-        method: 'POST',
-        credentials: 'same-origin',
-      });
+      const headers = new Headers(apiHeaders());
+      headers.delete('Content-Type');
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await fetch(
+        `${baseApiUrl}/payroll/csv_reconciliation/?payroll_id=${encodeURIComponent(payrollUuid)}`,
+        {
+          headers,
+          body: formData,
+          method: 'POST',
+          credentials: 'same-origin',
+        },
+      );
 
-      await response.json();
-
-      if (response.status >= 400) {
-        handleClose();
-        return;
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (error) {
+        data = null;
       }
-      handleClose();
+
+      if (response.status === 401 || response.status === 403) {
+        completedResult = { severity: 'error', key: 'permission' };
+      } else if (response.status === 409 && data?.error === 'csv_reconciliation.duplicate_file') {
+        completedResult = { severity: 'warning', key: 'duplicateFile' };
+      } else if (!response.ok || data?.success === false) {
+        completedResult = { severity: 'error', key: 'failed' };
+      } else if (data?.success !== true) {
+        completedResult = { severity: 'warning', key: 'unknown' };
+      } else {
+        const processed = data.summary?.affected_rows;
+        const skipped = data.summary?.skipped_items;
+        const total = data.summary?.total_number_of_benefits_in_file;
+        const countsValid = [processed, skipped, total].every(
+          (value) => Number.isInteger(value) && value >= 0,
+        ) && processed + skipped === total;
+        const values = countsValid ? { processed, skipped } : {};
+
+        if (data.status === 'SUCCESS') {
+          completedResult = {
+            severity: 'success',
+            key: countsValid ? 'successCounts' : 'success',
+            values,
+          };
+        } else if (data.status === 'PARTIAL_SUCCESS') {
+          let key = 'partial';
+          if (countsValid) key = processed === 0 ? 'noneProcessed' : 'partialCounts';
+          completedResult = { severity: 'warning', key, values };
+        } else if (data.status == null) {
+          completedResult = { severity: 'info', key: 'accepted', values: {} };
+        } else {
+          completedResult = { severity: 'warning', key: 'unknown' };
+        }
+      }
     } catch (error) {
+      completedResult = { severity: 'warning', key: 'unknown' };
+    } finally {
+      submitting.current = false;
+      setIsUploading(false);
+    }
+
+    // Keep completion/refresh handling outside the request error handler.
+    if (completedResult) {
       handleClose();
+      onUploadResult(completedResult);
     }
   };
 
@@ -82,87 +123,50 @@ function PayrollPaymentDataUploadDialog({
       <Button
         onClick={handleOpen}
         variant="outlined"
-        color="#DFEDEF"
-        className={classes.button}
-        style={{
-          border: '0px',
-          marginTop: '6px',
-        }}
+        color="primary"
+        style={{ border: 0, marginTop: 6 }}
       >
-        {formatMessage(intl, 'payroll', 'payroll.paymentData.upload.label')}
+        {message('label')}
       </Button>
-      <Dialog
-        open={isOpen}
-        onClose={handleClose}
-        PaperProps={{
-          style: {
-            width: 600,
-            maxWidth: 1000,
-          },
-        }}
-      >
-        <form noValidate>
-          <DialogTitle
-            style={{
-              marginTop: '10px',
-            }}
-          >
-            {formatMessage(intl, 'payroll', 'payroll.paymentData.upload.label')}
-          </DialogTitle>
+      <Dialog open={isOpen} onClose={handleClose} fullWidth maxWidth="sm">
+        <form onSubmit={onSubmit} noValidate>
+          <DialogTitle>{message('label')}</DialogTitle>
           <DialogContent>
-            <div
-              style={{ backgroundColor: '#DFEDEF', paddingLeft: '10px', paddingBottom: '10px' }}
-            >
-              <Grid item>
-                <Grid container spacing={4} direction="column">
-                  <Grid item>
-                    <Input
-                      onChange={(event) => handleFieldChange('paymentData', 'file', event.target.files[0])}
-                      required
-                      id="import-button"
-                      inputProps={{
-                        accept: '.csv, application/csv, text/csv',
-                      }}
-                      type="file"
-                    />
-                  </Grid>
-                </Grid>
-              </Grid>
-            </div>
+            {notice && (
+              <Alert severity={notice.severity}>{message(notice.key)}</Alert>
+            )}
+            <Input
+              id="payroll-reconciliation-file"
+              type="file"
+              disabled={isUploading}
+              onChange={(event) => {
+                setFile(event.target.files?.[0] ?? null);
+                setNotice(null);
+              }}
+              inputProps={{
+                accept: '.csv,text/csv,application/csv',
+                'aria-label': message('label'),
+              }}
+            />
+            {isUploading && (
+              <div role="status" aria-live="polite">
+                <Typography>{message('processing')}</Typography>
+                <LinearProgress />
+              </div>
+            )}
           </DialogContent>
-          <DialogActions
-            style={{
-              display: 'inline',
-              paddingLeft: '10px',
-              marginTop: '25px',
-              marginBottom: '15px',
-            }}
-          >
-            <div style={{ maxWidth: '1000px' }}>
-              <div style={{ float: 'left' }}>
-                <Button
-                  onClick={handleClose}
-                  variant="outlined"
-                  autoFocus
-                  style={{
-                    margin: '0 16px',
-                    marginBottom: '15px',
-                  }}
-                >
-                  Cancel
-                </Button>
-              </div>
-              <div style={{ float: 'right', paddingRight: '16px' }}>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => onSubmit(forms.paymentData)}
-                  disabled={!(forms.paymentData?.file && payrollUuid)}
-                >
-                  {formatMessage(intl, 'payroll', 'payroll.paymentData.upload.label')}
-                </Button>
-              </div>
-            </div>
+          <DialogActions>
+            <Button onClick={handleClose} disabled={isUploading}>
+              {message('cancel')}
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={isUploading || !file || !payrollUuid}
+            >
+              {message(isUploading ? 'processing' : 'label')}
+            </Button>
           </DialogActions>
         </form>
       </Dialog>
@@ -170,18 +174,4 @@ function PayrollPaymentDataUploadDialog({
   );
 }
 
-const mapStateToProps = (state) => ({
-  rights: !!state.core && !!state.core.user && !!state.core.user.i_user ? state.core.user.i_user.rights : [],
-  confirmed: state.core.confirmed,
-});
-
-const mapDispatchToProps = (dispatch) => bindActionCreators({
-}, dispatch);
-
-export default injectIntl(
-  withTheme(
-    withStyles(styles)(
-      connect(mapStateToProps, mapDispatchToProps)(PayrollPaymentDataUploadDialog),
-    ),
-  ),
-);
+export default injectIntl(PayrollPaymentDataUploadDialog);
