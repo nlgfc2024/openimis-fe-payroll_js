@@ -125,6 +125,8 @@ function PaymentPointPage({
     coreConfirm(
       formatMessageWithValues('paymentPoint.delete.confirm.title', pageTitle(paymentPoint)),
       formatMessage('paymentPoint.delete.confirm.message'),
+      null,
+      'warning',
     );
   };
 
