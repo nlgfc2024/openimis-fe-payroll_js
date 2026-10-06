@@ -64,6 +64,8 @@ function PayrollSearcher({
     coreConfirm(
       formatMessageWithValues('payroll.delete.confirm.title', pageTitle(payrollToDelete)),
       formatMessage('payroll.delete.confirm.message'),
+      null,
+      'warning',
     );
   };
 

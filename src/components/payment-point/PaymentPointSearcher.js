@@ -50,6 +50,8 @@ function PaymentPointSearcher({
     coreConfirm(
       formatMessageWithValues('paymentPoint.delete.confirm.title', pageTitle(paymentPointToDelete)),
       formatMessage('paymentPoint.delete.confirm.message'),
+      null,
+      'warning',
     );
   };
 
