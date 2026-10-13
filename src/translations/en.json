@@ -27,6 +27,8 @@
   "payroll.payroll.paymentStrategy": "Payment Strategy",
   "payroll.payrollSearcher.results": "{totalCount} Payrolls Found",
   "payroll.payroll.mutation.create": "Create Payroll {id}",
+  "payroll.payroll.taskCreated.title": "A payroll review task has been created.",
+  "payroll.payroll.taskCreated.message": "The payroll has been created and is awaiting reviewer approval.",
   "payroll.payroll.mutation.deleteLabel": "Delete Payroll {id}",
   "payroll.payroll.paymentPoint": "Payment Point",
   "payroll.paymentPoint.label": "Payment Point",

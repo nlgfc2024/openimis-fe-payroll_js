@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 
-import { IconButton, Tooltip } from '@material-ui/core';
+import { IconButton, Link, Tooltip } from '@material-ui/core';
 import DownloadIcon from '@material-ui/icons/CloudDownload';
 
 import {
@@ -18,6 +18,7 @@ import {
 import { fetchPayrollPaymentFiles } from '../../actions';
 import downloadPayroll from '../../utils/export';
 import AdditionalFieldsDialog from './dialogs/AdditionalFieldsDialog';
+import ReconciliationUploadRowsDialog from './dialogs/ReconciliationUploadRowsDialog';
 
 function PayrollPaymentFilesSearcher({
   fetchingPayrollFiles,
@@ -35,7 +36,15 @@ function PayrollPaymentFilesSearcher({
   const headers = () => [
     'payrollPaymentFile.fileName',
     'payrollPaymentFile.status',
+    'payroll.payrollPaymentFile.totalRecords',
+    'payroll.payrollPaymentFile.matchedRecords',
+    'payroll.payrollPaymentFile.paidRecords',
+    'payroll.payrollPaymentFile.unpaidRecords',
+    'payroll.payrollPaymentFile.unmatchedRecords',
+    'Duplicate of',
+    'Review task',
     'payrollPaymentFile.download',
+    'Rows',
     '',
   ];
 
@@ -84,6 +93,15 @@ function PayrollPaymentFilesSearcher({
   const itemFormatters = () => [
     (file) => file.fileName,
     (file) => file.status,
+    (file) => file.totalRecords,
+    (file) => file.matchedRecords,
+    (file) => file.paidRecords,
+    (file) => file.unpaidRecords,
+    (file) => file.unmatchedRecords,
+    (file) => file.duplicateOf?.fileName || '—',
+    (file) => (file.reviewTaskId && file.status === PAYROLL_PAYMENT_FILE_STATUS.WAITING_FOR_VERIFICATION ? (
+      <Link href={`/front/tasks/task/${file.reviewTaskId}`}>Review upload</Link>
+    ) : '—'),
     (file) => (
       <Tooltip title={formatMessage('tooltip.download')}>
         <IconButton
@@ -92,11 +110,15 @@ function PayrollPaymentFilesSearcher({
             PAYROLL_PAYMENT_FILE_STATUS.PENDING_REVIEW,
             PAYROLL_PAYMENT_FILE_STATUS.WAITING_FOR_VERIFICATION,
             PAYROLL_PAYMENT_FILE_STATUS.PARTIAL_SUCCESS,
-            PAYROLL_PAYMENT_FILE_STATUS.DUPLICATE].includes(file.status)}
+            PAYROLL_PAYMENT_FILE_STATUS.DUPLICATE,
+            PAYROLL_PAYMENT_FILE_STATUS.FAIL].includes(file.status)}
         >
           <DownloadIcon />
         </IconButton>
       </Tooltip>
+    ),
+    (file) => (
+      <ReconciliationUploadRowsDialog upload={file} />
     ),
     (file) => (
       <AdditionalFieldsDialog

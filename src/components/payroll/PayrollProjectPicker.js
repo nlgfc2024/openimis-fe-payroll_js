@@ -9,7 +9,7 @@ const PayrollProjectPicker = ({
   const modulesManager = useModulesManager();
   const { formatMessage } = useTranslations('projectSocialProtection', modulesManager);
   const [search, setSearch] = useState('');
-  const microCatchmentId = microCatchment?.id ? decodeId(microCatchment.id) : null;
+  const microCatchmentId = microCatchment?.id || null;
   const { data, error, isLoading } = useGraphqlQuery(
     `
       query PayrollProjectPicker($search: String, $benefitPlanId: ID, $microCatchmentId: ID) {

@@ -9,6 +9,7 @@ import {
   useHistory,
   useModulesManager,
   useTranslations,
+  coreAlert,
   coreConfirm,
   clearConfirm,
   journalize,
@@ -43,6 +44,7 @@ function PayrollPage({
   createPayroll,
   clearPayroll,
   clearConfirm,
+  coreAlert,
   createPayrollFromFailedInvoices,
   journalize,
   benefitPlanId,
@@ -87,6 +89,12 @@ function PayrollPage({
   useEffect(() => {
     if (prevSubmittingMutationRef.current && !submittingMutation) {
       journalize(mutation);
+      if (mutation?.actionType === ACTION_TYPE.CREATE_PAYROLL) {
+        coreAlert(
+          formatMessage('payroll.payroll.taskCreated.title'),
+          formatMessage('payroll.payroll.taskCreated.message'),
+        );
+      }
       if (mutation?.actionType === ACTION_TYPE.DELETE_PAYROLL) {
         back();
       }
@@ -183,6 +191,7 @@ const mapDispatchToProps = (dispatch) => bindActionCreators({
   fetchPayroll,
   createPayroll,
   clearPayroll,
+  coreAlert,
   coreConfirm,
   clearConfirm,
   journalize,

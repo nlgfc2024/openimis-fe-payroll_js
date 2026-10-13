@@ -102,8 +102,15 @@ const CSV_RECONCILIATION_PROJECTION = () => [
   "paidRecords",
   "unpaidRecords",
   "unmatchedRecords",
+  "duplicateOf { id fileName status }",
+  "reviewTaskId",
+  "reviewTaskStatus",
   "error",
   "jsonExt",
+];
+
+const RECONCILIATION_UPLOAD_ROW_PROJECTION = () => [
+  'id', 'rowNumber', 'code', 'nationalId', 'status', 'submittedData', 'mismatchReasons',
 ];
 
 const PAYMENT_METHOD_PROJECTION = () => [
@@ -175,6 +182,15 @@ export function fetchPaymentPoint(modulesManager, params) {
 export function fetchPayrollPaymentFiles(modulesManager, params) {
   const payload = formatPageQueryWithCount('csvReconciliationUpload', params, CSV_RECONCILIATION_PROJECTION());
   return graphql(payload, ACTION_TYPE.GET_PAYROLL_PAYMENT_FILES);
+}
+
+export function fetchReconciliationUploadRows(uploadId) {
+  const payload = formatPageQueryWithCount(
+    'reconciliationUploadRow',
+    [`first: 100`, `upload_Id: "${decodeId(uploadId)}"`, 'isDeleted: false', 'orderBy: "rowNumber"'],
+    RECONCILIATION_UPLOAD_ROW_PROJECTION(),
+  );
+  return graphql(payload, ACTION_TYPE.GET_RECONCILIATION_UPLOAD_ROWS);
 }
 
 export const clearPaymentPoint = () => (dispatch) => {
