@@ -2,12 +2,14 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 
-import { IconButton, Tooltip } from '@material-ui/core';
+import { IconButton, Link, Tooltip } from '@material-ui/core';
 import DownloadIcon from '@material-ui/icons/CloudDownload';
 
 import {
   Searcher,
   decodeId,
+  historyPush,
+  useHistory,
   useModulesManager,
   useTranslations,
 } from '@openimis/fe-core';
@@ -18,6 +20,7 @@ import {
 import { fetchPayrollPaymentFiles } from '../../actions';
 import downloadPayroll from '../../utils/export';
 import AdditionalFieldsDialog from './dialogs/AdditionalFieldsDialog';
+import ReconciliationUploadRowsDialog from './dialogs/ReconciliationUploadRowsDialog';
 
 function PayrollPaymentFilesSearcher({
   fetchingPayrollFiles,
@@ -29,13 +32,22 @@ function PayrollPaymentFilesSearcher({
   fetchPayrollPaymentFiles,
   payrollUuid,
 }) {
+  const history = useHistory();
   const modulesManager = useModulesManager();
   const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
 
   const headers = () => [
     'payrollPaymentFile.fileName',
     'payrollPaymentFile.status',
+    'payroll.payrollPaymentFile.totalRecords',
+    'payroll.payrollPaymentFile.matchedRecords',
+    'payroll.payrollPaymentFile.paidRecords',
+    'payroll.payrollPaymentFile.unpaidRecords',
+    'payroll.payrollPaymentFile.unmatchedRecords',
+    formatMessage('payroll.reconciliationUpload.duplicateOf'),
+    formatMessage('payroll.reconciliationUpload.reviewTask'),
     'payrollPaymentFile.download',
+    formatMessage('payroll.reconciliationUpload.rows'),
     '',
   ];
 
@@ -77,13 +89,27 @@ function PayrollPaymentFilesSearcher({
     }
     return Object.entries(reasonsByRow).map(([row, reasons]) => {
       const detail = Array.isArray(reasons) ? reasons.join(", ") : JSON.stringify(reasons);
-      return `Row ${row}: ${detail}`;
+      return formatMessageWithValues('payroll.reconciliationUpload.rowError', { row, detail });
     }).join("; ");
   };
 
   const itemFormatters = () => [
     (file) => file.fileName,
     (file) => file.status,
+    (file) => file.totalRecords,
+    (file) => file.matchedRecords,
+    (file) => file.paidRecords,
+    (file) => file.unpaidRecords,
+    (file) => file.unmatchedRecords,
+    (file) => file.duplicateOf?.fileName || formatMessage('payroll.reconciliationUpload.notAvailable'),
+    (file) => (file.reviewTaskId && file.status === PAYROLL_PAYMENT_FILE_STATUS.WAITING_FOR_VERIFICATION ? (
+      <Link
+        component="button"
+        onClick={() => historyPush(modulesManager, history, 'tasksManagement.route.task', [file.reviewTaskId])}
+      >
+        {formatMessage('payroll.reconciliationUpload.reviewUpload')}
+      </Link>
+    ) : formatMessage('payroll.reconciliationUpload.notAvailable')),
     (file) => (
       <Tooltip title={formatMessage('tooltip.download')}>
         <IconButton
@@ -92,11 +118,15 @@ function PayrollPaymentFilesSearcher({
             PAYROLL_PAYMENT_FILE_STATUS.PENDING_REVIEW,
             PAYROLL_PAYMENT_FILE_STATUS.WAITING_FOR_VERIFICATION,
             PAYROLL_PAYMENT_FILE_STATUS.PARTIAL_SUCCESS,
-            PAYROLL_PAYMENT_FILE_STATUS.DUPLICATE].includes(file.status)}
+            PAYROLL_PAYMENT_FILE_STATUS.DUPLICATE,
+            PAYROLL_PAYMENT_FILE_STATUS.FAIL].includes(file.status)}
         >
           <DownloadIcon />
         </IconButton>
       </Tooltip>
+    ),
+    (file) => (
+      <ReconciliationUploadRowsDialog upload={file} />
     ),
     (file) => (
       <AdditionalFieldsDialog

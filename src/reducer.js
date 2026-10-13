@@ -33,6 +33,7 @@ export const ACTION_TYPE = {
   REJECT_PAYROLL: 'PAYROLL_MUTATION_REJECT_PAYROLL',
   MAKE_PAYMENT_PAYROLL: 'PAYROLL_MUTATION_MAKE_PAYMENT_PAYROLL',
   GET_PAYROLL_PAYMENT_FILES: 'GET_PAYROLL_PAYMENT_FILES',
+  GET_RECONCILIATION_UPLOAD_ROWS: 'GET_RECONCILIATION_UPLOAD_ROWS',
   BENEFITS_SUMMARY: 'PAYROLL_BENEFITS_SUMMARY',
   DELETE_BENEFIT_CONSUMPTION: 'BENEFIT_CONSUMPTION_MUTATION_DELETE_BENEFIT_CONSUMPTION',
 };
@@ -106,6 +107,10 @@ const STORE_STATE = {
   payrollFiles: [],
   payrollFilesPageInfo: {},
   payrollFilesTotalCount: 0,
+  fetchingReconciliationUploadRows: false,
+  fetchedReconciliationUploadRows: false,
+  reconciliationUploadRows: [],
+  reconciliationUploadRowsError: null,
 
   fetchingPayrollBenefitConsumptions: true,
   payrollBenefitConsumption: [],
@@ -405,6 +410,29 @@ function reducer(
         ...state,
         fetchingPayrollFiles: false,
         errorPayrollFiles: formatGraphQLError(action.payload),
+      };
+    case REQUEST(ACTION_TYPE.GET_RECONCILIATION_UPLOAD_ROWS):
+      return {
+        ...state,
+        fetchingReconciliationUploadRows: true,
+        fetchedReconciliationUploadRows: false,
+        reconciliationUploadRowsError: null,
+      };
+    case SUCCESS(ACTION_TYPE.GET_RECONCILIATION_UPLOAD_ROWS):
+      return {
+        ...state,
+        fetchingReconciliationUploadRows: false,
+        fetchedReconciliationUploadRows: true,
+        reconciliationUploadRowsError: formatGraphQLError(action.payload),
+        reconciliationUploadRows: parseData(action.payload.data.reconciliationUploadRow) || [],
+      };
+    case ERROR(ACTION_TYPE.GET_RECONCILIATION_UPLOAD_ROWS):
+      return {
+        ...state,
+        fetchingReconciliationUploadRows: false,
+        fetchedReconciliationUploadRows: false,
+        reconciliationUploadRowsError: formatGraphQLError(action.payload),
+        reconciliationUploadRows: [],
       };
     case CLEAR(ACTION_TYPE.GET_PAYROLL_PAYMENT_FILES):
       return {

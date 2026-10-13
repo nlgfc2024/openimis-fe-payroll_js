@@ -45,6 +45,7 @@ function PayrollTab({
   const classes = useStyles();
 
   const [activeTab, setActiveTab] = useState(BENEFIT_CONSUMPTION_LIST_TAB_VALUE);
+  const [reconciliationRevision, setReconciliationRevision] = useState(0);
 
   const isSelected = (tab) => tab === activeTab;
 
@@ -95,12 +96,14 @@ function PayrollTab({
                 && (
                 <PayrollPaymentDataUploadDialog
                   payrollUuid={payrollUuid}
+                  onUploadResult={() => setReconciliationRevision((revision) => revision + 1)}
                 />
                 )}
           </div>
         </div>
       </Grid>
       <Contributions
+        key={reconciliationRevision}
         contributionKey={PAYROLL_TABS_PANEL_CONTRIBUTION_KEY}
         rights={rights}
         value={activeTab}
