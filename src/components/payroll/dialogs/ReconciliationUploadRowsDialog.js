@@ -5,11 +5,14 @@ import {
 } from '@material-ui/core';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
+import { useModulesManager, useTranslations } from '@openimis/fe-core';
 import { fetchReconciliationUploadRows } from '../../../actions';
 
 function ReconciliationUploadRowsDialog({
   upload, rows, fetching, error, fetchReconciliationUploadRows,
 }) {
+  const modulesManager = useModulesManager();
+  const { formatMessage, formatMessageWithValues } = useTranslations('payroll', modulesManager);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -18,9 +21,9 @@ function ReconciliationUploadRowsDialog({
 
   return (
     <>
-      <Button variant="outlined" onClick={() => setOpen(true)}>View rows</Button>
+      <Button variant="outlined" onClick={() => setOpen(true)}>{formatMessage('payroll.reconciliationUpload.viewRows')}</Button>
       <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="lg">
-        <DialogTitle>Reconciliation rows — {upload.fileName}</DialogTitle>
+        <DialogTitle>{formatMessageWithValues('payroll.reconciliationUpload.rowsDialog.title', { fileName: upload.fileName })}</DialogTitle>
         <DialogContent>
           {fetching && <CircularProgress size={24} />}
           {error && <div>{error}</div>}
@@ -28,12 +31,12 @@ function ReconciliationUploadRowsDialog({
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>Row</TableCell>
-                  <TableCell>Code</TableCell>
-                  <TableCell>National ID</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Submitted values</TableCell>
-                  <TableCell>Mismatch reasons</TableCell>
+                  <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.row')}</TableCell>
+                  <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.code')}</TableCell>
+                  <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.nationalId')}</TableCell>
+                  <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.status')}</TableCell>
+                  <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.submittedValues')}</TableCell>
+                  <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.mismatchReasons')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -43,15 +46,15 @@ function ReconciliationUploadRowsDialog({
                     <TableCell>{row.code}</TableCell>
                     <TableCell>{row.nationalId}</TableCell>
                     <TableCell>{row.status}</TableCell>
-                    <TableCell>{Object.entries(row.submittedData || {}).map(([key, value]) => `${key}: ${value}`).join(', ') || '—'}</TableCell>
-                    <TableCell>{(row.mismatchReasons || []).join(', ') || '—'}</TableCell>
+                    <TableCell>{Object.entries(row.submittedData || {}).map(([key, value]) => `${key}: ${value}`).join(', ') || formatMessage('payroll.reconciliationUpload.notAvailable')}</TableCell>
+                    <TableCell>{(row.mismatchReasons || []).join(', ') || formatMessage('payroll.reconciliationUpload.notAvailable')}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           )}
         </DialogContent>
-        <DialogActions><Button onClick={() => setOpen(false)}>Close</Button></DialogActions>
+        <DialogActions><Button onClick={() => setOpen(false)}>{formatMessage('payroll.summary.close')}</Button></DialogActions>
       </Dialog>
     </>
   );

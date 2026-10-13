@@ -8,6 +8,8 @@ import DownloadIcon from '@material-ui/icons/CloudDownload';
 import {
   Searcher,
   decodeId,
+  historyPush,
+  useHistory,
   useModulesManager,
   useTranslations,
 } from '@openimis/fe-core';
@@ -30,6 +32,7 @@ function PayrollPaymentFilesSearcher({
   fetchPayrollPaymentFiles,
   payrollUuid,
 }) {
+  const history = useHistory();
   const modulesManager = useModulesManager();
   const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
 
@@ -41,10 +44,10 @@ function PayrollPaymentFilesSearcher({
     'payroll.payrollPaymentFile.paidRecords',
     'payroll.payrollPaymentFile.unpaidRecords',
     'payroll.payrollPaymentFile.unmatchedRecords',
-    'Duplicate of',
-    'Review task',
+    formatMessage('payroll.reconciliationUpload.duplicateOf'),
+    formatMessage('payroll.reconciliationUpload.reviewTask'),
     'payrollPaymentFile.download',
-    'Rows',
+    formatMessage('payroll.reconciliationUpload.rows'),
     '',
   ];
 
@@ -86,7 +89,7 @@ function PayrollPaymentFilesSearcher({
     }
     return Object.entries(reasonsByRow).map(([row, reasons]) => {
       const detail = Array.isArray(reasons) ? reasons.join(", ") : JSON.stringify(reasons);
-      return `Row ${row}: ${detail}`;
+      return formatMessageWithValues('payroll.reconciliationUpload.rowError', { row, detail });
     }).join("; ");
   };
 
@@ -98,10 +101,15 @@ function PayrollPaymentFilesSearcher({
     (file) => file.paidRecords,
     (file) => file.unpaidRecords,
     (file) => file.unmatchedRecords,
-    (file) => file.duplicateOf?.fileName || '—',
+    (file) => file.duplicateOf?.fileName || formatMessage('payroll.reconciliationUpload.notAvailable'),
     (file) => (file.reviewTaskId && file.status === PAYROLL_PAYMENT_FILE_STATUS.WAITING_FOR_VERIFICATION ? (
-      <Link href={`/front/tasks/task/${file.reviewTaskId}`}>Review upload</Link>
-    ) : '—'),
+      <Link
+        component="button"
+        onClick={() => historyPush(modulesManager, history, 'tasksManagement.route.task', [file.reviewTaskId])}
+      >
+        {formatMessage('payroll.reconciliationUpload.reviewUpload')}
+      </Link>
+    ) : formatMessage('payroll.reconciliationUpload.notAvailable')),
     (file) => (
       <Tooltip title={formatMessage('tooltip.download')}>
         <IconButton

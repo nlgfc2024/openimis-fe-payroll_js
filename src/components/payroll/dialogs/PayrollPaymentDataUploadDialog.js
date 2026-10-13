@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Input, Grid } from '@material-ui/core';
-import { injectIntl } from 'react-intl';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
@@ -10,8 +9,9 @@ import {
   apiHeaders,
   baseApiUrl,
   FeedbackBanner,
-  formatMessage,
   LoadingOverlay,
+  useModulesManager,
+  useTranslations,
 } from '@openimis/fe-core';
 import { withTheme, withStyles } from '@material-ui/core/styles';
 import { connect } from 'react-redux';
@@ -47,11 +47,12 @@ const styles = (theme) => ({
 });
 
 function PayrollPaymentDataUploadDialog({
-  intl,
   classes,
   payrollUuid,
   onUploadResult,
 }) {
+  const modulesManager = useModulesManager();
+  const { formatMessage, formatMessageWithValues } = useTranslations('payroll', modulesManager);
   const [isOpen, setIsOpen] = useState(false);
   const [forms, setForms] = useState({});
   const [isUploading, setIsUploading] = useState(false);
@@ -82,7 +83,7 @@ function PayrollPaymentDataUploadDialog({
     if (!file) return;
     const fileFormat = file.type;
     if (!file.name.toLowerCase().endsWith('.csv') && !fileFormat.includes('csv')) {
-      setFeedback({ severity: 'error', message: 'Choose a CSV reconciliation file.' });
+      setFeedback({ severity: 'error', message: formatMessage('payroll.reconciliationUpload.invalidFile') });
       return;
     }
     const formData = new FormData();
@@ -107,10 +108,17 @@ function PayrollPaymentDataUploadDialog({
       const error = payload.error || {};
       const status = payload.status || 'FAIL';
       const errorMessage = typeof error === 'string' ? error : (error.message || error.code);
-      const summaryMessage = `${summary.total_records || 0} total, ${summary.matched_records || 0} matched, ${summary.paid_records || 0} paid, ${summary.unpaid_records || 0} unpaid, ${summary.unmatched_records || 0} unmatched.`;
+      const summaryMessage = formatMessageWithValues('payroll.reconciliationUpload.statusSummary', {
+        status: status.replaceAll('_', ' ').toLowerCase(),
+        total: summary.total_records || 0,
+        matched: summary.matched_records || 0,
+        paid: summary.paid_records || 0,
+        unpaid: summary.unpaid_records || 0,
+        unmatched: summary.unmatched_records || 0,
+      });
       const message = response.ok
-        ? `Upload ${status.replaceAll('_', ' ').toLowerCase()}. ${summaryMessage}`
-        : (errorMessage || 'The reconciliation file could not be processed. Please correct the file and upload it again.');
+        ? summaryMessage
+        : (errorMessage || formatMessage('payroll.reconciliationUpload.processingFailed'));
       setFeedback({
         severity: response.ok && status !== 'DUPLICATE' ? 'success' : 'error',
         message,
@@ -121,7 +129,7 @@ function PayrollPaymentDataUploadDialog({
       });
       if (response.ok && onUploadResult) onUploadResult(payload);
     } catch (error) {
-      const message = 'The reconciliation file could not be processed. Please try again.';
+      const message = formatMessage('payroll.reconciliationUpload.networkFailed');
       setFeedback({ severity: 'error', message });
     } finally {
       setIsUploading(false);
@@ -134,10 +142,10 @@ function PayrollPaymentDataUploadDialog({
   const isSuccessful = feedback?.severity === 'success' && !hasValidationIssues;
 
   const feedbackTitle = () => {
-    if (isDuplicate) return 'Duplicate reconciliation file';
-    if (hasValidationIssues) return 'Some reconciliation records could not be matched';
-    if (isSuccessful) return 'Reconciliation upload complete';
-    return 'Reconciliation upload needs attention';
+    if (isDuplicate) return formatMessage('payroll.reconciliationUpload.title.duplicate');
+    if (hasValidationIssues) return formatMessage('payroll.reconciliationUpload.title.unmatched');
+    if (isSuccessful) return formatMessage('payroll.reconciliationUpload.title.complete');
+    return formatMessage('payroll.reconciliationUpload.title.attention');
   };
 
   const feedbackSeverity = () => {
@@ -158,7 +166,7 @@ function PayrollPaymentDataUploadDialog({
           marginTop: '6px',
         }}
       >
-        {formatMessage(intl, 'payroll', 'payroll.paymentData.upload.label')}
+        {formatMessage('payroll.paymentData.upload.label')}
       </Button>
       <Dialog
         open={isOpen}
@@ -171,7 +179,7 @@ function PayrollPaymentDataUploadDialog({
               marginTop: '10px',
             }}
           >
-            {formatMessage(intl, 'payroll', 'payroll.paymentData.upload.label')}
+            {formatMessage('payroll.paymentData.upload.label')}
           </DialogTitle>
           <DialogContent>
             {feedback && (
@@ -179,25 +187,27 @@ function PayrollPaymentDataUploadDialog({
                 <FeedbackBanner severity={feedbackSeverity()} title={feedbackTitle()}>
                   {hasValidationIssues && (
                     <>
-                      Download the error report to see which rows failed, correct them, and upload a corrected file.
+                      {formatMessage('payroll.reconciliationUpload.message.unmatched')}
                       <div className={classes.issueMetrics}>
-                        <span className={classes.issueMetric}>{`${unmatchedRecords} Records Not Matched`}</span>
+                        <span className={classes.issueMetric}>
+                          {formatMessageWithValues('payroll.reconciliationUpload.metric.unmatched', { count: unmatchedRecords })}
+                        </span>
                       </div>
                     </>
                   )}
-                  {isDuplicate && 'This file has already been uploaded. Use the existing upload or upload a corrected file.'}
+                  {isDuplicate && formatMessage('payroll.reconciliationUpload.message.duplicate')}
                   {isSuccessful && (feedback.status === 'WAITING_FOR_VERIFICATION'
-                    ? 'All records passed validation. Open the review task to apply the payment results.'
+                    ? formatMessage('payroll.reconciliationUpload.message.readyForReview')
                     : feedback.message)}
                   {!hasValidationIssues && !isDuplicate && !isSuccessful && feedback.message}
                 </FeedbackBanner>
-                <div className={classes.resultTitle}>Upload summary</div>
+                <div className={classes.resultTitle}>{formatMessage('payroll.reconciliationUpload.summary.title')}</div>
                 {[
-                  ['Total records detected', feedback.summary.total_records],
-                  ['Matched records', feedback.summary.matched_records],
-                  ['Paid records', feedback.summary.paid_records],
-                  ['Unpaid records', feedback.summary.unpaid_records],
-                  ['Unmatched records', feedback.summary.unmatched_records],
+                  [formatMessage('payroll.reconciliationUpload.summary.totalRecords'), feedback.summary.total_records],
+                  [formatMessage('payroll.reconciliationUpload.summary.matchedRecords'), feedback.summary.matched_records],
+                  [formatMessage('payroll.reconciliationUpload.summary.paidRecords'), feedback.summary.paid_records],
+                  [formatMessage('payroll.reconciliationUpload.summary.unpaidRecords'), feedback.summary.unpaid_records],
+                  [formatMessage('payroll.reconciliationUpload.summary.unmatchedRecords'), feedback.summary.unmatched_records],
                 ].map(([label, value]) => (
                   <div key={label} className={classes.resultRow}>
                     <span>{label}</span><span>{value || 0}</span>
@@ -244,7 +254,7 @@ function PayrollPaymentDataUploadDialog({
                     marginBottom: '15px',
                   }}
                 >
-                  {feedback ? 'Close' : 'Cancel'}
+                  {feedback ? formatMessage('payroll.summary.close') : formatMessage('payroll.advancedFilters.button.cancel')}
                 </Button>
               </div>
               <div style={{ float: 'right', paddingRight: '16px' }}>
@@ -255,8 +265,8 @@ function PayrollPaymentDataUploadDialog({
                     onClick={() => downloadPayroll(payrollUuid, feedback.fileName, false, feedback.uploadId)}
                   >
                     {feedback.summary.unmatched_records > 0 || feedback.severity === 'error'
-                      ? 'Download Error Report'
-                      : 'Download Reviewed CSV'}
+                      ? formatMessage('payroll.reconciliationUpload.downloadErrorReport')
+                      : formatMessage('payroll.reconciliationUpload.downloadReviewedFile')}
                   </Button>
                 ) : (
                   <Button
@@ -265,7 +275,7 @@ function PayrollPaymentDataUploadDialog({
                     onClick={() => onSubmit(forms.paymentData)}
                     disabled={isUploading || !(forms.paymentData?.file && payrollUuid)}
                   >
-                    {isUploading ? 'Uploading…' : formatMessage(intl, 'payroll', 'payroll.paymentData.upload.label')}
+                    {isUploading ? formatMessage('payroll.reconciliationUpload.uploading') : formatMessage('payroll.paymentData.upload.label')}
                   </Button>
                 )}
               </div>
@@ -273,7 +283,7 @@ function PayrollPaymentDataUploadDialog({
           </DialogActions>
         </form>
       </Dialog>
-      <LoadingOverlay open={isUploading} label="Uploading reconciliation file" />
+      <LoadingOverlay open={isUploading} label={formatMessage('payroll.reconciliationUpload.loading')} />
     </>
   );
 }
@@ -283,10 +293,8 @@ const mapStateToProps = (state) => ({
   confirmed: state.core.confirmed,
 });
 
-export default injectIntl(
-  withTheme(
-    withStyles(styles)(
-      connect(mapStateToProps)(PayrollPaymentDataUploadDialog),
-    ),
+export default withTheme(
+  withStyles(styles)(
+    connect(mapStateToProps)(PayrollPaymentDataUploadDialog),
   ),
 );
