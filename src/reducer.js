@@ -480,6 +480,12 @@ function reducer(
       return dispatchMutationResp(state, MUTATION_SERVICE.PAYROLL.CREATE, action);
     case SUCCESS(ACTION_TYPE.DELETE_PAYROLL):
       return dispatchMutationResp(state, MUTATION_SERVICE.PAYROLL.DELETE, action);
+    case SUCCESS(ACTION_TYPE.CLOSE_PAYROLL):
+      return dispatchMutationResp(state, MUTATION_SERVICE.PAYROLL.CLOSE, action);
+    case SUCCESS(ACTION_TYPE.REJECT_PAYROLL):
+      return dispatchMutationResp(state, MUTATION_SERVICE.PAYROLL.REJECT, action);
+    case SUCCESS(ACTION_TYPE.MAKE_PAYMENT_PAYROLL):
+      return dispatchMutationResp(state, MUTATION_SERVICE.PAYROLL.MAKE_PAYMENT, action);
     case SUCCESS(ACTION_TYPE.DELETE_BENEFIT_CONSUMPTION):
       return dispatchMutationResp(state, MUTATION_SERVICE.BENEFIT_CONSUMPTION.DELETE, action);
     default:
