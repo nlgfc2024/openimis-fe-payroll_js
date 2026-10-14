@@ -99,6 +99,10 @@ const PayrollPrintTemplate = forwardRef(({ benefitConsumptions }, ref) => {
             <div className={classes.detailName}>{formatMessage('payroll.benefitConsumption.individual.lastName')}</div>
             <div className={classes.detailValue}>{benefitConsumption.individual.lastName}</div>
           </div>
+          <div className={classes.detailRow}>
+            <div className={classes.detailName}>{formatMessage('payroll.benefitConsumption.code')}</div>
+            <div className={classes.detailValue}>{benefitConsumption.code}</div>
+          </div>
           {[
             ['district', benefitConsumption.districtName],
             ['ta', benefitConsumption.traditionalAuthorityName],

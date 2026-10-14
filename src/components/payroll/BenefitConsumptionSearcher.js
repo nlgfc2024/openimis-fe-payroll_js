@@ -53,6 +53,7 @@ function BenefitConsumptionSearcher({
     'benefitConsumption.nationalId',
     'benefitConsumption.phoneNumber',
     'benefitConsumption.photo',
+    'benefitConsumption.code',
     'benefitConsumption.dateDue',
     'benefitConsumption.receipt',
     'benefitConsumption.amount',
@@ -91,6 +92,7 @@ function BenefitConsumptionSearcher({
         <PhotoCameraOutlinedIcon style={{ fontSize: 150 }} />
       ) : null
     ),
+    (benefitConsumption) => benefitConsumption?.code,
     (benefitConsumption) => benefitConsumption?.dateDue,
     (benefitConsumption) => benefitConsumption?.receipt,
     (benefitConsumption) => benefitConsumption?.amount,
@@ -115,14 +117,26 @@ function BenefitConsumptionSearcher({
   const rowIdentifier = (benefitConsumption) => benefitConsumption.id;
 
   const sorts = () => [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
     ['individual_FirstName', true],
     ['individual_LastName', true],
+    null,
+    null,
     ['photo', true],
+    ['code', true],
     ['dateDue', true],
     ['receipt', true],
     ['amount', true],
     ['type', true],
     ['status', true],
+    null,
+    null,
+    null,
   ];
 
   const defaultFilters = () => {
