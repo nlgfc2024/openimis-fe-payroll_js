@@ -41,7 +41,6 @@ import {
 import { PayrollDeleteTaskItemFormatters, PayrollDeleteTaskTableHeaders } from './components/tasks/PayrollDeleteTasks';
 import { PayrollPaymentFilesTabLabel, PayrollPaymentFilesTabPanel } from './components/payroll/PayrollPaymentFilesTab';
 import PendingPayrollsPage from './pages/payroll/PendingPayrollsPage';
-import PendingReconciliationPayrollsPage from './pages/payroll/PendingReconciliationPayrollsPage';
 
 const ROUTE_PAYMENT_POINTS = 'paymentPoints';
 const ROUTE_PAYMENT_POINT = 'paymentPoints/paymentPoint';
@@ -49,7 +48,6 @@ const ROUTE_PAYROLLS = 'payrolls';
 const ROUTE_PAYROLLS_APPROVED = 'payrollsApproved';
 const ROUTE_PAYROLLS_PENDING = 'payrollsPending';
 const ROUTE_PAYROLLS_RECONCILED = 'payrollsReconciled';
-const ROUTE_PAYROLLS_PENDING_RECONCILIATION = 'payrollsPendingReconciliation';
 const ROUTE_PAYROLL = 'payrolls/payroll';
 
 const DEFAULT_CONFIG = {
@@ -62,7 +60,6 @@ const DEFAULT_CONFIG = {
     { key: 'payroll.route.payrollsApproved', ref: ROUTE_PAYROLLS_APPROVED },
     { key: 'payroll.route.payrollsPending', ref: ROUTE_PAYROLLS_PENDING },
     { key: 'payroll.route.payrollsReconciled', ref: ROUTE_PAYROLLS_RECONCILED },
-    { key: 'payroll.route.payrollsPendingReconciliation', ref: ROUTE_PAYROLLS_PENDING_RECONCILIATION },
     { key: 'payroll.route.payroll', ref: ROUTE_PAYROLL },
     { key: 'payroll.PaymentPointPicker', ref: PaymentPointPicker },
     { key: 'payroll.PaymentPointPicker.projection', ref: ['id', 'name', 'location'] },
@@ -76,7 +73,6 @@ const DEFAULT_CONFIG = {
     { path: ROUTE_PAYROLLS_APPROVED, component: ApprovedPayrollsPage },
     { path: ROUTE_PAYROLLS_PENDING, component: PendingPayrollsPage },
     { path: ROUTE_PAYROLLS_RECONCILED, component: ReconciledPayrollsPage },
-    { path: ROUTE_PAYROLLS_PENDING_RECONCILIATION, component: PendingReconciliationPayrollsPage },
     {
       path: `${ROUTE_PAYROLL}/:payroll_uuid?/:createPayrollFromFailedInvoices?/:benefitPlanId?`,
       component: PayrollPage,
@@ -117,13 +113,6 @@ const DEFAULT_CONFIG = {
       route: `/${ROUTE_PAYROLLS_RECONCILED}`,
       filter: (rights) => rights.includes(RIGHT_PAYROLL_SEARCH),
       id: 'legalAndFinance.payrollsReconciled',
-    },
-    {
-      text: <FormattedMessage module="payroll" id="payroll.route.payrollsPendingReconciliation" />,
-      icon: <MonetizationOnIcon />,
-      route: `/${ROUTE_PAYROLLS_PENDING_RECONCILIATION}`,
-      filter: (rights) => rights.includes(RIGHT_PAYROLL_SEARCH),
-      id: 'legalAndFinance.payrollsPendingReconciliation',
     },
   ],
   'payroll.TabPanel.label': [BenefitConsumptionsTabLabel, PayrollTaskTabLabel, PayrollPaymentFilesTabLabel],
