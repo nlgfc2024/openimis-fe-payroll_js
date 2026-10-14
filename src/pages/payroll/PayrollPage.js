@@ -9,6 +9,8 @@ import {
   useHistory,
   useModulesManager,
   useTranslations,
+  PageFeedbackBanner,
+  showPageFeedback,
   coreAlert,
   coreConfirm,
   clearConfirm,
@@ -44,6 +46,7 @@ function PayrollPage({
   createPayroll,
   clearPayroll,
   clearConfirm,
+  showPageFeedback,
   coreAlert,
   createPayrollFromFailedInvoices,
   journalize,
@@ -90,10 +93,16 @@ function PayrollPage({
     if (prevSubmittingMutationRef.current && !submittingMutation) {
       journalize(mutation);
       if (mutation?.actionType === ACTION_TYPE.CREATE_PAYROLL) {
-        coreAlert(
-          formatMessage('payroll.payroll.taskCreated.title'),
-          formatMessage('payroll.payroll.taskCreated.message'),
-        );
+        showPageFeedback({
+          severity: 'success',
+          title: formatMessage('payroll.payroll.create.success.title'),
+          message: formatMessage('payroll.payroll.create.success.message'),
+        });
+        coreAlert({
+          severity: 'success',
+          title: formatMessage('payroll.payroll.create.popup.title'),
+          message: formatMessage('payroll.payroll.create.popup.message'),
+        });
       }
       if (mutation?.actionType === ACTION_TYPE.DELETE_PAYROLL) {
         back();
@@ -156,6 +165,7 @@ function PayrollPage({
   return (
     rights.includes(RIGHT_PAYROLL_CREATE) && (
     <div className={classes.page}>
+      <PageFeedbackBanner />
       <Form
         key={payrollUuid}
         module="payroll"
@@ -191,6 +201,7 @@ const mapDispatchToProps = (dispatch) => bindActionCreators({
   fetchPayroll,
   createPayroll,
   clearPayroll,
+  showPageFeedback,
   coreAlert,
   coreConfirm,
   clearConfirm,

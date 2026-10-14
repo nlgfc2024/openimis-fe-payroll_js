@@ -45,6 +45,7 @@ function FilterDialog({
   const [microCatchment, setMicroCatchment] = useState(null);
   const [advancedFilters, setAdvancedFilters] = useState([]);
   const isInitializing = useRef(true);
+  const shouldAutoSelectProjects = useRef(false);
 
   useEffect(() => {
     if (objectToSave?.jsonExt) {
@@ -123,12 +124,20 @@ function FilterDialog({
     setDistrict(value);
     setMicroCatchment(null);
     setSelectedProjects([]);
+    shouldAutoSelectProjects.current = false;
     setSelectedLocations(value ? [value] : []);
   };
 
   const handleMicroCatchmentChange = (value) => {
     setMicroCatchment(value);
     setSelectedProjects([]);
+    shouldAutoSelectProjects.current = !!value;
+  };
+
+  const handleProjectsLoaded = (projects) => {
+    if (!shouldAutoSelectProjects.current) return;
+    shouldAutoSelectProjects.current = false;
+    setSelectedProjects(projects);
   };
 
   const handleAdvancedFiltersChange = (filters) => {
@@ -222,6 +231,7 @@ function FilterDialog({
             microCatchment={microCatchment}
             value={selectedProjects}
             onChange={handleProjectsChange}
+            onProjectsLoaded={handleProjectsLoaded}
             readOnly={readOnly}
           />
         </Grid>

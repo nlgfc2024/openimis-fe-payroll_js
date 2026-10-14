@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Autocomplete, decodeId, useGraphqlQuery, useModulesManager, useTranslations,
 } from '@openimis/fe-core';
 
 const PayrollProjectPicker = ({
-  benefitPlanId, microCatchment, onChange, readOnly, value,
+  benefitPlanId, microCatchment, onChange, onProjectsLoaded, readOnly, value,
 }) => {
   const modulesManager = useModulesManager();
   const { formatMessage } = useTranslations('projectSocialProtection', modulesManager);
@@ -17,7 +17,6 @@ const PayrollProjectPicker = ({
           name_Icontains: $search,
           benefitPlan_Id: $benefitPlanId,
           microCatchment_Id: $microCatchmentId,
-          status: COMPLETED,
           isDeleted: false,
           orderBy: "name"
         ) {
@@ -28,10 +27,15 @@ const PayrollProjectPicker = ({
     { search, benefitPlanId, microCatchmentId },
     { skip: !benefitPlanId },
   );
-  const projects = (data?.project?.edges || []).map(({ node }) => ({
+  const projects = useMemo(() => (data?.project?.edges || []).map(({ node }) => ({
     ...node,
     id: decodeId(node.id),
-  }));
+  })), [data]);
+  const projectIds = projects.map((project) => project.id).join(',');
+
+  useEffect(() => {
+    if (microCatchmentId && !isLoading) onProjectsLoaded?.(projects);
+  }, [microCatchmentId, isLoading, onProjectsLoaded, projectIds]);
 
   return (
     <Autocomplete
