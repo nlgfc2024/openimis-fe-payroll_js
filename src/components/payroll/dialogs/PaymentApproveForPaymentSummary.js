@@ -8,6 +8,8 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import {
   useModulesManager,
   useTranslations,
+  showPageFeedback,
+  coreAlert,
 } from '@openimis/fe-core';
 import {
   Paper,
@@ -32,6 +34,8 @@ function PaymentApproveForPaymentDialog({
   payrollDetail,
   fetchPayroll,
   makePaymentForPayroll,
+  showPageFeedback,
+  coreAlert,
 }) {
   const modulesManager = useModulesManager();
   const [payrollUuid] = useState(payrollDetail?.id ?? null);
@@ -91,20 +95,50 @@ function PaymentApproveForPaymentDialog({
     }
   }, [isOpen, payroll]);
 
-  const closePayrollCallback = () => {
-    handleClose();
-    closePayroll(
-      payrollDetail,
-      formatMessageWithValues('payroll.mutation.closeLabel', mutationLabel(payrollDetail)),
-    );
+  const closePayrollCallback = async () => {
+    try {
+      const response = await closePayroll(
+        payrollDetail,
+        formatMessageWithValues('payroll.mutation.closeLabel', mutationLabel(payrollDetail)),
+      );
+      if (response?.error || response?.payload?.errors?.length) throw new Error('close payroll failed');
+      handleClose();
+      showPageFeedback({
+        severity: 'success',
+        title: formatMessage('payroll.reconciliation.submit.success.title'),
+        message: formatMessage('payroll.reconciliation.submit.success.message'),
+      });
+      coreAlert({
+        severity: 'success',
+        title: formatMessage('payroll.reconciliation.submit.popup.title'),
+        message: formatMessage('payroll.reconciliation.submit.popup.message'),
+      });
+    } catch {
+      // The shared GraphQL request pipeline renders the failure alert.
+    }
   };
 
-  const rejectPayrollCallback = () => {
-    handleClose();
-    rejectPayroll(
-      payrollDetail,
-      formatMessageWithValues('payroll.mutation.closeLabel', mutationLabel(payrollDetail)),
-    );
+  const rejectPayrollCallback = async () => {
+    try {
+      const response = await rejectPayroll(
+        payrollDetail,
+        formatMessageWithValues('payroll.mutation.closeLabel', mutationLabel(payrollDetail)),
+      );
+      if (response?.error || response?.payload?.errors?.length) throw new Error('reject payroll failed');
+      handleClose();
+      showPageFeedback({
+        severity: 'success',
+        title: formatMessage('payroll.rejection.submit.success.title'),
+        message: formatMessage('payroll.rejection.submit.success.message'),
+      });
+      coreAlert({
+        severity: 'success',
+        title: formatMessage('payroll.rejection.submit.popup.title'),
+        message: formatMessage('payroll.rejection.submit.popup.message'),
+      });
+    } catch {
+      // The shared GraphQL request pipeline renders the failure alert.
+    }
   };
 
   const makePaymentForPayrollCallback = () => {
@@ -283,6 +317,8 @@ const mapDispatchToProps = (dispatch) => bindActionCreators({
   rejectPayroll,
   fetchPayroll,
   makePaymentForPayroll,
+  showPageFeedback,
+  coreAlert,
 }, dispatch);
 
 export default connect(mapStateToProps, mapDispatchToProps)(PaymentApproveForPaymentDialog);
