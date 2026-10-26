@@ -95,16 +95,10 @@ function PayrollSearcherPending({
     (payroll) => (payroll.paymentMethod
       ? `${payroll.paymentMethod}` : ''),
     (payroll) => (
-      <PayrollReconciliationFilesDialog
-        classes={classes}
-        payroll={payroll}
-      />
-    ),
-    (payroll) => (
-      <PayrollPendingPayrollSummary
-        classes={classes}
-        payrollDetail={payroll}
-      />
+      <span style={{ display: 'inline-flex', whiteSpace: 'nowrap' }}>
+        <PayrollReconciliationFilesDialog classes={classes} payroll={payroll} />
+        <PayrollPendingPayrollSummary classes={classes} payrollDetail={payroll} />
+      </span>
     ),
   ];
 
@@ -126,6 +120,7 @@ function PayrollSearcherPending({
       errorItems={errorPayrolls}
       tableTitle={formatMessageWithValues('payrollSearcher.results', { totalCount })}
       headers={headers}
+      columnWidths={['22%', '24%', '16%', '12%', undefined, '112px']}
       itemFormatters={itemFormatters}
       sorts={sorts}
       rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
