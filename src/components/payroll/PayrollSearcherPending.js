@@ -120,7 +120,7 @@ function PayrollSearcherPending({
       errorItems={errorPayrolls}
       tableTitle={formatMessageWithValues('payrollSearcher.results', { totalCount })}
       headers={headers}
-      columnWidths={['22%', '24%', '16%', '12%', undefined, '112px']}
+      columnWidths={['20%', '20%', '16%', '16%', undefined, '112px']}
       itemFormatters={itemFormatters}
       sorts={sorts}
       rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
