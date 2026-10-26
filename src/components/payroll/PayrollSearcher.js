@@ -64,6 +64,8 @@ function PayrollSearcher({
     coreConfirm(
       formatMessageWithValues('payroll.delete.confirm.title', pageTitle(payrollToDelete)),
       formatMessage('payroll.delete.confirm.message'),
+      null,
+      'warning',
     );
   };
 
@@ -138,23 +140,21 @@ function PayrollSearcher({
     (payroll) => (payroll.paymentMethod
       ? `${payroll.paymentMethod}` : ''),
     (payroll) => (
-      <Tooltip title={formatMessage('tooltip.viewDetails')}>
-        <IconButton
-          onClick={() => openPayroll(payroll)}
-        >
-          <VisibilityIcon />
-        </IconButton>
-      </Tooltip>
-    ),
-    (payroll) => (
-      <Tooltip title={formatMessage('tooltip.delete')}>
-        <IconButton
-          onClick={() => onDelete(payroll)}
-          disabled={deletedPayrollUuids.includes(payroll.id) || payroll.status !== PAYROLL_STATUS.PENDING_APPROVAL}
-        >
-          <DeleteIcon />
-        </IconButton>
-      </Tooltip>
+      <span style={{ display: 'inline-flex', whiteSpace: 'nowrap' }}>
+        <Tooltip title={formatMessage('tooltip.viewDetails')}>
+          <IconButton onClick={() => openPayroll(payroll)}>
+            <VisibilityIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title={formatMessage('tooltip.delete')}>
+          <IconButton
+            onClick={() => onDelete(payroll)}
+            disabled={deletedPayrollUuids.includes(payroll.id) || payroll.status !== PAYROLL_STATUS.PENDING_APPROVAL}
+          >
+            <DeleteIcon />
+          </IconButton>
+        </Tooltip>
+      </span>
     ),
   ];
 
@@ -178,6 +178,7 @@ function PayrollSearcher({
       errorItems={errorPayrolls}
       tableTitle={formatMessageWithValues('payrollSearcher.results', { totalCount })}
       headers={headers}
+      columnWidths={['22%', '24%', '16%', '12%', undefined, '112px']}
       itemFormatters={itemFormatters}
       sorts={sorts}
       rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}

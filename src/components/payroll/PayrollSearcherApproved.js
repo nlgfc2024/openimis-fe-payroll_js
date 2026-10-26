@@ -97,16 +97,10 @@ function PayrollSearcherApproved({
     (payroll) => (payroll.paymentMethod
       ? `${payroll.paymentMethod}` : ''),
     (payroll) => (
-      <PayrollReconciliationFilesDialog
-        classes={classes}
-        payroll={payroll}
-      />
-    ),
-    (payroll) => (
-      <SummaryDialog
-        classes={classes}
-        payrollDetail={payroll}
-      />
+      <span style={{ display: 'inline-flex', whiteSpace: 'nowrap' }}>
+        <PayrollReconciliationFilesDialog classes={classes} payroll={payroll} />
+        <SummaryDialog classes={classes} payrollDetail={payroll} />
+      </span>
     ),
   ];
 
@@ -128,6 +122,7 @@ function PayrollSearcherApproved({
       errorItems={errorPayrolls}
       tableTitle={formatMessageWithValues('payrollSearcher.results', { totalCount })}
       headers={headers}
+      columnWidths={['22%', '24%', '16%', '12%', undefined, '112px']}
       itemFormatters={itemFormatters}
       sorts={sorts}
       rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}

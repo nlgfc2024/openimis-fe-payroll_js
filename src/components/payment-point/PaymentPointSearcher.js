@@ -50,6 +50,8 @@ function PaymentPointSearcher({
     coreConfirm(
       formatMessageWithValues('paymentPoint.delete.confirm.title', pageTitle(paymentPointToDelete)),
       formatMessage('paymentPoint.delete.confirm.message'),
+      null,
+      'warning',
     );
   };
 
@@ -107,23 +109,21 @@ function PaymentPointSearcher({
     ({ ppm }) => `${ppm?.username} ${ppm?.iUser?.lastName} ${ppm?.iUser?.otherNames}`,
     ({ location }) => `${location?.code} ${location?.name}`,
     (paymentPoint) => (
-      <Tooltip title={formatMessage('tooltip.viewDetails')}>
-        <IconButton
-          onClick={() => openPaymentPoint(paymentPoint)}
-        >
-          <VisibilityIcon />
-        </IconButton>
-      </Tooltip>
-    ),
-    (paymentPoint) => (
-      <Tooltip title={formatMessage('tooltip.delete')}>
-        <IconButton
-          onClick={() => onDelete(paymentPoint)}
-          disabled={deletedPaymentPointUuids.includes(paymentPoint.id)}
-        >
-          <DeleteIcon />
-        </IconButton>
-      </Tooltip>
+      <span style={{ display: 'inline-flex', whiteSpace: 'nowrap' }}>
+        <Tooltip title={formatMessage('tooltip.viewDetails')}>
+          <IconButton onClick={() => openPaymentPoint(paymentPoint)}>
+            <VisibilityIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title={formatMessage('tooltip.delete')}>
+          <IconButton
+            onClick={() => onDelete(paymentPoint)}
+            disabled={deletedPaymentPointUuids.includes(paymentPoint.id)}
+          >
+            <DeleteIcon />
+          </IconButton>
+        </Tooltip>
+      </span>
     ),
   ];
 
@@ -154,6 +154,7 @@ function PaymentPointSearcher({
       errorItems={errorPaymentPoints}
       tableTitle={formatMessageWithValues('PaymentPointSearcher.results', { totalCount })}
       headers={headers}
+      columnWidths={['28%', '24%', undefined, '112px']}
       itemFormatters={itemFormatters}
       sorts={sorts}
       rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}

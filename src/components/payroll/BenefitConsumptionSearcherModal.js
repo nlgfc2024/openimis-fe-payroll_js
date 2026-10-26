@@ -1,19 +1,14 @@
 /* eslint-disable max-len */
 /* eslint-disable no-param-reassign */
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import PrintIcon from '@material-ui/icons/Print';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import Button from '@material-ui/core/Button';
-import Dialog from '@material-ui/core/Dialog';
 import Typography from '@material-ui/core/Typography';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
 import {
-  Searcher, useModulesManager, useTranslations,
+  Searcher, useModulesManager, useTranslations, coreConfirm, clearConfirm,
 } from '@openimis/fe-core';
 import PhotoCameraOutlinedIcon from '@material-ui/icons/PhotoCameraOutlined';
 import { fetchBenefitAttachments, deleteBenefitConsumption } from '../../actions';
@@ -38,11 +33,13 @@ function BenefitConsumptionSearcherModal({
   reconciledMode,
   payrollDetail,
   deleteBenefitConsumption,
+  coreConfirm,
+  clearConfirm,
+  confirmed,
 }) {
   const modulesManager = useModulesManager();
   const { formatMessage, formatMessageWithValues } = useTranslations('payroll', modulesManager);
   const [selectedBenefitAttachment, setSelectedBenefitAttachment] = useState(null);
-  const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [benefitToDelete, setBenefitToDelete] = useState(null);
   const payrollPrintTemplateRef = useRef(null);
 
@@ -105,19 +102,32 @@ function BenefitConsumptionSearcherModal({
 
   const confirmDeleteBenefitConsumption = (benefit) => {
     setBenefitToDelete(benefit);
-    setOpenConfirmDialog(true);
+    coreConfirm(
+      formatMessage('benefitConsumption.delete.confirm.title'),
+      formatMessage('benefitConsumption.delete.confirm.message'),
+      null,
+      'warning',
+    );
   };
 
-  const handleDeleteBenefitConsumption = () => {
+  const handleDeleteBenefitConsumption = (benefit) => {
     deleteBenefitConsumption(
-      benefitToDelete.benefit,
-      formatMessageWithValues('payroll.mutation.deleteLabel', mutationLabel(benefitToDelete.benefit.code)),
+      benefit.benefit,
+      formatMessageWithValues('payroll.mutation.deleteLabel', mutationLabel(benefit.benefit.code)),
     );
-    setOpenConfirmDialog(false);
-    setBenefitToDelete(null);
     const filters = defaultFiltersArray();
     fetchBenefitAttachments(modulesManager, filters); // Refresh the searcher after deletion
   };
+
+  useEffect(() => {
+    if (benefitToDelete && confirmed) {
+      handleDeleteBenefitConsumption(benefitToDelete);
+    }
+    if (benefitToDelete && confirmed !== null) {
+      setBenefitToDelete(null);
+    }
+    return () => confirmed && clearConfirm(false);
+  }, [confirmed]);
 
   const checkBenefitDueDate = (benefitAttachment) => {
     if (!benefitAttachment.benefit.receipt) {
@@ -250,25 +260,6 @@ function BenefitConsumptionSearcherModal({
           benefitAttachment={selectedBenefitAttachment}
         />
         )}
-        <Dialog
-          open={openConfirmDialog}
-          onClose={() => setOpenConfirmDialog(false)}
-        >
-          <DialogTitle>{formatMessage('benefitConsumption.delete.confirm.title')}</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              {formatMessage('benefitConsumption.delete.confirm.message')}
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenConfirmDialog(false)} color="primary">
-              {formatMessage('benefitConsumption.cancel')}
-            </Button>
-            <Button onClick={handleDeleteBenefitConsumption} color="primary" autoFocus>
-              {formatMessage('benefitConsumption.confirm')}
-            </Button>
-          </DialogActions>
-        </Dialog>
         <div style={{ display: 'none' }}>
           <PayrollBenefitPrintTemplate
             ref={payrollPrintTemplateRef}
@@ -287,10 +278,16 @@ const mapStateToProps = (state) => ({
   benefitAttachments: state.payroll.benefitAttachments,
   benefitAttachmentsPageInfo: state.payroll.benefitAttachmentsPageInfo,
   benefitAttachmentsTotalCount: state.payroll.benefitAttachmentsTotalCount,
+  confirmed: state.core.confirmed,
 });
 
 const mapDispatchToProps = (dispatch) => bindActionCreators(
-  { fetchBenefitAttachments, deleteBenefitConsumption },
+  {
+    fetchBenefitAttachments,
+    deleteBenefitConsumption,
+    clearConfirm,
+    coreConfirm,
+  },
   dispatch,
 );
 
