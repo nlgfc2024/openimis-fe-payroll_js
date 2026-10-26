@@ -117,7 +117,7 @@ function PayrollSearcherReconciled({
       errorItems={errorPayrolls}
       tableTitle={formatMessageWithValues('payrollSearcher.results', { totalCount })}
       headers={headers}
-      columnWidths={['18%', '18%', '14%', '14%', undefined, '205px', '230px']}
+      columnWidths={['250px', '220px', '180px', '180px', '220px', '260px', '290px']}
       itemFormatters={itemFormatters}
       sorts={sorts}
       rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}

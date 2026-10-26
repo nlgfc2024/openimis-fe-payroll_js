@@ -91,7 +91,7 @@ function PaymentPendingPayrollPaymentDialog({
         variant="contained"
         color="primary"
         className={classes.button}
-        style={{ margin: '8px', whiteSpace: 'nowrap' }}
+        style={{ margin: '8px 16px 8px 8px', whiteSpace: 'nowrap' }}
       >
         {formatMessage('payroll.viewReconciliationSummary')}
       </Button>
