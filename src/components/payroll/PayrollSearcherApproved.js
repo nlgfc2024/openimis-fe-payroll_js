@@ -56,6 +56,7 @@ function PayrollSearcherApproved({
     'payroll.paymentPoint',
     'payroll.paymentMethod',
     'emptyLabel',
+    'emptyLabel',
   ];
 
   const sorts = () => [
@@ -94,12 +95,8 @@ function PayrollSearcherApproved({
       ? `${payroll.paymentPoint.name}` : ''),
     (payroll) => (payroll.paymentMethod
       ? `${payroll.paymentMethod}` : ''),
-    (payroll) => (
-      <span style={{ display: 'inline-flex', whiteSpace: 'nowrap' }}>
-        <PayrollReconciliationFilesDialog classes={classes} payroll={payroll} />
-        <PaymentApproveForPaymentSummary classes={classes} payrollDetail={payroll} />
-      </span>
-    ),
+    (payroll) => <PayrollReconciliationFilesDialog classes={classes} payroll={payroll} />,
+    (payroll) => <PaymentApproveForPaymentSummary classes={classes} payrollDetail={payroll} />,
   ];
 
   const onDoubleClick = (payroll) => openPayroll(payroll);
@@ -120,7 +117,7 @@ function PayrollSearcherApproved({
       errorItems={errorPayrolls}
       tableTitle={formatMessageWithValues('payrollSearcher.results', { totalCount })}
       headers={headers}
-      columnWidths={['20%', '20%', '16%', '16%', undefined, '112px']}
+      columnWidths={['18%', '18%', '14%', '14%', undefined, '205px', '230px']}
       itemFormatters={itemFormatters}
       sorts={sorts}
       rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}

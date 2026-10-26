@@ -34,6 +34,7 @@ function PayrollReconciliationFilesDialog({
         variant="contained"
         color="primary"
         className={classes.button}
+        style={{ whiteSpace: 'nowrap' }}
       >
         {formatMessage('payroll.viewReconciliationFiles')}
       </Button>
