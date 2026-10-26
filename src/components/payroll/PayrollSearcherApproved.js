@@ -30,8 +30,6 @@ function PayrollSearcherApproved({
   submittingMutation,
   mutation,
   classes,
-  status = PAYROLL_STATUS.APPROVE_FOR_PAYMENT,
-  SummaryDialog = PaymentApproveForPaymentSummary,
 }) {
   const history = useHistory();
   const modulesManager = useModulesManager();
@@ -73,8 +71,8 @@ function PayrollSearcherApproved({
       filter: 'isDeleted: false',
     },
     status: {
-      value: status,
-      filter: `status: ${status}`,
+      value: PAYROLL_STATUS.APPROVE_FOR_PAYMENT,
+      filter: `status: ${PAYROLL_STATUS.APPROVE_FOR_PAYMENT}`,
     },
   });
 
@@ -99,7 +97,7 @@ function PayrollSearcherApproved({
     (payroll) => (
       <span style={{ display: 'inline-flex', whiteSpace: 'nowrap' }}>
         <PayrollReconciliationFilesDialog classes={classes} payroll={payroll} />
-        <SummaryDialog classes={classes} payrollDetail={payroll} />
+        <PaymentApproveForPaymentSummary classes={classes} payrollDetail={payroll} />
       </span>
     ),
   ];

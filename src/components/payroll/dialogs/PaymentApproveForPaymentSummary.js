@@ -9,7 +9,7 @@ import {
   useModulesManager,
   useTranslations,
   showPageFeedback,
-  coreAlert,
+  waitForMutation,
 } from '@openimis/fe-core';
 import {
   Paper,
@@ -35,7 +35,7 @@ function PaymentApproveForPaymentDialog({
   fetchPayroll,
   makePaymentForPayroll,
   showPageFeedback,
-  coreAlert,
+  waitForMutation: waitForMutationStatus,
 }) {
   const modulesManager = useModulesManager();
   const [payrollUuid] = useState(payrollDetail?.id ?? null);
@@ -102,16 +102,15 @@ function PaymentApproveForPaymentDialog({
         formatMessageWithValues('payroll.mutation.closeLabel', mutationLabel(payrollDetail)),
       );
       if (response?.error || response?.payload?.errors?.length) throw new Error('close payroll failed');
+      const clientMutationId = response?.payload?.data?.closePayroll?.clientMutationId;
+      const result = clientMutationId && await waitForMutationStatus(clientMutationId);
+      if (result?.status !== 2) return;
+
       handleClose();
       showPageFeedback({
         severity: 'success',
         title: formatMessage('payroll.reconciliation.submit.success.title'),
         message: formatMessage('payroll.reconciliation.submit.success.message'),
-      });
-      coreAlert({
-        severity: 'success',
-        title: formatMessage('payroll.reconciliation.submit.popup.title'),
-        message: formatMessage('payroll.reconciliation.submit.popup.message'),
       });
     } catch {
       // The shared GraphQL request pipeline renders the failure alert.
@@ -125,16 +124,15 @@ function PaymentApproveForPaymentDialog({
         formatMessageWithValues('payroll.mutation.closeLabel', mutationLabel(payrollDetail)),
       );
       if (response?.error || response?.payload?.errors?.length) throw new Error('reject payroll failed');
+      const clientMutationId = response?.payload?.data?.rejectPayroll?.clientMutationId;
+      const result = clientMutationId && await waitForMutationStatus(clientMutationId);
+      if (result?.status !== 2) return;
+
       handleClose();
       showPageFeedback({
         severity: 'success',
         title: formatMessage('payroll.rejection.submit.success.title'),
         message: formatMessage('payroll.rejection.submit.success.message'),
-      });
-      coreAlert({
-        severity: 'success',
-        title: formatMessage('payroll.rejection.submit.popup.title'),
-        message: formatMessage('payroll.rejection.submit.popup.message'),
       });
     } catch {
       // The shared GraphQL request pipeline renders the failure alert.
@@ -318,7 +316,7 @@ const mapDispatchToProps = (dispatch) => bindActionCreators({
   fetchPayroll,
   makePaymentForPayroll,
   showPageFeedback,
-  coreAlert,
+  waitForMutation,
 }, dispatch);
 
 export default connect(mapStateToProps, mapDispatchToProps)(PaymentApproveForPaymentDialog);
