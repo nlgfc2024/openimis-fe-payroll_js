@@ -17,6 +17,7 @@ import {
   journalize,
 } from '@openimis/fe-core';
 import PayrollFilter from './PayrollFilter';
+import PayrollStatusChip from './PayrollStatusChip';
 import {
   DEFAULT_PAGE_SIZE, MODULE_NAME, PAYROLL_PAYROLL_ROUTE,
   RIGHT_PAYROLL_CREATE,
@@ -133,8 +134,7 @@ function PayrollSearcher({
     (payroll) => payroll.name,
     (payroll) => (payroll.benefitPlan
       ? `${payroll.benefitPlan.code} ${payroll.benefitPlan.name}` : ''),
-    (payroll) => (payroll.status
-      ? `${payroll.status}` : ''),
+    (payroll) => <PayrollStatusChip status={payroll.status} />,
     (payroll) => (payroll.paymentPoint
       ? `${payroll.paymentPoint.name}` : ''),
     (payroll) => (payroll.paymentMethod
