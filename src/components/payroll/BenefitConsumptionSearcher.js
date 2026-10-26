@@ -42,10 +42,15 @@ function BenefitConsumptionSearcher({
   const fetch = (params) => fetchBenefitConsumptions(modulesManager, params);
 
   const headers = () => [
+    'benefitConsumption.district',
+    'benefitConsumption.ta',
+    'benefitConsumption.gvh',
+    'benefitConsumption.catchment',
+    'benefitConsumption.projectName',
+    'benefitConsumption.formNumber',
     'benefitConsumption.individual.firstName',
     'benefitConsumption.individual.lastName',
     'benefitConsumption.nationalId',
-    'benefitConsumption.formNumber',
     'benefitConsumption.phoneNumber',
     'benefitConsumption.photo',
     'benefitConsumption.code',
@@ -72,10 +77,15 @@ function BenefitConsumptionSearcher({
   };
 
   const itemFormatters = () => [
+    (benefitConsumption) => benefitConsumption?.districtName,
+    (benefitConsumption) => benefitConsumption?.traditionalAuthorityName,
+    (benefitConsumption) => benefitConsumption?.groupVillageHeadName,
+    (benefitConsumption) => benefitConsumption?.catchmentName,
+    (benefitConsumption) => benefitConsumption?.projectName,
+    (benefitConsumption) => benefitConsumption?.formNumber,
     (benefitConsumption) => benefitConsumption?.individual?.firstName,
     (benefitConsumption) => benefitConsumption?.individual?.lastName,
     (benefitConsumption) => benefitConsumption?.nationalId,
-    (benefitConsumption) => benefitConsumption?.formNumber,
     (benefitConsumption) => benefitConsumption?.phoneNumber,
     (benefitConsumption) => (
       benefitConsumption.receipt ? (
@@ -107,8 +117,16 @@ function BenefitConsumptionSearcher({
   const rowIdentifier = (benefitConsumption) => benefitConsumption.id;
 
   const sorts = () => [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
     ['individual_FirstName', true],
     ['individual_LastName', true],
+    null,
+    null,
     ['photo', true],
     ['code', true],
     ['dateDue', true],
@@ -116,6 +134,9 @@ function BenefitConsumptionSearcher({
     ['amount', true],
     ['type', true],
     ['status', true],
+    null,
+    null,
+    null,
   ];
 
   const defaultFilters = () => {

@@ -103,6 +103,19 @@ const PayrollPrintTemplate = forwardRef(({ benefitConsumptions }, ref) => {
             <div className={classes.detailName}>{formatMessage('payroll.benefitConsumption.code')}</div>
             <div className={classes.detailValue}>{benefitConsumption.code}</div>
           </div>
+          {[
+            ['district', benefitConsumption.districtName],
+            ['ta', benefitConsumption.traditionalAuthorityName],
+            ['gvh', benefitConsumption.groupVillageHeadName],
+            ['catchment', benefitConsumption.catchmentName],
+            ['projectName', benefitConsumption.projectName],
+            ['formNumber', benefitConsumption.formNumber],
+          ].map(([field, value]) => (
+            <div key={field} className={classes.detailRow}>
+              <div className={classes.detailName}>{formatMessage(`payroll.benefitConsumption.${field}`)}</div>
+              <div className={classes.detailValue}>{value || ''}</div>
+            </div>
+          ))}
           <div className={classes.detailRow}>
             <div className={classes.detailName}>{formatMessage('payroll.benefitConsumption.dateDue')}</div>
             <div className={classes.detailValue}>{benefitConsumption.dateDue}</div>
