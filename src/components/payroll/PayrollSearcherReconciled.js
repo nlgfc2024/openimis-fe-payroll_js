@@ -51,8 +51,8 @@ function PayrollSearcherReconciled({
   const headers = () => [
     'payroll.name',
     'payroll.paymentPlan',
-    'payroll.paymentPoint',
     'payroll.status',
+    'payroll.paymentPoint',
     'payroll.paymentMethod',
     'emptyLabel',
   ];
@@ -60,8 +60,8 @@ function PayrollSearcherReconciled({
   const sorts = () => [
     ['name', true],
     ['paymentPlan', true],
-    ['paymentPoint', true],
     ['status', true],
+    ['paymentPoint', true],
     ['paymentMethod', true],
   ];
 
@@ -88,23 +88,17 @@ function PayrollSearcherReconciled({
     (payroll) => payroll.name,
     (payroll) => (payroll.benefitPlan
       ? `${payroll.benefitPlan.code} ${payroll.benefitPlan.name}` : ''),
-    (payroll) => (payroll.paymentPoint
-      ? `${payroll.paymentPoint.name}` : ''),
     (payroll) => (payroll.status
       ? `${payroll.status}` : ''),
+    (payroll) => (payroll.paymentPoint
+      ? `${payroll.paymentPoint.name}` : ''),
     (payroll) => (payroll.paymentMethod
       ? `${payroll.paymentMethod}` : ''),
     (payroll) => (
-      <PayrollReconciliationFilesDialog
-        classes={classes}
-        payroll={payroll}
-      />
-    ),
-    (payroll) => (
-      <PaymentReconciliationSummaryDialog
-        classes={classes}
-        payrollDetail={payroll}
-      />
+      <span style={{ display: 'inline-flex', whiteSpace: 'nowrap' }}>
+        <PayrollReconciliationFilesDialog classes={classes} payroll={payroll} />
+        <PaymentReconciliationSummaryDialog classes={classes} payrollDetail={payroll} />
+      </span>
     ),
   ];
 
@@ -126,6 +120,7 @@ function PayrollSearcherReconciled({
       errorItems={errorPayrolls}
       tableTitle={formatMessageWithValues('payrollSearcher.results', { totalCount })}
       headers={headers}
+      columnWidths={['20%', '20%', '16%', '16%', undefined, '112px']}
       itemFormatters={itemFormatters}
       sorts={sorts}
       rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}

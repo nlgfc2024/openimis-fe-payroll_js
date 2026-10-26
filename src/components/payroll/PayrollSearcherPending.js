@@ -51,8 +51,8 @@ function PayrollSearcherPending({
   const headers = () => [
     'payroll.name',
     'payroll.paymentPlan',
-    'payroll.paymentPoint',
     'payroll.status',
+    'payroll.paymentPoint',
     'payroll.paymentMethod',
     'emptyLabel',
   ];
@@ -60,8 +60,8 @@ function PayrollSearcherPending({
   const sorts = () => [
     ['name', true],
     ['paymentPlan', true],
-    ['paymentPoint', true],
     ['status', true],
+    ['paymentPoint', true],
     ['paymentMethod', true],
   ];
 
@@ -88,10 +88,10 @@ function PayrollSearcherPending({
     (payroll) => payroll.name,
     (payroll) => (payroll.benefitPlan
       ? `${payroll.benefitPlan.code} ${payroll.benefitPlan.name}` : ''),
-    (payroll) => (payroll.paymentPoint
-      ? `${payroll.paymentPoint.name}` : ''),
     (payroll) => (payroll.status
       ? `${payroll.status}` : ''),
+    (payroll) => (payroll.paymentPoint
+      ? `${payroll.paymentPoint.name}` : ''),
     (payroll) => (payroll.paymentMethod
       ? `${payroll.paymentMethod}` : ''),
     (payroll) => (
