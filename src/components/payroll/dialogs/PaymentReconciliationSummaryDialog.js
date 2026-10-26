@@ -104,7 +104,7 @@ function PaymentReconcilationSummarytDialog({
         variant="contained"
         color="primary"
         className={classes.button}
-        style={{ whiteSpace: 'nowrap' }}
+        style={{ margin: '8px', whiteSpace: 'nowrap' }}
       >
         {formatMessage('payroll.viewReconciliationSummary')}
       </Button>
