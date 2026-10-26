@@ -98,7 +98,7 @@ function PayrollSearcher({
 
   const headers = () => [
     'payroll.name',
-    'payroll.benefitPlan',
+    'payroll.paymentPlan',
     'payroll.status',
     'payroll.paymentPoint',
     'payroll.paymentMethod',
@@ -107,7 +107,7 @@ function PayrollSearcher({
 
   const sorts = () => [
     ['name', true],
-    ['benefitPlan', true],
+    ['paymentPlan', true],
     ['status', true],
     ['paymentPoint', true],
     ['paymentMethod', true],
@@ -132,8 +132,8 @@ function PayrollSearcher({
 
   const itemFormatters = () => [
     (payroll) => payroll.name,
-    (payroll) => (payroll.benefitPlan
-      ? `${payroll.benefitPlan.code} ${payroll.benefitPlan.name}` : ''),
+    (payroll) => (payroll.paymentPlan
+      ? `${payroll.paymentPlan.code} ${payroll.paymentPlan.name}` : ''),
     (payroll) => <PayrollStatusChip status={payroll.status} />,
     (payroll) => (payroll.paymentPoint
       ? `${payroll.paymentPoint.name}` : ''),

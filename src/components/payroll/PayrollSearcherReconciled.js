@@ -87,8 +87,8 @@ function PayrollSearcherReconciled({
 
   const itemFormatters = () => [
     (payroll) => payroll.name,
-    (payroll) => (payroll.benefitPlan
-      ? `${payroll.benefitPlan.code} ${payroll.benefitPlan.name}` : ''),
+    (payroll) => (payroll.paymentPlan
+      ? `${payroll.paymentPlan.code} ${payroll.paymentPlan.name}` : ''),
     (payroll) => <PayrollStatusChip status={payroll.status} />,
     (payroll) => (payroll.paymentPoint
       ? `${payroll.paymentPoint.name}` : ''),
