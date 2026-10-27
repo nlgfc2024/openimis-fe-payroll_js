@@ -18,6 +18,10 @@ import PayrollSearcherApproved from '../../components/payroll/PayrollSearcherApp
 const useStyles = makeStyles((theme) => ({
   page: theme.page,
   fab: theme.fab,
+  button: {
+    margin: theme.spacing(1, 2, 1, 1),
+    whiteSpace: 'nowrap',
+  },
 }));
 
 function ApprovedPayrollsPage() {
