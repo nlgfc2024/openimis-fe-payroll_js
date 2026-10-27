@@ -137,8 +137,13 @@ function PayrollSearcher({
     (payroll) => <PayrollStatusChip status={payroll.status} />,
     (payroll) => (payroll.paymentPoint
       ? `${payroll.paymentPoint.name}` : ''),
-    (payroll) => (payroll.paymentMethod
-      ? `${payroll.paymentMethod}` : ''),
+    (payroll) => (payroll.paymentMethod ? (
+      <Tooltip title={payroll.paymentMethod}>
+        <span style={{ display: 'block', maxWidth: '100%', overflowWrap: 'anywhere' }}>
+          {payroll.paymentMethod}
+        </span>
+      </Tooltip>
+    ) : ''),
     (payroll) => (
       <span style={{ display: 'inline-flex', whiteSpace: 'nowrap' }}>
         <Tooltip title={formatMessage('tooltip.viewDetails')}>
