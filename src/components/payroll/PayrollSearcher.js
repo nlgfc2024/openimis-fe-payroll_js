@@ -4,6 +4,8 @@ import { bindActionCreators } from 'redux';
 
 import { IconButton, Tooltip } from '@material-ui/core';
 import AddIcon from '@material-ui/icons/Add';
+import DescriptionIcon from '@material-ui/icons/Description';
+import CloudUploadIcon from '@material-ui/icons/CloudUpload';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import DeleteIcon from '@material-ui/icons/Delete';
 
@@ -24,6 +26,7 @@ import {
 } from '../../constants';
 import { mutationLabel, pageTitle } from '../../utils/string-utils';
 import { fetchPayrolls, deletePayrolls } from '../../actions';
+import DistrictPayrollBatchDialog from './dialogs/DistrictPayrollBatchDialog';
 
 function PayrollSearcher({
   deletePayrolls,
@@ -48,13 +51,32 @@ function PayrollSearcher({
     `/${modulesManager.getRef(PAYROLL_PAYROLL_ROUTE)}`,
   );
 
-  const searcherActions = () => [{
-    label: formatMessage('payroll.createButton.label'),
-    icon: <AddIcon />,
-    authorized: rights.includes(RIGHT_PAYROLL_CREATE),
-    onClick: onCreate,
-    variant: 'contained',
-  }];
+  const [districtBatchDialogOpen, setDistrictBatchDialogOpen] = useState(false);
+  const [districtBatchMode, setDistrictBatchMode] = useState('download');
+
+  const searcherActions = () => [
+    {
+      label: formatMessage('payroll.districtBatch.action'),
+      icon: <DescriptionIcon />,
+      authorized: rights.includes(RIGHT_PAYROLL_SEARCH) || rights.includes(RIGHT_PAYROLL_CREATE),
+      onClick: () => { setDistrictBatchMode('download'); setDistrictBatchDialogOpen(true); },
+      variant: 'outlined',
+    },
+    {
+      label: formatMessage('payroll.districtBatch.uploadAction'),
+      icon: <CloudUploadIcon />,
+      authorized: rights.includes(RIGHT_PAYROLL_SEARCH) || rights.includes(RIGHT_PAYROLL_CREATE),
+      onClick: () => { setDistrictBatchMode('upload'); setDistrictBatchDialogOpen(true); },
+      variant: 'outlined',
+    },
+    {
+      label: formatMessage('payroll.createButton.label'),
+      icon: <AddIcon />,
+      authorized: rights.includes(RIGHT_PAYROLL_CREATE),
+      onClick: onCreate,
+      variant: 'contained',
+    },
+  ];
 
   const [payrollToDelete, setPayrollToDelete] = useState(null);
   const [deletedPayrollUuids, setDeletedPayrollUuids] = useState([]);
@@ -167,6 +189,7 @@ function PayrollSearcher({
   const isRowDisabled = (_, payroll) => deletedPayrollUuids.includes(payroll.id);
 
   return (
+    <>
     <Searcher
       module="payroll"
       FilterPane={payrollFilter}
@@ -191,7 +214,14 @@ function PayrollSearcher({
       enableActionButtons
       searcherActionsPosition="header-right"
       searcherActions={searcherActions()}
+      compactLayout
     />
+      <DistrictPayrollBatchDialog
+        open={districtBatchDialogOpen}
+        mode={districtBatchMode}
+        onClose={() => setDistrictBatchDialogOpen(false)}
+      />
+    </>
   );
 }
 

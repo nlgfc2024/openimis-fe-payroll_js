@@ -191,9 +191,14 @@ export function fetchPayrollPaymentFiles(modulesManager, params) {
 }
 
 export function fetchReconciliationUploadRows(uploadId) {
+  // Task payloads carry the raw UUID while GraphQL list rows carry relay IDs.
+  // Accept both so the same review dialog works from payroll and task pages.
+  const rawUploadId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uploadId)
+    ? uploadId
+    : decodeId(uploadId);
   const payload = formatPageQueryWithCount(
     'reconciliationUploadRow',
-    [`first: 100`, `upload_Id: "${decodeId(uploadId)}"`, 'isDeleted: false', 'orderBy: "rowNumber"'],
+    [`first: 100`, `upload_Id: "${rawUploadId}"`, 'isDeleted: false', 'orderBy: "rowNumber"'],
     RECONCILIATION_UPLOAD_ROW_PROJECTION(),
   );
   return graphql(payload, ACTION_TYPE.GET_RECONCILIATION_UPLOAD_ROWS);

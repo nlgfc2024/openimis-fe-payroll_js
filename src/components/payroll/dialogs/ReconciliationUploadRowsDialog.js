@@ -29,29 +29,54 @@ const formatMismatchReasons = (reasons) => {
   return reasons == null ? '' : String(reasons);
 };
 
-const formatSubmittedData = (submittedData) => {
-  const parsedData = parseJson(submittedData);
-  if (!parsedData || typeof parsedData !== 'object' || Array.isArray(parsedData)) {
-    return formatMismatchReasons(parsedData);
-  }
-  return Object.entries(parsedData)
-    .map(([key, value]) => `${key}: ${formatMismatchReasons(value)}`)
-    .join(', ');
-};
-
-const getSubmittedValue = (submittedData, field) => {
-  const parsedData = parseJson(submittedData);
-  return parsedData && typeof parsedData === 'object'
-    ? formatMismatchReasons(parsedData[field])
-    : '';
-};
-
 function ReconciliationUploadRowsDialog({
   upload, rows, fetching, error, fetchReconciliationUploadRows,
 }) {
   const modulesManager = useModulesManager();
   const { formatMessage, formatMessageWithValues } = useTranslations('payroll', modulesManager);
   const [open, setOpen] = useState(false);
+
+  // GraphQL may return JSON fields either as an object or as JSON text,
+  // depending on the server/schema version. Normalise it before rendering.
+  const parseJsonValue = (value) => {
+    let parsed = value;
+    while (typeof parsed === 'string') {
+      try {
+        const next = JSON.parse(parsed);
+        if (next === parsed) break;
+        parsed = next;
+      } catch (_) {
+        break;
+      }
+    }
+    return parsed;
+  };
+
+  const columns = [
+    ['District Name', 'individual__location__parent__parent__parent__name'],
+    ['Catchment Name', 'Catchment Name'],
+    ['Project Name', 'Project Name'],
+    ['Form Number', 'individual__json_ext__form_number'],
+    ['Phone Number', 'individual__json_ext__household_mobile_number'],
+    ['First Name', 'individual__first_name'],
+    ['Last Name', 'individual__last_name'],
+    ['National ID', 'individual__json_ext__national_id'],
+    ['Date of Birth', 'individual__dob'],
+    ['Code', 'code'],
+    ['Status', 'status'],
+    ['Amount', 'amount'],
+    ['Type', 'type'],
+    ['Receipt', 'receipt'],
+    ['Paid', 'Paid'],
+  ];
+
+  const submittedValue = (submittedData, label, field) => {
+    const data = parseJsonValue(submittedData);
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return '';
+    // District batches retain their extra context under the CSV labels; standard
+    // payroll reconciliation rows use the mapped field names.
+    return data[label] ?? data[field] ?? '';
+  };
 
   useEffect(() => {
     if (open) fetchReconciliationUploadRows(upload.id);
@@ -69,29 +94,15 @@ function ReconciliationUploadRowsDialog({
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.row')}</TableCell>
-                  <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.formNumber')}</TableCell>
-                  <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.firstName')}</TableCell>
-                  <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.lastName')}</TableCell>
-                  <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.nationalId')}</TableCell>
-                  <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.code')}</TableCell>
-                  <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.status')}</TableCell>
-                  <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.submittedValues')}</TableCell>
-                  <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.mismatchReasons')}</TableCell>
+                  {columns.map(([label]) => <TableCell key={label}>{label}</TableCell>)}
                 </TableRow>
               </TableHead>
               <TableBody>
                 {rows.map((row) => (
                   <TableRow key={row.id}>
-                    <TableCell>{row.rowNumber}</TableCell>
-                    <TableCell>{getSubmittedValue(row.submittedData, 'individual__json_ext__form_number') || formatMessage('payroll.reconciliationUpload.notAvailable')}</TableCell>
-                    <TableCell>{getSubmittedValue(row.submittedData, 'individual__first_name') || formatMessage('payroll.reconciliationUpload.notAvailable')}</TableCell>
-                    <TableCell>{getSubmittedValue(row.submittedData, 'individual__last_name') || formatMessage('payroll.reconciliationUpload.notAvailable')}</TableCell>
-                    <TableCell>{row.nationalId}</TableCell>
-                    <TableCell>{row.code}</TableCell>
-                    <TableCell>{row.status}</TableCell>
-                    <TableCell>{formatSubmittedData(row.submittedData) || formatMessage('payroll.reconciliationUpload.notAvailable')}</TableCell>
-                    <TableCell>{formatMismatchReasons(row.mismatchReasons) || formatMessage('payroll.reconciliationUpload.notAvailable')}</TableCell>
+                    {columns.map(([label, field]) => (
+                      <TableCell key={label}>{submittedValue(row.submittedData, label, field)}</TableCell>
+                    ))}
                   </TableRow>
                 ))}
               </TableBody>
