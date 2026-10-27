@@ -5,6 +5,7 @@ import { makeStyles } from '@material-ui/styles';
 
 import {
   Helmet,
+  PageFeedbackBanner,
   useModulesManager,
   useTranslations,
 } from '@openimis/fe-core';
@@ -28,6 +29,7 @@ function ApprovedPayrollsPage() {
   return (
     <div className={classes.page}>
       <Helmet title={formatMessage('paymentPoint.page.title')} />
+      <PageFeedbackBanner />
       {rights.includes(RIGHT_PAYROLL_SEARCH)
         && <PayrollSearcherApproved classes={classes} />}
     </div>

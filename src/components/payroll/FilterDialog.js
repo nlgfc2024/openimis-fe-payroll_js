@@ -47,6 +47,9 @@ function FilterDialog({
   const isInitializing = useRef(true);
 
   useEffect(() => {
+    // The state changes below are derived from the form value. Do not write
+    // them straight back to the form in the same render cycle.
+    isInitializing.current = true;
     if (objectToSave?.jsonExt) {
       const jsonData = JSON.parse(objectToSave.jsonExt);
 
@@ -72,7 +75,6 @@ function FilterDialog({
       });
       setAdvancedFilters(transformedCriteria);
     }
-    isInitializing.current = false;
   }, [objectToSave?.jsonExt]);
 
   const updateJsonExt = (projects, locations, filters) => {
@@ -105,11 +107,15 @@ function FilterDialog({
       delete jsonData.advanced_criteria;
     }
 
-    updateAttribute('jsonExt', JSON.stringify(jsonData));
+    const nextJsonExt = JSON.stringify(jsonData);
+    if (nextJsonExt !== objectToSave?.jsonExt) {
+      updateAttribute('jsonExt', nextJsonExt);
+    }
   };
 
   useEffect(() => {
     if (isInitializing.current) {
+      isInitializing.current = false;
       return;
     }
     updateJsonExt(selectedProjects, selectedLocations, advancedFilters);
