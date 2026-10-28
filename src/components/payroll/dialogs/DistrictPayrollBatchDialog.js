@@ -29,6 +29,22 @@ function DistrictPayrollBatchDialog({ open, onClose, onCreated, mode = 'download
   const [feedback, setFeedback] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const canSubmit = district && benefitPlan && financialYear;
+  const hasUploadIssues = feedback?.upload_id && (
+    feedback.severity === 'error'
+    || feedback.status === 'DUPLICATE'
+    || Number(feedback.summary?.unmatched_records || 0) > 0
+  );
+
+  const errorMessage = (error, fallback) => {
+    if (typeof error === 'string') return error;
+    if (typeof error?.message === 'string') return error.message;
+    if (error && typeof error === 'object') {
+      return Object.values(error).flat().map((value) => (
+        typeof value === 'string' ? value : JSON.stringify(value)
+      )).join('; ') || fallback;
+    }
+    return fallback;
+  };
 
   useEffect(() => {
     if (!district || !benefitPlan) {
@@ -144,13 +160,47 @@ function DistrictPayrollBatchDialog({ open, onClose, onCreated, mode = 'download
     try {
       setIsUploading(true);
       const response = await fetch(url, { method: 'POST', body: formData, headers, credentials: 'same-origin' });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || formatMessage('payroll.districtBatch.error.upload'));
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setFeedback({
+          severity: 'error',
+          ...payload,
+          message: errorMessage(payload.error, formatMessage('payroll.districtBatch.error.upload')),
+        });
+        return;
+      }
       setFeedback({ severity: payload.status === 'DUPLICATE' ? 'warning' : 'success', ...payload });
     } catch (error) {
       setFeedback({ severity: 'error', message: error.message, summary: {} });
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const downloadErrorReport = async () => {
+    if (!feedback?.upload_id) return;
+    const url = new URL(`${window.location.origin}${baseApiUrl}/payroll/district_reconciliation/`);
+    url.searchParams.set('action', 'review');
+    url.searchParams.set('upload_id', feedback.upload_id);
+    url.searchParams.set('district_id', decodeId(district.id));
+    url.searchParams.set('benefit_plan_id', decodeId(benefitPlan.id));
+    url.searchParams.set('financial_year', financialYear);
+    try {
+      const response = await fetch(url, { headers: apiHeaders(), credentials: 'same-origin' });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || formatMessage('payroll.districtBatch.error.download'));
+      }
+      const blob = await response.blob();
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'district_reconciliation_error_report.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    } catch (error) {
+      setFeedback((previous) => ({ ...previous, severity: 'error', message: error.message }));
     }
   };
 
@@ -231,9 +281,16 @@ function DistrictPayrollBatchDialog({ open, onClose, onCreated, mode = 'download
             </Button>
           </>
         ) : (
-          <Button color="primary" disabled={!canSubmit || !file || isUploading} onClick={uploadReconciliation} variant="contained">
-            {formatMessage('payroll.districtBatch.upload')}
-          </Button>
+          <>
+            {hasUploadIssues && (
+              <Button onClick={downloadErrorReport}>
+                {formatMessage('payroll.reconciliationUpload.downloadErrorReport')}
+              </Button>
+            )}
+            <Button color="primary" disabled={!canSubmit || !file || isUploading} onClick={uploadReconciliation} variant="contained">
+              {formatMessage('payroll.districtBatch.upload')}
+            </Button>
+          </>
         )}
       </DialogActions>
     </Dialog>
