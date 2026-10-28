@@ -3,6 +3,7 @@ import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
 
 import { IconButton, Tooltip } from '@material-ui/core';
+import { makeStyles } from '@material-ui/styles';
 import AddIcon from '@material-ui/icons/Add';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -26,6 +27,18 @@ import {
 import { mutationLabel, pageTitle } from '../../utils/string-utils';
 import { fetchPayrolls, deletePayrolls } from '../../actions';
 
+const useStyles = makeStyles(() => ({
+  paymentMethod: {
+    display: 'block',
+    maxWidth: '100%',
+    overflowWrap: 'anywhere',
+  },
+  rowActions: {
+    display: 'inline-flex',
+    whiteSpace: 'nowrap',
+  },
+}));
+
 function PayrollSearcher({
   deletePayrolls,
   fetchingPayrolls,
@@ -41,6 +54,7 @@ function PayrollSearcher({
   submittingMutation,
   mutation,
 }) {
+  const classes = useStyles();
   const history = useHistory();
   const modulesManager = useModulesManager();
   const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
@@ -139,13 +153,13 @@ function PayrollSearcher({
       ? `${payroll.paymentPoint.name}` : ''),
     (payroll) => (payroll.paymentMethod ? (
       <Tooltip title={payroll.paymentMethod}>
-        <span style={{ display: 'block', maxWidth: '100%', overflowWrap: 'anywhere' }}>
+        <span className={classes.paymentMethod}>
           {payroll.paymentMethod}
         </span>
       </Tooltip>
     ) : ''),
     (payroll) => (
-      <span style={{ display: 'inline-flex', whiteSpace: 'nowrap' }}>
+      <span className={classes.rowActions}>
         <Tooltip title={formatMessage('tooltip.viewDetails')}>
           <IconButton onClick={() => openPayroll(payroll)}>
             <VisibilityIcon />
