@@ -18,9 +18,9 @@ import {
 } from '@openimis/fe-core';
 import { MODULE_NAME } from '../../../constants';
 
-function DistrictPayrollBatchDialog({ open, onClose, mode = 'download' }) {
+function DistrictPayrollBatchDialog({ open, onClose, onCreated, mode = 'download' }) {
   const modulesManager = useModulesManager();
-  const { formatMessage } = useTranslations(MODULE_NAME, modulesManager);
+  const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
   const [district, setDistrict] = useState(null);
   const [benefitPlan, setBenefitPlan] = useState(null);
   const [financialYears, setFinancialYears] = useState([]);
@@ -28,7 +28,7 @@ function DistrictPayrollBatchDialog({ open, onClose, mode = 'download' }) {
   const [file, setFile] = useState(null);
   const [feedback, setFeedback] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
-  const canDownload = district && benefitPlan && financialYear;
+  const canSubmit = district && benefitPlan && financialYear;
 
   useEffect(() => {
     if (!district || !benefitPlan) {
@@ -41,7 +41,7 @@ function DistrictPayrollBatchDialog({ open, onClose, mode = 'download' }) {
     url.searchParams.set('benefit_plan_id', decodeId(benefitPlan.id));
     url.searchParams.set('options', 'financial_years');
     fetch(url, { headers: apiHeaders(), credentials: 'same-origin' })
-      .then((response) => response.ok ? response.json() : Promise.reject(new Error('Financial years could not be loaded.')))
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error(formatMessage('payroll.districtBatch.error.loadFinancialYears'))))
       .then((payload) => {
         const years = payload.financial_years || [];
         setFinancialYears(years);
@@ -51,21 +51,24 @@ function DistrictPayrollBatchDialog({ open, onClose, mode = 'download' }) {
   }, [district, benefitPlan]);
 
   const downloadApprovedPayrolls = () => {
-    if (!canDownload) return;
+    if (!canSubmit) return;
     setFeedback(null);
     const url = new URL(`${window.location.origin}${baseApiUrl}/payroll/district_reconciliation/`);
     url.searchParams.set('district_id', decodeId(district.id));
     url.searchParams.set('benefit_plan_id', decodeId(benefitPlan.id));
     url.searchParams.set('financial_year', financialYear);
-    fetch(url)
+    fetch(url, { headers: apiHeaders(), credentials: 'same-origin' })
       .then(async (response) => {
         if (!response.ok) {
           const payload = await response.json().catch(() => ({}));
-          throw new Error(payload.error || 'District payroll file could not be generated.');
+          throw new Error(payload.error || formatMessage('payroll.districtBatch.error.download'));
         }
-        return response.blob();
+        return response.blob().then((blob) => ({
+          blob,
+          status: response.headers.get('X-District-Wagesheet-Status'),
+        }));
       })
-      .then((blob) => {
+      .then(({ blob, status }) => {
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         link.download = 'district_reconciliation.csv';
@@ -73,12 +76,25 @@ function DistrictPayrollBatchDialog({ open, onClose, mode = 'download' }) {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(link.href);
+        const feedbackByStatus = {
+          READY_FOR_PSP: 'payroll.districtBatch.feedback.readyForPsp',
+          SUBMITTED_TO_PSP: 'payroll.districtBatch.feedback.submittedToPsp',
+          APPLIED: 'payroll.districtBatch.feedback.applied',
+        };
+        if (feedbackByStatus[status]) {
+          setFeedback({
+            severity: 'success',
+            message: formatMessageWithValues(feedbackByStatus[status], {
+              name: formatMessage('payroll.districtBatch.title'),
+            }),
+          });
+        }
       })
       .catch((error) => setFeedback({ severity: 'error', message: error.message }));
   };
 
-  const submitOrDownloadWagesheet = async () => {
-    if (!canDownload) return;
+  const createDistrictWagesheet = async () => {
+    if (!canSubmit) return;
     const url = new URL(`${window.location.origin}${baseApiUrl}/payroll/district_reconciliation/`);
     url.searchParams.set('district_id', decodeId(district.id));
     url.searchParams.set('benefit_plan_id', decodeId(benefitPlan.id));
@@ -95,28 +111,31 @@ function DistrictPayrollBatchDialog({ open, onClose, mode = 'download' }) {
       try {
         payload = JSON.parse(responseText);
       } catch (_) {
-        throw new Error(responseText.includes('<!DOCTYPE')
-          ? 'The backend returned a server error. Apply the district wagesheet migration and restart the backend.'
-          : 'District Wagesheet could not be created.');
+        throw new Error(formatMessage('payroll.districtBatch.error.create'));
       }
-      if (!response.ok) throw new Error(payload.error || 'District Wagesheet could not be created.');
-      if (payload.status === 'READY_FOR_PSP') {
-        downloadApprovedPayrolls();
-      } else {
-        setFeedback({
-          severity: 'success',
-          message: payload.status === 'PENDING_NATIONAL_APPROVAL'
-            ? 'District Wagesheet is awaiting national approval.'
-            : 'District Wagesheet is awaiting district approval.',
-        });
-      }
+      if (!response.ok) throw new Error(payload.error || formatMessage('payroll.districtBatch.error.create'));
+      const wagesheetName = payload.name || formatMessage('payroll.districtBatch.title');
+      const feedbackByStatus = {
+        PENDING_DISTRICT_APPROVAL: 'payroll.districtBatch.feedback.pendingDistrict',
+        PENDING_NATIONAL_APPROVAL: 'payroll.districtBatch.feedback.pendingNational',
+        READY_FOR_PSP: 'payroll.districtBatch.feedback.readyForPsp',
+        SUBMITTED_TO_PSP: 'payroll.districtBatch.feedback.submittedToPsp',
+        APPLIED: 'payroll.districtBatch.feedback.applied',
+      };
+      setFeedback({
+        severity: 'success',
+        message: feedbackByStatus[payload.status]
+          ? formatMessageWithValues(feedbackByStatus[payload.status], { name: wagesheetName })
+          : formatMessageWithValues('payroll.districtBatch.feedback.default', { status: payload.status }),
+      });
+      if (onCreated) onCreated();
     } catch (error) {
       setFeedback({ severity: 'error', message: error.message });
     }
   };
 
   const uploadReconciliation = async () => {
-    if (!canDownload || !file) return;
+    if (!canSubmit || !file) return;
     const url = `${baseApiUrl}/payroll/district_reconciliation/?district_id=${decodeId(district.id)}&benefit_plan_id=${decodeId(benefitPlan.id)}&financial_year=${encodeURIComponent(financialYear)}`;
     const formData = new FormData();
     formData.append('file', file);
@@ -126,7 +145,7 @@ function DistrictPayrollBatchDialog({ open, onClose, mode = 'download' }) {
       setIsUploading(true);
       const response = await fetch(url, { method: 'POST', body: formData, headers, credentials: 'same-origin' });
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || 'District reconciliation upload failed.');
+      if (!response.ok) throw new Error(payload.error || formatMessage('payroll.districtBatch.error.upload'));
       setFeedback({ severity: payload.status === 'DUPLICATE' ? 'warning' : 'success', ...payload });
     } catch (error) {
       setFeedback({ severity: 'error', message: error.message, summary: {} });
@@ -150,8 +169,19 @@ function DistrictPayrollBatchDialog({ open, onClose, mode = 'download' }) {
             />
           </Grid>
           <Grid item xs={12}>
+            <PublishedComponent
+              pubRef="socialProtection.BenefitPlanPicker"
+              required
+              withLabel
+              type="EVERY_TYPE"
+              label={formatMessage('payroll.districtBatch.phase')}
+              value={benefitPlan}
+              onChange={setBenefitPlan}
+            />
+          </Grid>
+          <Grid item xs={12}>
             <FormControl fullWidth required disabled={!financialYears.length}>
-              <InputLabel>Financial Year</InputLabel>
+              <InputLabel>{formatMessage('payroll.districtBatch.financialYear')}</InputLabel>
               <Select value={financialYear} onChange={(event) => setFinancialYear(event.target.value)}>
                 {financialYears.map((year) => <MenuItem key={year} value={year}>{year}</MenuItem>)}
               </Select>
@@ -170,42 +200,38 @@ function DistrictPayrollBatchDialog({ open, onClose, mode = 'download' }) {
             <Grid item xs={12}>
               <FeedbackBanner
                 severity={feedback.severity}
-                title={feedback.status === 'DUPLICATE' ? 'Duplicate reconciliation file' : 'Upload summary'}
+                title={feedback.status === 'DUPLICATE'
+                  ? formatMessage('payroll.districtBatch.duplicateTitle')
+                  : (mode === 'download' ? formatMessage('payroll.districtBatch.title') : formatMessage('payroll.districtBatch.uploadSummary'))}
               >
                 {feedback.status === 'DUPLICATE'
-                  ? 'This file has already been uploaded. Use the existing upload or upload a corrected file.'
-                  : (feedback.message || 'District reconciliation is ready for review.')}
+                  ? formatMessage('payroll.districtBatch.duplicateMessage')
+                  : (feedback.message || formatMessage('payroll.districtBatch.readyForReview'))}
               </FeedbackBanner>
               {[
-                ['Total records detected', feedback.summary?.total_records],
-                ['Matched records', feedback.summary?.matched_records],
-                ['Paid records', feedback.summary?.paid_records],
-                ['Unpaid records', feedback.summary?.unpaid_records],
-                ['Unmatched records', feedback.summary?.unmatched_records],
-              ].map(([label, value]) => <Typography key={label}>{label}: {value || 0}</Typography>)}
+                ['payroll.districtBatch.totalRecords', feedback.summary?.total_records],
+                ['payroll.districtBatch.matchedRecords', feedback.summary?.matched_records],
+                ['payroll.districtBatch.paidRecords', feedback.summary?.paid_records],
+                ['payroll.districtBatch.unpaidRecords', feedback.summary?.unpaid_records],
+                ['payroll.districtBatch.unmatchedRecords', feedback.summary?.unmatched_records],
+              ].map(([label, value]) => <Typography key={label}>{formatMessage(label)}: {value || 0}</Typography>)}
             </Grid>
           )}
-          <Grid item xs={12}>
-            <PublishedComponent
-              pubRef="socialProtection.BenefitPlanPicker"
-              required
-              withLabel
-              type="EVERY_TYPE"
-              label={formatMessage('payroll.districtBatch.phase')}
-              value={benefitPlan}
-              onChange={setBenefitPlan}
-            />
-          </Grid>
         </Grid>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>{formatMessage('payroll.summary.close')}</Button>
         {mode === 'download' ? (
-          <Button color="primary" disabled={!canDownload} onClick={submitOrDownloadWagesheet} variant="contained">
-            Create / Download District Wagesheet
-          </Button>
+          <>
+            <Button color="primary" disabled={!canSubmit} onClick={createDistrictWagesheet} variant="contained">
+              {formatMessage('payroll.districtBatch.create')}
+            </Button>
+            <Button color="primary" disabled={!canSubmit} onClick={downloadApprovedPayrolls} variant="outlined">
+              {formatMessage('payroll.districtBatch.download')}
+            </Button>
+          </>
         ) : (
-          <Button color="primary" disabled={!canDownload || !file || isUploading} onClick={uploadReconciliation} variant="contained">
+          <Button color="primary" disabled={!canSubmit || !file || isUploading} onClick={uploadReconciliation} variant="contained">
             {formatMessage('payroll.districtBatch.upload')}
           </Button>
         )}

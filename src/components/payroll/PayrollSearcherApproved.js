@@ -1,7 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import DescriptionIcon from '@material-ui/icons/Description';
 import CloudUploadIcon from '@material-ui/icons/CloudUpload';
 
 import {
@@ -113,13 +112,6 @@ function PayrollSearcherApproved({
   );
 
   const searcherActions = () => [
-    {
-      label: formatMessage('payroll.districtBatch.action'),
-      icon: <DescriptionIcon />,
-      authorized: rights.includes(RIGHT_PAYROLL_SEARCH),
-      onClick: () => setDistrictBatchDialogMode('download'),
-      variant: 'outlined',
-    },
     {
       label: formatMessage('payroll.districtBatch.uploadAction'),
       icon: <CloudUploadIcon />,

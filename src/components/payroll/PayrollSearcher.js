@@ -26,6 +26,7 @@ import {
 import { mutationLabel, pageTitle } from '../../utils/string-utils';
 import { fetchPayrolls, deletePayrolls } from '../../actions';
 import DistrictPayrollBatchDialog from './dialogs/DistrictPayrollBatchDialog';
+import DistrictWagesheetListDialog from './dialogs/DistrictWagesheetListDialog';
 
 function PayrollSearcher({
   deletePayrolls,
@@ -51,6 +52,7 @@ function PayrollSearcher({
   );
 
   const [districtBatchDialogOpen, setDistrictBatchDialogOpen] = useState(false);
+  const [districtWagesheetListOpen, setDistrictWagesheetListOpen] = useState(false);
   const [districtBatchMode] = useState('download');
 
   const searcherActions = () => [
@@ -59,6 +61,13 @@ function PayrollSearcher({
       icon: <DescriptionIcon />,
       authorized: rights.includes(RIGHT_PAYROLL_SEARCH) || rights.includes(RIGHT_PAYROLL_CREATE),
       onClick: () => setDistrictBatchDialogOpen(true),
+      variant: 'outlined',
+    },
+    {
+      label: formatMessage('payroll.districtBatch.listAction'),
+      icon: <DescriptionIcon />,
+      authorized: rights.includes(RIGHT_PAYROLL_SEARCH) || rights.includes(RIGHT_PAYROLL_CREATE),
+      onClick: () => setDistrictWagesheetListOpen(true),
       variant: 'outlined',
     },
     {
@@ -212,6 +221,14 @@ function PayrollSearcher({
         open={districtBatchDialogOpen}
         mode={districtBatchMode}
         onClose={() => setDistrictBatchDialogOpen(false)}
+        onCreated={() => {
+          setDistrictBatchDialogOpen(false);
+          setDistrictWagesheetListOpen(true);
+        }}
+      />
+      <DistrictWagesheetListDialog
+        open={districtWagesheetListOpen}
+        onClose={() => setDistrictWagesheetListOpen(false)}
       />
     </>
   );

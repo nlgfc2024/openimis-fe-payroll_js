@@ -1,6 +1,8 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
+import { IconButton, Tooltip } from '@material-ui/core';
+import VisibilityIcon from '@material-ui/icons/Visibility';
 
 import {
   Searcher,
@@ -10,6 +12,8 @@ import {
   coreConfirm,
   clearConfirm,
   journalize,
+  apiHeaders,
+  baseApiUrl,
 } from '@openimis/fe-core';
 import PayrollFilter from './PayrollFilter';
 import {
@@ -18,6 +22,7 @@ import {
 import { fetchPayrolls } from '../../actions';
 import PayrollReconciliationFilesDialog from './dialogs/PayrollReconciliationFilesDialog';
 import PayrollPendingPayrollSummary from './dialogs/PayrollPendingPayrollSummary';
+import DistrictWagesheetDetailsDialog from './dialogs/DistrictWagesheetDetailsDialog';
 
 function PayrollSearcherPending({
   fetchingPayrolls,
@@ -35,6 +40,10 @@ function PayrollSearcherPending({
   const modulesManager = useModulesManager();
   const { formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
   const rights = useSelector((store) => store.core.user.i_user.rights ?? []);
+  const [districtWagesheets, setDistrictWagesheets] = useState([]);
+  const [loadingDistrictWagesheets, setLoadingDistrictWagesheets] = useState(true);
+  const [districtWagesheetsError, setDistrictWagesheetsError] = useState(null);
+  const [selectedDistrictWagesheet, setSelectedDistrictWagesheet] = useState(null);
 
   const prevSubmittingMutationRef = useRef();
 
@@ -47,6 +56,23 @@ function PayrollSearcherPending({
   useEffect(() => {
     prevSubmittingMutationRef.current = submittingMutation;
   });
+
+  useEffect(() => {
+    window.fetch(`${baseApiUrl}/payroll/district_reconciliation/?action=list`, {
+      headers: apiHeaders(),
+      credentials: 'same-origin',
+    })
+      .then(async (response) => {
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || 'District Wagesheets could not be loaded.');
+        return payload.wagesheets || [];
+      })
+      .then((wagesheets) => setDistrictWagesheets(wagesheets.filter((wagesheet) => (
+        ['PENDING_DISTRICT_APPROVAL', 'PENDING_NATIONAL_APPROVAL'].includes(wagesheet.status)
+      ))))
+      .catch((error) => setDistrictWagesheetsError(error.message))
+      .finally(() => setLoadingDistrictWagesheets(false));
+  }, []);
 
   const headers = () => [
     'payroll.name',
@@ -80,6 +106,17 @@ function PayrollSearcherPending({
 
   const rowIdentifier = (payroll) => payroll.id;
 
+  const pendingDistrictWagesheets = districtWagesheets.map((wagesheet) => ({
+    id: `district-wagesheet-${wagesheet.id}`,
+    name: wagesheet.name,
+    benefitPlan: { code: '', name: wagesheet.phase },
+    paymentPoint: { name: wagesheet.district },
+    paymentMethod: 'District Wagesheet',
+    status: wagesheet.status,
+    districtWagesheet: wagesheet,
+  }));
+  const payrollRows = [...pendingDistrictWagesheets, ...payrolls];
+
   const openPayroll = (payroll) => rights.includes(RIGHT_PAYROLL_SEARCH) && history.push(
     `/${modulesManager.getRef(PAYROLL_PAYROLL_ROUTE)}/${payroll?.id}`,
   );
@@ -94,31 +131,44 @@ function PayrollSearcherPending({
       ? `${payroll.status}` : ''),
     (payroll) => (payroll.paymentMethod
       ? `${payroll.paymentMethod}` : ''),
-    (payroll) => (
+    (payroll) => (payroll.districtWagesheet ? (
+      <Tooltip title="View District Wagesheet">
+        <IconButton onClick={() => setSelectedDistrictWagesheet(payroll.districtWagesheet)}>
+          <VisibilityIcon />
+        </IconButton>
+      </Tooltip>
+    ) : (
       <span style={{ display: 'inline-flex', whiteSpace: 'nowrap' }}>
         <PayrollReconciliationFilesDialog classes={classes} payroll={payroll} />
         <PayrollPendingPayrollSummary classes={classes} payrollDetail={payroll} />
       </span>
-    ),
+    )),
   ];
 
-  const onDoubleClick = (payroll) => openPayroll(payroll);
+  const onDoubleClick = (payroll) => {
+    if (payroll.districtWagesheet) {
+      setSelectedDistrictWagesheet(payroll.districtWagesheet);
+    } else {
+      openPayroll(payroll);
+    }
+  };
 
   const payrollFilter = ({ filters, onChangeFilters }) => (
     <PayrollFilter filters={filters} onChangeFilters={onChangeFilters} statusReadOnly />
   );
 
   return (
+    <>
     <Searcher
       module="payroll"
       FilterPane={payrollFilter}
       fetch={fetch}
-      items={payrolls}
+      items={payrollRows}
       itemsPageInfo={pageInfo}
       fetchedItems={fetchedPayrolls}
-      fetchingItems={fetchingPayrolls}
-      errorItems={errorPayrolls}
-      tableTitle={formatMessageWithValues('payrollSearcher.results', { totalCount })}
+      fetchingItems={fetchingPayrolls || loadingDistrictWagesheets}
+      errorItems={errorPayrolls || districtWagesheetsError}
+      tableTitle={formatMessageWithValues('payrollSearcher.results', { totalCount: totalCount + pendingDistrictWagesheets.length })}
       headers={headers}
       columnWidths={['20%', '20%', '16%', '16%', undefined, '112px']}
       itemFormatters={itemFormatters}
@@ -129,6 +179,13 @@ function PayrollSearcherPending({
       onDoubleClick={onDoubleClick}
       defaultFilters={defaultFilters()}
     />
+    {selectedDistrictWagesheet && (
+      <DistrictWagesheetDetailsDialog
+        wagesheet={selectedDistrictWagesheet}
+        onClose={() => setSelectedDistrictWagesheet(null)}
+      />
+    )}
+    </>
   );
 }
 

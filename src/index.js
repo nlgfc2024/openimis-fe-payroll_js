@@ -27,6 +27,11 @@ import {
   PayrollReconciliationTaskTableHeaders,
 } from './components/tasks/PayrollReconciliationTasks';
 import {
+  DistrictWagesheetApprovalTaskTableHeaders,
+  DistrictWagesheetDistrictApprovalTaskItemFormatters,
+  DistrictWagesheetNationalApprovalTaskItemFormatters,
+} from './components/tasks/DistrictWagesheetApprovalTasks';
+import {
   BenefitConsumptionsTabLabel,
   BenefitConsumptionsTabPanel,
 } from './components/payroll/BenefitConsumptionTabPanel';
@@ -128,6 +133,18 @@ const DEFAULT_CONFIG = {
     tableHeaders: PayrollReconciliationTaskTableHeaders,
     itemFormatters: PayrollReconciliationTaskItemFormatters,
     taskSource: ['payroll_reconciliation'],
+  },
+  {
+    text: <FormattedMessage module="payroll" id="payroll.tasks.districtWagesheetApproval.title" />,
+    tableHeaders: DistrictWagesheetApprovalTaskTableHeaders,
+    itemFormatters: DistrictWagesheetDistrictApprovalTaskItemFormatters,
+    taskSource: ['district_wagesheet_district_approval'],
+  },
+  {
+    text: <FormattedMessage module="payroll" id="payroll.tasks.nationalWagesheetApproval.title" />,
+    tableHeaders: DistrictWagesheetApprovalTaskTableHeaders,
+    itemFormatters: DistrictWagesheetNationalApprovalTaskItemFormatters,
+    taskSource: ['district_wagesheet_national_approval'],
   },
   {
     text: <FormattedMessage module="payroll" id="payroll.tasks.rejected.title" />,

@@ -53,21 +53,21 @@ function ReconciliationUploadRowsDialog({
   };
 
   const columns = [
-    ['District Name', 'individual__location__parent__parent__parent__name'],
-    ['Catchment Name', 'Catchment Name'],
-    ['Project Name', 'Project Name'],
-    ['Form Number', 'individual__json_ext__form_number'],
-    ['Phone Number', 'individual__json_ext__household_mobile_number'],
-    ['First Name', 'individual__first_name'],
-    ['Last Name', 'individual__last_name'],
-    ['National ID', 'individual__json_ext__national_id'],
-    ['Date of Birth', 'individual__dob'],
-    ['Code', 'code'],
-    ['Status', 'status'],
-    ['Amount', 'amount'],
-    ['Type', 'type'],
-    ['Receipt', 'receipt'],
-    ['Paid', 'Paid'],
+    ['payroll.reconciliationUpload.rowsDialog.districtName', 'District Name'],
+    ['payroll.reconciliationUpload.rowsDialog.catchmentName', 'Catchment Name'],
+    ['payroll.reconciliationUpload.rowsDialog.projectName', 'Project Name'],
+    ['payroll.reconciliationUpload.rowsDialog.formNumber', 'individual__json_ext__form_number'],
+    ['payroll.reconciliationUpload.rowsDialog.phoneNumber', 'individual__json_ext__household_mobile_number'],
+    ['payroll.reconciliationUpload.rowsDialog.firstName', 'individual__first_name'],
+    ['payroll.reconciliationUpload.rowsDialog.lastName', 'individual__last_name'],
+    ['payroll.reconciliationUpload.rowsDialog.nationalId', 'individual__json_ext__national_id'],
+    ['payroll.reconciliationUpload.rowsDialog.dateOfBirth', 'individual__dob'],
+    ['payroll.reconciliationUpload.rowsDialog.code', 'code'],
+    ['payroll.reconciliationUpload.rowsDialog.paymentStatus', 'status'],
+    ['payroll.reconciliationUpload.rowsDialog.amount', 'amount'],
+    ['payroll.reconciliationUpload.rowsDialog.type', 'type'],
+    ['payroll.reconciliationUpload.rowsDialog.receipt', 'receipt'],
+    ['payroll.reconciliationUpload.rowsDialog.paid', 'Paid'],
   ];
 
   const submittedValue = (submittedData, label, field) => {
@@ -94,12 +94,18 @@ function ReconciliationUploadRowsDialog({
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  {columns.map(([label]) => <TableCell key={label}>{label}</TableCell>)}
+                  <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.row')}</TableCell>
+                  <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.validationStatus')}</TableCell>
+                  <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.mismatchReasons')}</TableCell>
+                  {columns.map(([label]) => <TableCell key={label}>{formatMessage(label)}</TableCell>)}
                 </TableRow>
               </TableHead>
               <TableBody>
                 {rows.map((row) => (
                   <TableRow key={row.id}>
+                    <TableCell>{row.rowNumber}</TableCell>
+                    <TableCell>{row.status}</TableCell>
+                    <TableCell>{formatMismatchReasons(row.mismatchReasons) || '-'}</TableCell>
                     {columns.map(([label, field]) => (
                       <TableCell key={label}>{submittedValue(row.submittedData, label, field)}</TableCell>
                     ))}
