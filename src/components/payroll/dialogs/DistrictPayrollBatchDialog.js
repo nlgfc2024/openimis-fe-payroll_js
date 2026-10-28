@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
-import { Grid, Input, Typography } from '@material-ui/core';
+import {
+  FormControl, Grid, Input, InputLabel, MenuItem, Select, Typography,
+} from '@material-ui/core';
 import {
   baseApiUrl,
   apiHeaders,
@@ -21,10 +23,32 @@ function DistrictPayrollBatchDialog({ open, onClose, mode = 'download' }) {
   const { formatMessage } = useTranslations(MODULE_NAME, modulesManager);
   const [district, setDistrict] = useState(null);
   const [benefitPlan, setBenefitPlan] = useState(null);
+  const [financialYears, setFinancialYears] = useState([]);
+  const [financialYear, setFinancialYear] = useState('');
   const [file, setFile] = useState(null);
   const [feedback, setFeedback] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
-  const canDownload = district && benefitPlan;
+  const canDownload = district && benefitPlan && financialYear;
+
+  useEffect(() => {
+    if (!district || !benefitPlan) {
+      setFinancialYears([]);
+      setFinancialYear('');
+      return;
+    }
+    const url = new URL(`${window.location.origin}${baseApiUrl}/payroll/district_reconciliation/`);
+    url.searchParams.set('district_id', decodeId(district.id));
+    url.searchParams.set('benefit_plan_id', decodeId(benefitPlan.id));
+    url.searchParams.set('options', 'financial_years');
+    fetch(url, { headers: apiHeaders(), credentials: 'same-origin' })
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error('Financial years could not be loaded.')))
+      .then((payload) => {
+        const years = payload.financial_years || [];
+        setFinancialYears(years);
+        setFinancialYear(years.length === 1 ? years[0] : '');
+      })
+      .catch((error) => setFeedback({ severity: 'error', message: error.message }));
+  }, [district, benefitPlan]);
 
   const downloadApprovedPayrolls = () => {
     if (!canDownload) return;
@@ -32,6 +56,7 @@ function DistrictPayrollBatchDialog({ open, onClose, mode = 'download' }) {
     const url = new URL(`${window.location.origin}${baseApiUrl}/payroll/district_reconciliation/`);
     url.searchParams.set('district_id', decodeId(district.id));
     url.searchParams.set('benefit_plan_id', decodeId(benefitPlan.id));
+    url.searchParams.set('financial_year', financialYear);
     fetch(url)
       .then(async (response) => {
         if (!response.ok) {
@@ -52,9 +77,47 @@ function DistrictPayrollBatchDialog({ open, onClose, mode = 'download' }) {
       .catch((error) => setFeedback({ severity: 'error', message: error.message }));
   };
 
+  const submitOrDownloadWagesheet = async () => {
+    if (!canDownload) return;
+    const url = new URL(`${window.location.origin}${baseApiUrl}/payroll/district_reconciliation/`);
+    url.searchParams.set('district_id', decodeId(district.id));
+    url.searchParams.set('benefit_plan_id', decodeId(benefitPlan.id));
+    url.searchParams.set('financial_year', financialYear);
+    url.searchParams.set('action', 'submit_for_approval');
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: apiHeaders(),
+        credentials: 'same-origin',
+      });
+      const responseText = await response.text();
+      let payload;
+      try {
+        payload = JSON.parse(responseText);
+      } catch (_) {
+        throw new Error(responseText.includes('<!DOCTYPE')
+          ? 'The backend returned a server error. Apply the district wagesheet migration and restart the backend.'
+          : 'District Wagesheet could not be created.');
+      }
+      if (!response.ok) throw new Error(payload.error || 'District Wagesheet could not be created.');
+      if (payload.status === 'READY_FOR_PSP') {
+        downloadApprovedPayrolls();
+      } else {
+        setFeedback({
+          severity: 'success',
+          message: payload.status === 'PENDING_NATIONAL_APPROVAL'
+            ? 'District Wagesheet is awaiting national approval.'
+            : 'District Wagesheet is awaiting district approval.',
+        });
+      }
+    } catch (error) {
+      setFeedback({ severity: 'error', message: error.message });
+    }
+  };
+
   const uploadReconciliation = async () => {
     if (!canDownload || !file) return;
-    const url = `${baseApiUrl}/payroll/district_reconciliation/?district_id=${decodeId(district.id)}&benefit_plan_id=${decodeId(benefitPlan.id)}`;
+    const url = `${baseApiUrl}/payroll/district_reconciliation/?district_id=${decodeId(district.id)}&benefit_plan_id=${decodeId(benefitPlan.id)}&financial_year=${encodeURIComponent(financialYear)}`;
     const formData = new FormData();
     formData.append('file', file);
     const headers = new Headers(apiHeaders());
@@ -85,6 +148,14 @@ function DistrictPayrollBatchDialog({ open, onClose, mode = 'download' }) {
               value={district}
               onChange={setDistrict}
             />
+          </Grid>
+          <Grid item xs={12}>
+            <FormControl fullWidth required disabled={!financialYears.length}>
+              <InputLabel>Financial Year</InputLabel>
+              <Select value={financialYear} onChange={(event) => setFinancialYear(event.target.value)}>
+                {financialYears.map((year) => <MenuItem key={year} value={year}>{year}</MenuItem>)}
+              </Select>
+            </FormControl>
           </Grid>
           {mode === 'upload' && (
             <Grid item xs={12}>
@@ -130,8 +201,8 @@ function DistrictPayrollBatchDialog({ open, onClose, mode = 'download' }) {
       <DialogActions>
         <Button onClick={onClose}>{formatMessage('payroll.summary.close')}</Button>
         {mode === 'download' ? (
-          <Button color="primary" disabled={!canDownload} onClick={downloadApprovedPayrolls} variant="contained">
-            {formatMessage('payroll.districtBatch.download')}
+          <Button color="primary" disabled={!canDownload} onClick={submitOrDownloadWagesheet} variant="contained">
+            Create / Download District Wagesheet
           </Button>
         ) : (
           <Button color="primary" disabled={!canDownload || !file || isUploading} onClick={uploadReconciliation} variant="contained">
