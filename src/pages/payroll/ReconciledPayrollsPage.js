@@ -17,6 +17,10 @@ import PayrollSearcherReconciled from '../../components/payroll/PayrollSearcherR
 const useStyles = makeStyles((theme) => ({
   page: theme.page,
   fab: theme.fab,
+  button: {
+    margin: theme.spacing(1, 2, 1, 1),
+    whiteSpace: 'nowrap',
+  },
 }));
 
 function ReconciledPayrollsPage() {

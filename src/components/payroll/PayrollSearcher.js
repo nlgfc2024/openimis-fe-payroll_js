@@ -3,6 +3,7 @@ import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
 
 import { IconButton, Tooltip } from '@material-ui/core';
+import { makeStyles } from '@material-ui/styles';
 import AddIcon from '@material-ui/icons/Add';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -17,6 +18,7 @@ import {
   journalize,
 } from '@openimis/fe-core';
 import PayrollFilter from './PayrollFilter';
+import PayrollStatusChip from './PayrollStatusChip';
 import {
   DEFAULT_PAGE_SIZE, MODULE_NAME, PAYROLL_PAYROLL_ROUTE,
   RIGHT_PAYROLL_CREATE,
@@ -24,6 +26,18 @@ import {
 } from '../../constants';
 import { mutationLabel, pageTitle } from '../../utils/string-utils';
 import { fetchPayrolls, deletePayrolls } from '../../actions';
+
+const useStyles = makeStyles(() => ({
+  paymentMethod: {
+    display: 'block',
+    maxWidth: '100%',
+    overflowWrap: 'anywhere',
+  },
+  rowActions: {
+    display: 'inline-flex',
+    whiteSpace: 'nowrap',
+  },
+}));
 
 function PayrollSearcher({
   deletePayrolls,
@@ -40,6 +54,7 @@ function PayrollSearcher({
   submittingMutation,
   mutation,
 }) {
+  const classes = useStyles();
   const history = useHistory();
   const modulesManager = useModulesManager();
   const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
@@ -97,18 +112,18 @@ function PayrollSearcher({
 
   const headers = () => [
     'payroll.name',
-    'payroll.benefitPlan',
-    'payroll.paymentPoint',
+    'payroll.paymentPlan',
     'payroll.status',
+    'payroll.paymentPoint',
     'payroll.paymentMethod',
     'emptyLabel',
   ];
 
   const sorts = () => [
     ['name', true],
-    ['benefitPlan', true],
-    ['paymentPoint', true],
+    ['paymentPlan', true],
     ['status', true],
+    ['paymentPoint', true],
     ['paymentMethod', true],
   ];
 
@@ -131,16 +146,20 @@ function PayrollSearcher({
 
   const itemFormatters = () => [
     (payroll) => payroll.name,
-    (payroll) => (payroll.benefitPlan
-      ? `${payroll.benefitPlan.code} ${payroll.benefitPlan.name}` : ''),
+    (payroll) => (payroll.paymentPlan
+      ? `${payroll.paymentPlan.code} ${payroll.paymentPlan.name}` : ''),
+    (payroll) => <PayrollStatusChip status={payroll.status} />,
     (payroll) => (payroll.paymentPoint
       ? `${payroll.paymentPoint.name}` : ''),
-    (payroll) => (payroll.status
-      ? `${payroll.status}` : ''),
-    (payroll) => (payroll.paymentMethod
-      ? `${payroll.paymentMethod}` : ''),
+    (payroll) => (payroll.paymentMethod ? (
+      <Tooltip title={payroll.paymentMethod}>
+        <span className={classes.paymentMethod}>
+          {payroll.paymentMethod}
+        </span>
+      </Tooltip>
+    ) : ''),
     (payroll) => (
-      <span style={{ display: 'inline-flex', whiteSpace: 'nowrap' }}>
+      <span className={classes.rowActions}>
         <Tooltip title={formatMessage('tooltip.viewDetails')}>
           <IconButton onClick={() => openPayroll(payroll)}>
             <VisibilityIcon />

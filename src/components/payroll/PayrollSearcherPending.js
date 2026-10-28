@@ -12,6 +12,7 @@ import {
   journalize,
 } from '@openimis/fe-core';
 import PayrollFilter from './PayrollFilter';
+import PayrollStatusChip from './PayrollStatusChip';
 import {
   DEFAULT_PAGE_SIZE, MODULE_NAME, PAYROLL_PAYROLL_ROUTE, RIGHT_PAYROLL_SEARCH, ROWS_PER_PAGE_OPTIONS, PAYROLL_STATUS,
 } from '../../constants';
@@ -51,17 +52,18 @@ function PayrollSearcherPending({
   const headers = () => [
     'payroll.name',
     'payroll.paymentPlan',
-    'payroll.paymentPoint',
     'payroll.status',
+    'payroll.paymentPoint',
     'payroll.paymentMethod',
+    'emptyLabel',
     'emptyLabel',
   ];
 
   const sorts = () => [
     ['name', true],
     ['paymentPlan', true],
-    ['paymentPoint', true],
     ['status', true],
+    ['paymentPoint', true],
     ['paymentMethod', true],
   ];
 
@@ -86,20 +88,15 @@ function PayrollSearcherPending({
 
   const itemFormatters = () => [
     (payroll) => payroll.name,
-    (payroll) => (payroll.benefitPlan
-      ? `${payroll.benefitPlan.code} ${payroll.benefitPlan.name}` : ''),
+    (payroll) => (payroll.paymentPlan
+      ? `${payroll.paymentPlan.code} ${payroll.paymentPlan.name}` : ''),
+    (payroll) => <PayrollStatusChip status={payroll.status} />,
     (payroll) => (payroll.paymentPoint
       ? `${payroll.paymentPoint.name}` : ''),
-    (payroll) => (payroll.status
-      ? `${payroll.status}` : ''),
     (payroll) => (payroll.paymentMethod
       ? `${payroll.paymentMethod}` : ''),
-    (payroll) => (
-      <span style={{ display: 'inline-flex', whiteSpace: 'nowrap' }}>
-        <PayrollReconciliationFilesDialog classes={classes} payroll={payroll} />
-        <PayrollPendingPayrollSummary classes={classes} payrollDetail={payroll} />
-      </span>
-    ),
+    (payroll) => <PayrollReconciliationFilesDialog classes={classes} payroll={payroll} />,
+    (payroll) => <PayrollPendingPayrollSummary classes={classes} payrollDetail={payroll} />,
   ];
 
   const onDoubleClick = (payroll) => openPayroll(payroll);
@@ -120,7 +117,6 @@ function PayrollSearcherPending({
       errorItems={errorPayrolls}
       tableTitle={formatMessageWithValues('payrollSearcher.results', { totalCount })}
       headers={headers}
-      columnWidths={['20%', '20%', '16%', '16%', undefined, '112px']}
       itemFormatters={itemFormatters}
       sorts={sorts}
       rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
