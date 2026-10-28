@@ -5,7 +5,6 @@ import { bindActionCreators } from 'redux';
 import { IconButton, Tooltip } from '@material-ui/core';
 import AddIcon from '@material-ui/icons/Add';
 import DescriptionIcon from '@material-ui/icons/Description';
-import CloudUploadIcon from '@material-ui/icons/CloudUpload';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import DeleteIcon from '@material-ui/icons/Delete';
 
@@ -52,21 +51,14 @@ function PayrollSearcher({
   );
 
   const [districtBatchDialogOpen, setDistrictBatchDialogOpen] = useState(false);
-  const [districtBatchMode, setDistrictBatchMode] = useState('download');
+  const [districtBatchMode] = useState('download');
 
   const searcherActions = () => [
     {
       label: formatMessage('payroll.districtBatch.action'),
       icon: <DescriptionIcon />,
       authorized: rights.includes(RIGHT_PAYROLL_SEARCH) || rights.includes(RIGHT_PAYROLL_CREATE),
-      onClick: () => { setDistrictBatchMode('download'); setDistrictBatchDialogOpen(true); },
-      variant: 'outlined',
-    },
-    {
-      label: formatMessage('payroll.districtBatch.uploadAction'),
-      icon: <CloudUploadIcon />,
-      authorized: rights.includes(RIGHT_PAYROLL_SEARCH) || rights.includes(RIGHT_PAYROLL_CREATE),
-      onClick: () => { setDistrictBatchMode('upload'); setDistrictBatchDialogOpen(true); },
+      onClick: () => setDistrictBatchDialogOpen(true),
       variant: 'outlined',
     },
     {

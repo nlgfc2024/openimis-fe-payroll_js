@@ -1,6 +1,8 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
+import DescriptionIcon from '@material-ui/icons/Description';
+import CloudUploadIcon from '@material-ui/icons/CloudUpload';
 
 import {
   Searcher,
@@ -18,6 +20,7 @@ import {
 import { fetchPayrolls } from '../../actions';
 import PaymentApproveForPaymentSummary from './dialogs/PaymentApproveForPaymentSummary';
 import PayrollReconciliationFilesDialog from './dialogs/PayrollReconciliationFilesDialog';
+import DistrictPayrollBatchDialog from './dialogs/DistrictPayrollBatchDialog';
 
 function PayrollSearcherApproved({
   fetchingPayrolls,
@@ -33,8 +36,9 @@ function PayrollSearcherApproved({
 }) {
   const history = useHistory();
   const modulesManager = useModulesManager();
-  const { formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
+  const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
   const rights = useSelector((store) => store.core.user.i_user.rights ?? []);
+  const [districtBatchDialogMode, setDistrictBatchDialogMode] = useState(null);
 
   const prevSubmittingMutationRef = useRef();
 
@@ -108,8 +112,26 @@ function PayrollSearcherApproved({
     <PayrollFilter filters={filters} onChangeFilters={onChangeFilters} statusReadOnly />
   );
 
+  const searcherActions = () => [
+    {
+      label: formatMessage('payroll.districtBatch.action'),
+      icon: <DescriptionIcon />,
+      authorized: rights.includes(RIGHT_PAYROLL_SEARCH),
+      onClick: () => setDistrictBatchDialogMode('download'),
+      variant: 'outlined',
+    },
+    {
+      label: formatMessage('payroll.districtBatch.uploadAction'),
+      icon: <CloudUploadIcon />,
+      authorized: rights.includes(RIGHT_PAYROLL_SEARCH),
+      onClick: () => setDistrictBatchDialogMode('upload'),
+      variant: 'outlined',
+    },
+  ];
+
   return (
-    <Searcher
+    <>
+      <Searcher
       module="payroll"
       FilterPane={payrollFilter}
       fetch={fetch}
@@ -128,7 +150,17 @@ function PayrollSearcherApproved({
       rowIdentifier={rowIdentifier}
       onDoubleClick={onDoubleClick}
       defaultFilters={defaultFilters()}
-    />
+      enableActionButtons
+      searcherActionsPosition="header-right"
+      searcherActions={searcherActions()}
+      compactLayout
+      />
+      <DistrictPayrollBatchDialog
+        open={Boolean(districtBatchDialogMode)}
+        mode={districtBatchDialogMode || 'download'}
+        onClose={() => setDistrictBatchDialogMode(null)}
+      />
+    </>
   );
 }
 
