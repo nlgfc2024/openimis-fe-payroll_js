@@ -13,6 +13,7 @@ import {
   coreConfirm,
   clearConfirm,
   journalize,
+  waitForMutation,
 } from '@openimis/fe-core';
 import {
   fetchPayroll,
@@ -45,6 +46,7 @@ function PayrollPage({
   clearPayroll,
   clearConfirm,
   coreAlert,
+  waitForMutation,
   createPayrollFromFailedInvoices,
   journalize,
   benefitPlanId,
@@ -90,10 +92,28 @@ function PayrollPage({
     if (prevSubmittingMutationRef.current && !submittingMutation) {
       journalize(mutation);
       if (mutation?.actionType === ACTION_TYPE.CREATE_PAYROLL) {
-        coreAlert(
-          formatMessage('payroll.payroll.taskCreated.title'),
-          formatMessage('payroll.payroll.taskCreated.message'),
-        );
+        const showPayrollCreationResult = async () => {
+          const result = await waitForMutation(mutation.clientMutationId);
+          if (result?.status === 2) {
+            coreAlert(
+              formatMessage('payroll.payroll.taskCreated.title'),
+              formatMessage('payroll.payroll.taskCreated.message'),
+            );
+            if (!payrollUuid || isPayrollFromFailedInvoices) {
+              fetchPayroll(modulesManager, [`clientMutationId: "${mutation.clientMutationId}"`]);
+              setIsPayrollFromFailedInvoices(false);
+            }
+            return;
+          }
+
+          const error = result?.error;
+          coreAlert(
+            'Payroll was not created',
+            error?.detail || error?.message || 'The payroll creation request failed. Check the mutation details and try again.',
+          );
+        };
+        showPayrollCreationResult();
+        return;
       }
       if (mutation?.actionType === ACTION_TYPE.DELETE_PAYROLL) {
         back();
@@ -195,6 +215,7 @@ const mapDispatchToProps = (dispatch) => bindActionCreators({
   coreConfirm,
   clearConfirm,
   journalize,
+  waitForMutation,
 }, dispatch);
 
 const mapStateToProps = (state, props) => ({

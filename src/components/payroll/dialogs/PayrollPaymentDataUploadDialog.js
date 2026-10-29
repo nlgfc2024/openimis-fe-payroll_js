@@ -136,7 +136,10 @@ function PayrollPaymentDataUploadDialog({
     }
   };
 
-  const unmatchedRecords = Number(feedback?.summary?.unmatched_records || 0);
+  // Some validation and network failures intentionally have no upload summary.
+  // Keep the dialog renderable for those responses as well as normal uploads.
+  const feedbackSummary = feedback?.summary || {};
+  const unmatchedRecords = Number(feedbackSummary.unmatched_records || 0);
   const hasValidationIssues = unmatchedRecords > 0;
   const isDuplicate = feedback?.status === 'DUPLICATE';
   const isSuccessful = feedback?.severity === 'success' && !hasValidationIssues;
@@ -203,11 +206,11 @@ function PayrollPaymentDataUploadDialog({
                 </FeedbackBanner>
                 <div className={classes.resultTitle}>{formatMessage('payroll.reconciliationUpload.summary.title')}</div>
                 {[
-                  [formatMessage('payroll.reconciliationUpload.summary.totalRecords'), feedback.summary.total_records],
-                  [formatMessage('payroll.reconciliationUpload.summary.matchedRecords'), feedback.summary.matched_records],
-                  [formatMessage('payroll.reconciliationUpload.summary.paidRecords'), feedback.summary.paid_records],
-                  [formatMessage('payroll.reconciliationUpload.summary.unpaidRecords'), feedback.summary.unpaid_records],
-                  [formatMessage('payroll.reconciliationUpload.summary.unmatchedRecords'), feedback.summary.unmatched_records],
+                  [formatMessage('payroll.reconciliationUpload.summary.totalRecords'), feedbackSummary.total_records],
+                  [formatMessage('payroll.reconciliationUpload.summary.matchedRecords'), feedbackSummary.matched_records],
+                  [formatMessage('payroll.reconciliationUpload.summary.paidRecords'), feedbackSummary.paid_records],
+                  [formatMessage('payroll.reconciliationUpload.summary.unpaidRecords'), feedbackSummary.unpaid_records],
+                  [formatMessage('payroll.reconciliationUpload.summary.unmatchedRecords'), feedbackSummary.unmatched_records],
                 ].map(([label, value]) => (
                   <div key={label} className={classes.resultRow}>
                     <span>{label}</span><span>{value || 0}</span>
@@ -264,7 +267,7 @@ function PayrollPaymentDataUploadDialog({
                     color="primary"
                     onClick={() => downloadPayroll(payrollUuid, feedback.fileName, false, feedback.uploadId)}
                   >
-                    {feedback.summary.unmatched_records > 0 || feedback.severity === 'error'
+                    {feedbackSummary.unmatched_records > 0 || feedback.severity === 'error'
                       ? formatMessage('payroll.reconciliationUpload.downloadErrorReport')
                       : formatMessage('payroll.reconciliationUpload.downloadReviewedFile')}
                   </Button>
