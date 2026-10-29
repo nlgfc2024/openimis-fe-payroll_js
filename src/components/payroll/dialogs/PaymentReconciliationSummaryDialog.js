@@ -62,10 +62,11 @@ function PaymentReconcilationSummarytDialog({
   };
 
   useEffect(() => {
-    if (isOpen && Object.keys(payroll).length > 0) {
+    if (isOpen && payroll && Object.keys(payroll).length > 0) {
       // Calculate total benefits and reconciled benefits
-      const total = payroll.benefitConsumption.length;
-      const selected = payroll.benefitConsumption.filter(
+      const benefits = payroll.benefitConsumption || [];
+      const total = benefits.length;
+      const selected = benefits.filter(
         (benefit) => benefit.status === BENEFIT_CONSUMPTION_STATUS.RECONCILED,
       ).length;
 
@@ -74,20 +75,18 @@ function PaymentReconcilationSummarytDialog({
 
       let totalAmount = 0;
       let reconciledAmount = 0;
-      if (payroll && payroll.benefitConsumption) {
-        payroll.benefitConsumption.forEach((benefit) => {
-          if (benefit.benefitAttachment && benefit.benefitAttachment.length > 0) {
-            benefit.benefitAttachment.forEach((attachment) => {
-              if (attachment.bill && attachment.bill.amountTotal) {
-                totalAmount += parseFloat(attachment.bill.amountTotal);
-                if (benefit.status === BENEFIT_CONSUMPTION_STATUS.RECONCILED) {
-                  reconciledAmount += parseFloat(attachment.bill.amountTotal);
-                }
+      benefits.forEach((benefit) => {
+        if (benefit.benefitAttachment && benefit.benefitAttachment.length > 0) {
+          benefit.benefitAttachment.forEach((attachment) => {
+            if (attachment.bill && attachment.bill.amountTotal) {
+              totalAmount += parseFloat(attachment.bill.amountTotal);
+              if (benefit.status === BENEFIT_CONSUMPTION_STATUS.RECONCILED) {
+                reconciledAmount += parseFloat(attachment.bill.amountTotal);
               }
-            });
-          }
-        });
-      }
+            }
+          });
+        }
+      });
       setTotalBillAmount(totalAmount);
       setTotalReconciledBillAmount(reconciledAmount);
     }
