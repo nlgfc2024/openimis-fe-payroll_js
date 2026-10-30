@@ -4,7 +4,7 @@ import {
   TableCell, TableHead, TableRow, Typography,
 } from '@material-ui/core';
 import {
-  decodeId, PublishedComponent, useGraphqlQuery, useModulesManager, useTranslations,
+  Autocomplete, decodeId, PublishedComponent, useGraphqlQuery, useModulesManager, useTranslations,
 } from '@openimis/fe-core';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
@@ -23,8 +23,16 @@ function ConsolidatePayrollsDialog({ createConsolidatedPayroll }) {
   // Locations use an integer primary key behind their Relay ID. The
   // consolidation API deliberately uses the location UUID instead.
   const districtId = district?.uuid || null;
-  const benefitPlanId = benefitPlan?.id ? decodeId(benefitPlan.id) : null;
+  const benefitPlanId = benefitPlan?.uuid || null;
   const skipCandidates = !districtId || !benefitPlanId;
+  const { data: phasesData, isLoading: phasesLoading } = useGraphqlQuery(
+    `query ConsolidationPhases($districtId: UUID!, $skipPhases: Boolean!) {
+      consolidationPhases(districtId: $districtId) @skip(if: $skipPhases) { uuid code name }
+    }`,
+    { districtId: districtId || EMPTY_UUID, skipPhases: !districtId },
+    { skip: !open },
+  );
+  const phases = phasesData?.consolidationPhases || [];
   const { data, isLoading, error } = useGraphqlQuery(
     `query ConsolidationCandidates($districtId: UUID!, $benefitPlanId: UUID!, $skipCandidates: Boolean!) {
       consolidationCandidates(districtId: $districtId, benefitPlanId: $benefitPlanId) @skip(if: $skipCandidates) {
@@ -39,6 +47,7 @@ function ConsolidatePayrollsDialog({ createConsolidatedPayroll }) {
     { skip: !open },
   );
   const candidates = data?.consolidationCandidates || [];
+  useEffect(() => setBenefitPlan(null), [districtId]);
   useEffect(() => setSelected([]), [districtId, benefitPlanId]);
   const toggle = (id) => setSelected((current) => (current.includes(id)
     ? current.filter((item) => item !== id) : [...current, id]));
@@ -58,7 +67,17 @@ function ConsolidatePayrollsDialog({ createConsolidatedPayroll }) {
       <DialogTitle>{formatMessage('payroll.consolidation.title')}</DialogTitle>
       <DialogContent>
         <PublishedComponent pubRef="location.MwDistrictPicker" value={district} onChange={setDistrict} />
-        <PublishedComponent pubRef="socialProtection.BenefitPlanPicker" value={benefitPlan} onChange={setBenefitPlan} withLabel label="Phase" required />
+        <Autocomplete
+          withLabel
+          required
+          label="Phase"
+          placeholder="Select a Phase"
+          options={phases}
+          value={benefitPlan}
+          onChange={setBenefitPlan}
+          isLoading={phasesLoading}
+          getOptionLabel={(phase) => `${phase.code} - ${phase.name}`}
+        />
         {error && <Typography color="error">{String(error)}</Typography>}
         <Table size="small"><TableHead><TableRow>
           <TableCell><Checkbox checked={allSelected} onChange={() => setSelected(allSelected ? [] : candidates.map((item) => item.id))} /></TableCell>
