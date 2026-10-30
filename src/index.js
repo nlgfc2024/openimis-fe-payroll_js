@@ -26,6 +26,7 @@ import {
   PayrollReconciliationTaskItemFormatters,
   PayrollReconciliationTaskTableHeaders,
 } from './components/tasks/PayrollReconciliationTasks';
+import PayrollReconciliationTaskPreview from './components/tasks/PayrollReconciliationTaskPreview';
 import {
   BenefitConsumptionsTabLabel,
   BenefitConsumptionsTabPanel,
@@ -127,6 +128,7 @@ const DEFAULT_CONFIG = {
     text: <FormattedMessage module="payroll" id="payroll.tasks.reconciliation.title" />,
     tableHeaders: PayrollReconciliationTaskTableHeaders,
     itemFormatters: PayrollReconciliationTaskItemFormatters,
+    previewComponent: PayrollReconciliationTaskPreview,
     taskSource: ['payroll_reconciliation'],
   },
   {
