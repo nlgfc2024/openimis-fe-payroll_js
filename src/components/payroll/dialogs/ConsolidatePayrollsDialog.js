@@ -11,6 +11,8 @@ import { bindActionCreators } from 'redux';
 import { createConsolidatedPayroll } from '../../../actions';
 import { MODULE_NAME } from '../../../constants';
 
+const EMPTY_UUID = '00000000-0000-0000-0000-000000000000';
+
 function ConsolidatePayrollsDialog({ createConsolidatedPayroll }) {
   const modulesManager = useModulesManager();
   const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
@@ -22,14 +24,19 @@ function ConsolidatePayrollsDialog({ createConsolidatedPayroll }) {
   // consolidation API deliberately uses the location UUID instead.
   const districtId = district?.uuid || null;
   const benefitPlanId = benefitPlan?.id ? decodeId(benefitPlan.id) : null;
+  const skipCandidates = !districtId || !benefitPlanId;
   const { data, isLoading, error } = useGraphqlQuery(
-    `query ConsolidationCandidates($districtId: UUID!, $benefitPlanId: UUID!) {
-      consolidationCandidates(districtId: $districtId, benefitPlanId: $benefitPlanId) {
+    `query ConsolidationCandidates($districtId: UUID!, $benefitPlanId: UUID!, $skipCandidates: Boolean!) {
+      consolidationCandidates(districtId: $districtId, benefitPlanId: $benefitPlanId) @skip(if: $skipCandidates) {
         id name paymentMethod status benefitConsumption { id amount }
       }
     }`,
-    { districtId, benefitPlanId },
-    { skip: !open || !districtId || !benefitPlanId },
+    {
+      districtId: districtId || EMPTY_UUID,
+      benefitPlanId: benefitPlanId || EMPTY_UUID,
+      skipCandidates,
+    },
+    { skip: !open },
   );
   const candidates = data?.consolidationCandidates || [];
   useEffect(() => setSelected([]), [districtId, benefitPlanId]);
