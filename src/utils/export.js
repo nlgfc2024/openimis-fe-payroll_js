@@ -14,7 +14,7 @@ export default function downloadPayroll(payrollId, payrollFileName, blank = true
     .then((blob) => {
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = blank ? `${payrollFileName}.csv` : payrollFileName;
+      link.download = blank ? `${payrollFileName}.xlsx` : payrollFileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
