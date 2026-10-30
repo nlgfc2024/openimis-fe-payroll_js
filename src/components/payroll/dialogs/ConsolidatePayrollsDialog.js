@@ -51,7 +51,7 @@ function ConsolidatePayrollsDialog({ createConsolidatedPayroll }) {
       <DialogTitle>{formatMessage('payroll.consolidation.title')}</DialogTitle>
       <DialogContent>
         <PublishedComponent pubRef="location.MwDistrictPicker" value={district} onChange={setDistrict} />
-        <PublishedComponent pubRef="socialProtection.BenefitPlanPicker" value={benefitPlan} onChange={setBenefitPlan} withLabel label="Phase / Benefit Plan" required />
+        <PublishedComponent pubRef="socialProtection.BenefitPlanPicker" value={benefitPlan} onChange={setBenefitPlan} withLabel label="Phase" required />
         {error && <Typography color="error">{String(error)}</Typography>}
         <Table size="small"><TableHead><TableRow>
           <TableCell><Checkbox checked={allSelected} onChange={() => setSelected(allSelected ? [] : candidates.map((item) => item.id))} /></TableCell>
