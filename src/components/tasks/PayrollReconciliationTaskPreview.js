@@ -10,9 +10,9 @@ import {
 } from '@material-ui/core';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { useModulesManager, useTranslations } from '@openimis/fe-core';
+import { useHistory, useModulesManager, useTranslations } from '@openimis/fe-core';
 import { fetchReconciliationUploadRows } from '../../actions';
-import { MODULE_NAME } from '../../constants';
+import { MODULE_NAME, PAYROLL_PAYROLL_ROUTE } from '../../constants';
 
 const parseJson = (value) => {
   if (typeof value !== 'string') return value;
@@ -49,6 +49,7 @@ function PayrollReconciliationTaskPreview({
   fetchReconciliationUploadRows,
 }) {
   const modulesManager = useModulesManager();
+  const history = useHistory();
   const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
   const data = taskData(task);
   const uploadId = data?.upload_id || data?.uploadId;
@@ -127,7 +128,9 @@ function PayrollReconciliationTaskPreview({
                   <TableCell>{submittedValue(row, 'individual__last_name')}</TableCell>
                   <TableCell>{row.nationalId || submittedValue(row, 'individual__json_ext__national_id')}</TableCell>
                   <TableCell>{row.code || submittedValue(row, 'code')}</TableCell>
-                  <TableCell>{submittedValue(row, 'Source Payroll')}</TableCell>
+                  <TableCell>{submittedValue(row, '_source_payroll_id') === '-'
+                    ? submittedValue(row, 'Source Payroll')
+                    : <button type="button" onClick={() => history.push(`/${modulesManager.getRef(PAYROLL_PAYROLL_ROUTE)}/${submittedValue(row, '_source_payroll_id')}`)}>{submittedValue(row, 'Source Payroll')}</button>}</TableCell>
                   <TableCell>{submittedValue(row, 'amount')}</TableCell>
                   <TableCell>{submittedValue(row, 'amount_received', 'Amount Received')}</TableCell>
                   <TableCell>{submittedValue(row, 'Paid')}</TableCell>
