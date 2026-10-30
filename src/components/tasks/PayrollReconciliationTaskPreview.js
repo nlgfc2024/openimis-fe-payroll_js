@@ -110,6 +110,7 @@ function PayrollReconciliationTaskPreview({
                 <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.lastName')}</TableCell>
                 <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.nationalId')}</TableCell>
                 <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.code')}</TableCell>
+                <TableCell>{formatMessage('payroll.consolidation.sourcePayroll')}</TableCell>
                 <TableCell>{formatMessage('payroll.reconciliationUpload.taskPreview.amount')}</TableCell>
                 <TableCell>{formatMessage('payroll.reconciliationUpload.taskPreview.amountReceived')}</TableCell>
                 <TableCell>{formatMessage('payroll.payrollPaymentFile.paidRecords')}</TableCell>
@@ -126,6 +127,7 @@ function PayrollReconciliationTaskPreview({
                   <TableCell>{submittedValue(row, 'individual__last_name')}</TableCell>
                   <TableCell>{row.nationalId || submittedValue(row, 'individual__json_ext__national_id')}</TableCell>
                   <TableCell>{row.code || submittedValue(row, 'code')}</TableCell>
+                  <TableCell>{submittedValue(row, 'Source Payroll')}</TableCell>
                   <TableCell>{submittedValue(row, 'amount')}</TableCell>
                   <TableCell>{submittedValue(row, 'amount_received', 'Amount Received')}</TableCell>
                   <TableCell>{submittedValue(row, 'Paid')}</TableCell>
