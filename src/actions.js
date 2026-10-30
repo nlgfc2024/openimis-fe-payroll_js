@@ -280,6 +280,18 @@ export function createPayroll(payroll, clientMutationLabel) {
   );
 }
 
+export function createConsolidatedPayroll(payload, clientMutationLabel) {
+  const input = `districtId: "${decodeId(payload.district.id)}"
+    paymentPlanId: "${decodeId(payload.paymentPlan.id)}"
+    sourcePayrollIds: [${payload.sourcePayrollIds.map((id) => `"${decodeId(id)}"`).join(', ')}]`;
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.PAYROLL.CREATE_CONSOLIDATED,
+    input,
+    ACTION_TYPE.CREATE_CONSOLIDATED_PAYROLL,
+    clientMutationLabel,
+  );
+}
+
 export function fetchBenefitConsumptions(modulesManager, params) {
   const payload = formatPageQueryWithCount('benefitConsumptionByPayroll', params, BENEFIT_CONSUMPTION_PROJECTION());
   return graphql(payload, ACTION_TYPE.GET_BENEFIT_CONSUMPTION);
