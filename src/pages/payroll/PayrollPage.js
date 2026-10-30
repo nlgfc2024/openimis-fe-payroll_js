@@ -176,7 +176,7 @@ function PayrollPage({
   const actions = [];
 
   return (
-    rights.includes(RIGHT_PAYROLL_CREATE) && (
+    (rights.includes(RIGHT_PAYROLL_CREATE) || taskPayrollUuid) && (
     <div className={classes.page}>
       <Form
         key={payrollUuid}
