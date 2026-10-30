@@ -16,23 +16,23 @@ function ConsolidatePayrollsDialog({ createConsolidatedPayroll }) {
   const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
   const [open, setOpen] = useState(false);
   const [district, setDistrict] = useState(null);
-  const [paymentPlan, setPaymentPlan] = useState(null);
+  const [benefitPlan, setBenefitPlan] = useState(null);
   const [selected, setSelected] = useState([]);
   // Locations use an integer primary key behind their Relay ID. The
   // consolidation API deliberately uses the location UUID instead.
   const districtId = district?.uuid || null;
-  const paymentPlanId = paymentPlan?.id ? decodeId(paymentPlan.id) : null;
+  const benefitPlanId = benefitPlan?.id ? decodeId(benefitPlan.id) : null;
   const { data, isLoading, error } = useGraphqlQuery(
-    `query ConsolidationCandidates($districtId: UUID!, $paymentPlanId: UUID!) {
-      consolidationCandidates(districtId: $districtId, paymentPlanId: $paymentPlanId) {
+    `query ConsolidationCandidates($districtId: UUID!, $benefitPlanId: UUID!) {
+      consolidationCandidates(districtId: $districtId, benefitPlanId: $benefitPlanId) {
         id name paymentMethod status benefitConsumption { id amount }
       }
     }`,
-    { districtId, paymentPlanId },
-    { skip: !open || !districtId || !paymentPlanId },
+    { districtId, benefitPlanId },
+    { skip: !open || !districtId || !benefitPlanId },
   );
   const candidates = data?.consolidationCandidates || [];
-  useEffect(() => setSelected([]), [districtId, paymentPlanId]);
+  useEffect(() => setSelected([]), [districtId, benefitPlanId]);
   const toggle = (id) => setSelected((current) => (current.includes(id)
     ? current.filter((item) => item !== id) : [...current, id]));
   const allSelected = candidates.length > 0 && selected.length === candidates.length;
@@ -40,7 +40,7 @@ function ConsolidatePayrollsDialog({ createConsolidatedPayroll }) {
     (sum, item) => sum + item.benefitConsumption.reduce((amount, benefit) => amount + Number(benefit.amount || 0), 0), 0,
   );
   const create = () => {
-    createConsolidatedPayroll({ district, paymentPlan, sourcePayrollIds: selected }, 'Create consolidated payroll');
+    createConsolidatedPayroll({ district, benefitPlan, sourcePayrollIds: selected }, 'Create consolidated payroll');
     setOpen(false);
   };
   return <>
@@ -51,7 +51,7 @@ function ConsolidatePayrollsDialog({ createConsolidatedPayroll }) {
       <DialogTitle>{formatMessage('payroll.consolidation.title')}</DialogTitle>
       <DialogContent>
         <PublishedComponent pubRef="location.MwDistrictPicker" value={district} onChange={setDistrict} />
-        <PublishedComponent pubRef="contributionPlan.PaymentPlanPicker" value={paymentPlan} onChange={setPaymentPlan} required />
+        <PublishedComponent pubRef="socialProtection.BenefitPlanPicker" value={benefitPlan} onChange={setBenefitPlan} withLabel label="Phase / Benefit Plan" required />
         {error && <Typography color="error">{String(error)}</Typography>}
         <Table size="small"><TableHead><TableRow>
           <TableCell><Checkbox checked={allSelected} onChange={() => setSelected(allSelected ? [] : candidates.map((item) => item.id))} /></TableCell>

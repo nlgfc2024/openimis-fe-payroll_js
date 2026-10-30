@@ -282,7 +282,7 @@ export function createPayroll(payroll, clientMutationLabel) {
 
 export function createConsolidatedPayroll(payload, clientMutationLabel) {
   const input = `districtId: "${payload.district.uuid}"
-    paymentPlanId: "${decodeId(payload.paymentPlan.id)}"
+    benefitPlanId: "${decodeId(payload.benefitPlan.id)}"
     sourcePayrollIds: [${payload.sourcePayrollIds.map((id) => `"${decodeId(id)}"`).join(', ')}]`;
   return PERFORM_MUTATION(
     MUTATION_SERVICE.PAYROLL.CREATE_CONSOLIDATED,
