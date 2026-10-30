@@ -70,6 +70,7 @@ const BENEFIT_ATTACHMENT_PROJECTION = () => [
 
 const PAYROLL_PROJECTION = (modulesManager) => [
   'id',
+  'payrollType',
   'name',
   'paymentMethod',
   'paymentPlan { code, id, name, benefitPlan }',
@@ -86,6 +87,7 @@ const PAYROLL_PROJECTION = (modulesManager) => [
 
 const PAYROLL_SEARCHER_PROJECTION = (modulesManager) => [
   'id',
+  'payrollType',
   'name',
   'paymentMethod',
   'paymentPlan { code, id, name, benefitPlan }',

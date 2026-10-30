@@ -106,10 +106,15 @@ function PayrollSearcherApproved({
     <PayrollFilter filters={filters} onChangeFilters={onChangeFilters} statusReadOnly />
   );
 
+  const searcherActions = [{
+    authorized: true,
+    render: ({ className, size }) => (
+      <ConsolidatePayrollsDialog buttonClassName={className} buttonSize={size} />
+    ),
+  }];
+
   return (
-    <>
-      <ConsolidatePayrollsDialog />
-      <Searcher
+    <Searcher
       module="payroll"
       FilterPane={payrollFilter}
       fetch={fetch}
@@ -127,8 +132,11 @@ function PayrollSearcherApproved({
       rowIdentifier={rowIdentifier}
       onDoubleClick={onDoubleClick}
       defaultFilters={defaultFilters()}
-      />
-    </>
+      searcherActions={searcherActions}
+      enableActionButtons
+      searcherActionsPosition="header-right"
+      compactLayout
+    />
   );
 }
 
