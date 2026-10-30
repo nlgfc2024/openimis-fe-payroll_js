@@ -75,6 +75,7 @@ function ConsolidatePayrollsDialog({ createConsolidatedPayroll }) {
           options={phases}
           value={benefitPlan}
           onChange={setBenefitPlan}
+          onInputChange={() => {}}
           isLoading={phasesLoading}
           getOptionLabel={(phase) => `${phase.code} - ${phase.name}`}
         />
