@@ -107,9 +107,11 @@ function PayrollPage({
           }
 
           const error = result?.error;
+          const mutationError = Array.isArray(error) ? error[0] : error;
           coreAlert(
-            'Payroll was not created',
-            error?.detail || error?.message || 'The payroll creation request failed. Check the mutation details and try again.',
+            formatMessage('payroll.payroll.creationFailed.title'),
+            mutationError?.detail || mutationError?.message
+              || formatMessage('payroll.payroll.creationFailed.message'),
           );
         };
         showPayrollCreationResult();

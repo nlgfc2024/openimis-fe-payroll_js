@@ -10,7 +10,9 @@ import {
 } from '@material-ui/core';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
+import { useModulesManager, useTranslations } from '@openimis/fe-core';
 import { fetchReconciliationUploadRows } from '../../actions';
+import { MODULE_NAME } from '../../constants';
 
 const parseJson = (value) => {
   if (typeof value !== 'string') return value;
@@ -46,59 +48,94 @@ function PayrollReconciliationTaskPreview({
   error,
   fetchReconciliationUploadRows,
 }) {
+  const modulesManager = useModulesManager();
+  const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
   const data = taskData(task);
   const uploadId = data?.upload_id || data?.uploadId;
+  const summary = data?.summary || {};
+  const totalRecords = summary.total_records ?? rows.length;
+  const previewSummary = [
+    ['payroll.reconciliationUpload.taskPreview.district', data?.district],
+    ['payroll.reconciliationUpload.taskPreview.phase', data?.phase],
+    ['payroll.reconciliationUpload.taskPreview.payrolls', (data?.included_payrolls || [])
+      .map((payroll) => payroll?.name).filter(Boolean).join(', ')],
+    ['payroll.reconciliationUpload.taskPreview.totalRecords', summary.total_records],
+    ['payroll.reconciliationUpload.taskPreview.matchedRecords', summary.matched_records],
+    ['payroll.reconciliationUpload.taskPreview.paidRecords', summary.paid_records],
+    ['payroll.reconciliationUpload.taskPreview.unpaidRecords', summary.unpaid_records],
+    ['payroll.reconciliationUpload.taskPreview.unmatchedRecords', summary.unmatched_records],
+  ];
 
   useEffect(() => {
     if (uploadId) fetchReconciliationUploadRows(uploadId);
   }, [uploadId, fetchReconciliationUploadRows]);
 
   if (!uploadId) {
-    return <Typography color="error">This reconciliation task has no uploaded file reference.</Typography>;
+    return <Typography color="error">{formatMessage('payroll.reconciliationUpload.task.noUpload')}</Typography>;
   }
 
   return (
     <>
       <Typography variant="subtitle1">
-        Uploaded beneficiary reconciliation data ({data?.summary?.total_records ?? rows.length} rows)
+        {formatMessageWithValues('payroll.reconciliationUpload.taskPreview.title', { totalRecords })}
       </Typography>
       {fetching && <CircularProgress size={24} />}
       {error && <Typography color="error">{error}</Typography>}
       {!fetching && !error && (
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Row</TableCell>
-              <TableCell>Form Number</TableCell>
-              <TableCell>First Name</TableCell>
-              <TableCell>Last Name</TableCell>
-              <TableCell>National ID</TableCell>
-              <TableCell>Code</TableCell>
-              <TableCell>Amount</TableCell>
-              <TableCell>Amount Received</TableCell>
-              <TableCell>Paid</TableCell>
-              <TableCell>Receipt</TableCell>
-              <TableCell>Validation</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>{row.rowNumber}</TableCell>
-                <TableCell>{submittedValue(row, 'individual__json_ext__form_number')}</TableCell>
-                <TableCell>{submittedValue(row, 'individual__first_name')}</TableCell>
-                <TableCell>{submittedValue(row, 'individual__last_name')}</TableCell>
-                <TableCell>{row.nationalId || submittedValue(row, 'individual__json_ext__national_id')}</TableCell>
-                <TableCell>{row.code || submittedValue(row, 'code')}</TableCell>
-                <TableCell>{submittedValue(row, 'amount')}</TableCell>
-                <TableCell>{submittedValue(row, 'amount_received', 'Amount Received')}</TableCell>
-                <TableCell>{submittedValue(row, 'Paid')}</TableCell>
-                <TableCell>{submittedValue(row, 'receipt')}</TableCell>
-                <TableCell>{row.status}: {mismatchReasons(row.mismatchReasons)}</TableCell>
+        <>
+          <Table size="small">
+            <TableBody>
+              {previewSummary.map(([label, value]) => (
+                <TableRow key={label}>
+                  <TableCell>{formatMessage(label)}</TableCell>
+                  <TableCell>{value ?? formatMessage('payroll.reconciliationUpload.notAvailable')}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          {totalRecords > rows.length && (
+            <Typography variant="body2">
+              {formatMessageWithValues('payroll.reconciliationUpload.taskPreview.truncated', {
+                shownRows: rows.length,
+                totalRecords,
+              })}
+            </Typography>
+          )}
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.row')}</TableCell>
+                <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.formNumber')}</TableCell>
+                <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.firstName')}</TableCell>
+                <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.lastName')}</TableCell>
+                <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.nationalId')}</TableCell>
+                <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.code')}</TableCell>
+                <TableCell>{formatMessage('payroll.reconciliationUpload.taskPreview.amount')}</TableCell>
+                <TableCell>{formatMessage('payroll.reconciliationUpload.taskPreview.amountReceived')}</TableCell>
+                <TableCell>{formatMessage('payroll.payrollPaymentFile.paidRecords')}</TableCell>
+                <TableCell>{formatMessage('payroll.reconciliationUpload.taskPreview.receipt')}</TableCell>
+                <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.status')}</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHead>
+            <TableBody>
+              {rows.map((row) => (
+                <TableRow key={row.id}>
+                  <TableCell>{row.rowNumber}</TableCell>
+                  <TableCell>{submittedValue(row, 'individual__json_ext__form_number')}</TableCell>
+                  <TableCell>{submittedValue(row, 'individual__first_name')}</TableCell>
+                  <TableCell>{submittedValue(row, 'individual__last_name')}</TableCell>
+                  <TableCell>{row.nationalId || submittedValue(row, 'individual__json_ext__national_id')}</TableCell>
+                  <TableCell>{row.code || submittedValue(row, 'code')}</TableCell>
+                  <TableCell>{submittedValue(row, 'amount')}</TableCell>
+                  <TableCell>{submittedValue(row, 'amount_received', 'Amount Received')}</TableCell>
+                  <TableCell>{submittedValue(row, 'Paid')}</TableCell>
+                  <TableCell>{submittedValue(row, 'receipt')}</TableCell>
+                  <TableCell>{row.status}: {mismatchReasons(row.mismatchReasons)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </>
       )}
     </>
   );
