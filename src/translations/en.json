@@ -144,6 +144,8 @@
   "payroll.consolidation.selected": "Selected: {count} payrolls | Total amount: {amount}",
   "payroll.consolidation.sourcePayrolls": "Source Payrolls",
   "payroll.consolidation.sourcePayroll": "Source payroll",
+  "payroll.summary.beneficiaries": "Beneficiaries",
+  "payroll.amount": "Amount",
   "payroll.reconciliationUpload.invalidFile": "Choose a CSV reconciliation file.",
   "payroll.reconciliationUpload.processingFailed": "The reconciliation file could not be processed. Please correct the file and upload it again.",
   "payroll.reconciliationUpload.networkFailed": "The reconciliation file could not be processed. Please try again.",

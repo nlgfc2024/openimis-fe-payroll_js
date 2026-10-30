@@ -18,7 +18,9 @@ function ConsolidatePayrollsDialog({ createConsolidatedPayroll }) {
   const [district, setDistrict] = useState(null);
   const [paymentPlan, setPaymentPlan] = useState(null);
   const [selected, setSelected] = useState([]);
-  const districtId = district?.id ? decodeId(district.id) : null;
+  // Locations use an integer primary key behind their Relay ID. The
+  // consolidation API deliberately uses the location UUID instead.
+  const districtId = district?.uuid || null;
   const paymentPlanId = paymentPlan?.id ? decodeId(paymentPlan.id) : null;
   const { data, isLoading, error } = useGraphqlQuery(
     `query ConsolidationCandidates($districtId: UUID!, $paymentPlanId: UUID!) {
