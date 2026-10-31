@@ -59,7 +59,7 @@ function PayrollReconciliationTaskPreview({
   const summary = data?.summary || {};
   const [selectedPayrollId, setSelectedPayrollId] = useState(null);
   const { data: payrollData } = useGraphqlQuery(
-    `query ReconciliationTaskPayroll($id: UUID!) {
+    `query ReconciliationTaskPayroll($id: ID!) {
       payroll(id: $id) {
         edges {
           node {
