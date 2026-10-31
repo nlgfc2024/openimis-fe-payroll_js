@@ -19,7 +19,7 @@ export function ConsolidatedPayrollsTabPanel({
   const modulesManager = useModulesManager();
   const history = useHistory();
   const { formatMessage } = useTranslations(MODULE_NAME, modulesManager);
-  const { data } = useGraphqlQuery(`query ConsolidatedPayroll($id: UUID!) { payroll(id: $id) { edges { node { payrollType consolidatedMembers { sourcePayrollId sourcePayrollName sourcePayrollStatus beneficiariesCount totalAmount } } } } }`, { id: payrollUuid }, { skip: !payrollUuid || isInTask });
+  const { data } = useGraphqlQuery(`query ConsolidatedPayroll($id: ID!) { payroll(id: $id) { edges { node { payrollType consolidatedMembers { sourcePayrollId sourcePayrollName sourcePayrollStatus beneficiariesCount totalAmount } } } } }`, { id: payrollUuid }, { skip: !payrollUuid || isInTask });
   const payroll = data?.payroll?.edges?.[0]?.node;
   if (isInTask || payroll?.payrollType !== 'CONSOLIDATED') return null;
   return <PublishedComponent pubRef="policyHolder.TabPanel" module="payroll" index={CONSOLIDATED_PAYROLLS_TAB_VALUE} value={value}>
