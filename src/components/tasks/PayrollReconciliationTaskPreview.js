@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  Button,
   CircularProgress,
   Table,
   TableBody,
@@ -10,9 +11,12 @@ import {
 } from '@material-ui/core';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { useModulesManager, useTranslations } from '@openimis/fe-core';
+import {
+  useGraphqlQuery, useModulesManager, useTranslations,
+} from '@openimis/fe-core';
 import { fetchReconciliationUploadRows } from '../../actions';
 import { MODULE_NAME } from '../../constants';
+import PayrollPage from '../../pages/payroll/PayrollPage';
 
 const parseJson = (value) => {
   if (typeof value !== 'string') return value;
@@ -53,12 +57,33 @@ function PayrollReconciliationTaskPreview({
   const data = taskData(task);
   const uploadId = data?.upload_id || data?.uploadId;
   const summary = data?.summary || {};
+  const [selectedPayrollId, setSelectedPayrollId] = useState(null);
+  const { data: payrollData } = useGraphqlQuery(
+    `query ReconciliationTaskPayroll($id: ID!) {
+      payroll(id: $id) {
+        edges {
+          node {
+            payrollType
+            consolidatedMembers { sourcePayrollId sourcePayrollName }
+          }
+        }
+      }
+    }`,
+    { id: data?.id },
+    { skip: !data?.id },
+  );
+  const payroll = payrollData?.payroll?.edges?.[0]?.node;
+  const isConsolidated = data?.consolidated || payroll?.payrollType === 'CONSOLIDATED';
+  const sourcePayrolls = payroll?.payrollType === 'CONSOLIDATED'
+    ? (payroll?.consolidatedMembers || []).map((member) => ({
+      id: member.sourcePayrollId,
+      name: member.sourcePayrollName,
+    }))
+    : (data?.included_payrolls || []).filter((item) => item.id !== data?.id);
   const totalRecords = summary.total_records ?? rows.length;
   const previewSummary = [
     ['payroll.reconciliationUpload.taskPreview.district', data?.district],
     ['payroll.reconciliationUpload.taskPreview.phase', data?.phase],
-    ['payroll.reconciliationUpload.taskPreview.payrolls', (data?.included_payrolls || [])
-      .map((payroll) => payroll?.name).filter(Boolean).join(', ')],
     ['payroll.reconciliationUpload.taskPreview.totalRecords', summary.total_records],
     ['payroll.reconciliationUpload.taskPreview.matchedRecords', summary.matched_records],
     ['payroll.reconciliationUpload.taskPreview.paidRecords', summary.paid_records],
@@ -93,6 +118,41 @@ function PayrollReconciliationTaskPreview({
               ))}
             </TableBody>
           </Table>
+          {isConsolidated && (
+            <>
+              <Typography variant="subtitle1">
+                {formatMessage('payroll.consolidation.sourcePayrolls')}
+              </Typography>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>{formatMessage('payroll.consolidation.sourcePayroll')}</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {sourcePayrolls.map((payroll) => (
+                    <TableRow key={payroll.id} selected={payroll.id === selectedPayrollId}>
+                      <TableCell>
+                        <Button
+                          color="primary"
+                          aria-pressed={payroll.id === selectedPayrollId}
+                          onClick={() => setSelectedPayrollId(payroll.id)}
+                        >
+                          {payroll.name}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {selectedPayrollId && (
+                <PayrollPage
+                  key={selectedPayrollId}
+                  taskPayrollUuid={selectedPayrollId}
+                />
+              )}
+            </>
+          )}
           {totalRecords > rows.length && (
             <Typography variant="body2">
               {formatMessageWithValues('payroll.reconciliationUpload.taskPreview.truncated', {
@@ -110,6 +170,7 @@ function PayrollReconciliationTaskPreview({
                 <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.lastName')}</TableCell>
                 <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.nationalId')}</TableCell>
                 <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.code')}</TableCell>
+                <TableCell>{formatMessage('payroll.consolidation.sourcePayroll')}</TableCell>
                 <TableCell>{formatMessage('payroll.reconciliationUpload.taskPreview.amount')}</TableCell>
                 <TableCell>{formatMessage('payroll.reconciliationUpload.taskPreview.amountReceived')}</TableCell>
                 <TableCell>{formatMessage('payroll.payrollPaymentFile.paidRecords')}</TableCell>
@@ -126,6 +187,14 @@ function PayrollReconciliationTaskPreview({
                   <TableCell>{submittedValue(row, 'individual__last_name')}</TableCell>
                   <TableCell>{row.nationalId || submittedValue(row, 'individual__json_ext__national_id')}</TableCell>
                   <TableCell>{row.code || submittedValue(row, 'code')}</TableCell>
+                  <TableCell style={{
+                    maxWidth: 220,
+                    whiteSpace: 'normal',
+                    overflowWrap: 'anywhere',
+                  }}
+                  >
+                    {submittedValue(row, 'Source Payroll')}
+                  </TableCell>
                   <TableCell>{submittedValue(row, 'amount')}</TableCell>
                   <TableCell>{submittedValue(row, 'amount_received', 'Amount Received')}</TableCell>
                   <TableCell>{submittedValue(row, 'Paid')}</TableCell>

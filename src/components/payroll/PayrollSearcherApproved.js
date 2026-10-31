@@ -19,6 +19,7 @@ import {
 import { fetchPayrolls } from '../../actions';
 import PaymentApproveForPaymentSummary from './dialogs/PaymentApproveForPaymentSummary';
 import PayrollReconciliationFilesDialog from './dialogs/PayrollReconciliationFilesDialog';
+import ConsolidatePayrollsDialog from './dialogs/ConsolidatePayrollsDialog';
 
 function PayrollSearcherApproved({
   fetchingPayrolls,
@@ -105,6 +106,13 @@ function PayrollSearcherApproved({
     <PayrollFilter filters={filters} onChangeFilters={onChangeFilters} statusReadOnly />
   );
 
+  const searcherActions = [{
+    authorized: true,
+    render: ({ className, size }) => (
+      <ConsolidatePayrollsDialog buttonClassName={className} buttonSize={size} />
+    ),
+  }];
+
   return (
     <Searcher
       module="payroll"
@@ -124,6 +132,10 @@ function PayrollSearcherApproved({
       rowIdentifier={rowIdentifier}
       onDoubleClick={onDoubleClick}
       defaultFilters={defaultFilters()}
+      searcherActions={searcherActions}
+      enableActionButtons
+      searcherActionsPosition="header-right"
+      compactLayout
     />
   );
 }
