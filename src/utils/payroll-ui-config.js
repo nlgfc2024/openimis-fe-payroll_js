@@ -1,4 +1,4 @@
-import { MODULE_NAME } from '../constants';
+export const PAYROLL_CONFIG_MODULE = 'fe-payroll';
 
 export const HIDDEN_PAYROLL_LIST_COLUMNS_CONFIG = 'hiddenPayrollListColumns';
 export const HIDDEN_PAYROLL_FORM_FIELDS_CONFIG = 'hiddenPayrollFormFields';
@@ -8,7 +8,7 @@ export const DEFAULT_PAYMENT_POINT_ID_CONFIG = 'defaultPaymentPointId';
 
 export const payrollListColumns = (modulesManager, columns) => {
   const hiddenColumns = modulesManager.getConf(
-    MODULE_NAME,
+    PAYROLL_CONFIG_MODULE,
     HIDDEN_PAYROLL_LIST_COLUMNS_CONFIG,
     [],
   );
@@ -27,7 +27,7 @@ export const payrollListColumns = (modulesManager, columns) => {
 
 export const hiddenPayrollFormFields = (modulesManager) => {
   const hiddenFields = modulesManager.getConf(
-    MODULE_NAME,
+    PAYROLL_CONFIG_MODULE,
     HIDDEN_PAYROLL_FORM_FIELDS_CONFIG,
     [],
   );

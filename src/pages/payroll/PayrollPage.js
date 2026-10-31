@@ -31,6 +31,7 @@ import {
   DEFAULT_PAYMENT_METHOD_CONFIG,
   DEFAULT_PAYMENT_PLAN_ID_CONFIG,
   DEFAULT_PAYMENT_POINT_ID_CONFIG,
+  PAYROLL_CONFIG_MODULE,
 } from '../../utils/payroll-ui-config';
 import PayrollHeadPanel from '../../components/payroll/PayrollHeadPanel';
 import PayrollTab from '../../components/payroll/PayrollTab';
@@ -70,17 +71,17 @@ function PayrollPage({
   const prevSubmittingMutationRef = useRef();
 
   const defaultPaymentPlanId = modulesManager.getConf(
-    MODULE_NAME,
+    PAYROLL_CONFIG_MODULE,
     DEFAULT_PAYMENT_PLAN_ID_CONFIG,
     null,
   );
   const defaultPaymentMethod = modulesManager.getConf(
-    MODULE_NAME,
+    PAYROLL_CONFIG_MODULE,
     DEFAULT_PAYMENT_METHOD_CONFIG,
     null,
   );
   const defaultPaymentPointId = modulesManager.getConf(
-    MODULE_NAME,
+    PAYROLL_CONFIG_MODULE,
     DEFAULT_PAYMENT_POINT_ID_CONFIG,
     null,
   );

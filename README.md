@@ -36,26 +36,27 @@ fields remain visible until a configured default value is loaded.
 
 ```json
 {
-  "payroll": {
-    "hiddenPayrollListColumns": [
-      "name",
-      "paymentPlan",
-      "status",
-      "paymentPoint",
-      "paymentMethod"
-    ],
-    "hiddenPayrollFormFields": [
-      "paymentPlan",
-      "paymentPoint",
-      "status",
-      "paymentMethod"
-    ],
-    "defaultPaymentPlanId": "<payment-plan-uuid>",
-    "defaultPaymentMethod": "StrategyOfflinePayment",
-    "defaultPaymentPointId": "<payment-point-uuid>"
-  }
+  "hiddenPayrollListColumns": [
+    "name",
+    "paymentPlan",
+    "status",
+    "paymentPoint",
+    "paymentMethod"
+  ],
+  "hiddenPayrollFormFields": [
+    "paymentPlan",
+    "paymentPoint",
+    "status",
+    "paymentMethod"
+  ],
+  "defaultPaymentPlanId": "<payment-plan-uuid>",
+  "defaultPaymentMethod": "StrategyOfflinePayment",
+  "defaultPaymentPointId": "<payment-point-uuid>"
 }
 ```
+
+Paste this JSON directly into the Config box for the `fe-payroll` frontend
+module configuration. Do not wrap it in a `"payroll"` property.
 
 `hiddenPayrollListColumns` applies to the all, pending, approved, and reconciled
 payroll lists. Supported values are `name`, `paymentPlan`, `status`,
