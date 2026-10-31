@@ -14,6 +14,7 @@ import {
   clearConfirm,
   journalize,
   waitForMutation,
+  useGraphqlQuery,
 } from '@openimis/fe-core';
 import {
   fetchPayroll,
@@ -26,6 +27,12 @@ import {
 } from '../../constants';
 import { ACTION_TYPE } from '../../reducer';
 import { mutationLabel, pageTitle } from '../../utils/string-utils';
+import {
+  DEFAULT_PAYMENT_METHOD_CONFIG,
+  DEFAULT_PAYMENT_PLAN_ID_CONFIG,
+  DEFAULT_PAYMENT_POINT_ID_CONFIG,
+  PAYROLL_CONFIG_MODULE,
+} from '../../utils/payroll-ui-config';
 import PayrollHeadPanel from '../../components/payroll/PayrollHeadPanel';
 import PayrollTab from '../../components/payroll/PayrollTab';
 
@@ -55,7 +62,6 @@ function PayrollPage({
   const classes = useStyles();
   const history = useHistory();
   const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
-
   const [editedPayroll, setEditedPayroll] = useState({});
   const [payrollUuid, setPayrollUuid] = useState(null);
   const [isInTask, setIsInTask] = useState(false);
@@ -64,7 +70,85 @@ function PayrollPage({
   const [confirmedAction, setConfirmedAction] = useState(() => null);
   const prevSubmittingMutationRef = useRef();
 
+  const defaultPaymentPlanId = modulesManager.getConf(
+    PAYROLL_CONFIG_MODULE,
+    DEFAULT_PAYMENT_PLAN_ID_CONFIG,
+    null,
+  );
+  const defaultPaymentMethod = modulesManager.getConf(
+    PAYROLL_CONFIG_MODULE,
+    DEFAULT_PAYMENT_METHOD_CONFIG,
+    null,
+  );
+  const defaultPaymentPointId = modulesManager.getConf(
+    PAYROLL_CONFIG_MODULE,
+    DEFAULT_PAYMENT_POINT_ID_CONFIG,
+    null,
+  );
+  const isEditingExistingPayroll = !!(statePayrollUuid || taskPayrollUuid);
+  const {
+    data: defaultPaymentPlanData,
+    error: defaultPaymentPlanError,
+    isLoading: isLoadingDefaultPaymentPlan,
+  } = useGraphqlQuery(
+    `query ConfiguredDefaultPaymentPlan($id: ID!) {
+      paymentPlan(id: $id) {
+        edges {
+          node { id code name benefitPlan }
+        }
+      }
+    }`,
+    { id: defaultPaymentPlanId },
+    { skip: !defaultPaymentPlanId || isEditingExistingPayroll || isPayrollFromFailedInvoices },
+  );
+  const defaultPaymentPlan = defaultPaymentPlanData?.paymentPlan?.edges?.[0]?.node;
+
   const back = () => history.goBack();
+
+  useEffect(() => {
+    if (defaultPaymentPlanError) {
+      coreAlert(
+        formatMessage('payroll.payroll.creationFailed.title'),
+        defaultPaymentPlanError.message
+          || formatMessage('payroll.payroll.defaultPaymentPlan.error'),
+      );
+    } else if (
+      defaultPaymentPlanId
+      && defaultPaymentPlanData
+      && !isLoadingDefaultPaymentPlan
+      && !defaultPaymentPlan
+    ) {
+      coreAlert(
+        formatMessage('payroll.payroll.creationFailed.title'),
+        formatMessage('payroll.payroll.defaultPaymentPlan.error'),
+      );
+    }
+  }, [
+    defaultPaymentPlanError,
+    defaultPaymentPlanId,
+    defaultPaymentPlanData,
+    isLoadingDefaultPaymentPlan,
+    defaultPaymentPlan,
+  ]);
+
+  useEffect(() => {
+    if (isEditingExistingPayroll || isPayrollFromFailedInvoices) return;
+    setEditedPayroll((current) => ({
+      ...current,
+      ...(defaultPaymentPlan && !current.paymentPlan
+        ? { paymentPlan: defaultPaymentPlan } : {}),
+      ...(defaultPaymentMethod && !current.paymentMethod
+        ? { paymentMethod: defaultPaymentMethod } : {}),
+      ...(defaultPaymentPointId && !current.paymentPoint
+        ? { paymentPoint: { id: defaultPaymentPointId } } : {}),
+    }));
+  }, [
+    defaultPaymentPlan,
+    defaultPaymentMethod,
+    defaultPaymentPointId,
+    isEditingExistingPayroll,
+    isPayrollFromFailedInvoices,
+  ]);
 
   useEffect(() => {
     if (createPayrollFromFailedInvoices === PAYROLL_FROM_FAILED_INVOICES_URL_PARAM) {

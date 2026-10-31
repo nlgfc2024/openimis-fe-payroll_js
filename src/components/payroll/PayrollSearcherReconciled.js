@@ -19,6 +19,7 @@ import {
 import { fetchPayrolls } from '../../actions';
 import PaymentReconciliationSummaryDialog from './dialogs/PaymentReconciliationSummaryDialog';
 import PayrollReconciliationFilesDialog from './dialogs/PayrollReconciliationFilesDialog';
+import { payrollListColumns } from '../../utils/payroll-ui-config';
 
 function PayrollSearcherReconciled({
   fetchingPayrolls,
@@ -49,22 +50,6 @@ function PayrollSearcherReconciled({
     prevSubmittingMutationRef.current = submittingMutation;
   });
 
-  const headers = () => [
-    'payroll.name',
-    'payroll.paymentPlan',
-    'payroll.status',
-    'payroll.paymentMethod',
-    'emptyLabel',
-    'emptyLabel',
-  ];
-
-  const sorts = () => [
-    ['name', true],
-    ['paymentPlan', true],
-    ['status', true],
-    ['paymentMethod', true],
-  ];
-
   const defaultFilters = () => ({
     isDeleted: {
       value: false,
@@ -84,16 +69,48 @@ function PayrollSearcherReconciled({
     `/${modulesManager.getRef(PAYROLL_PAYROLL_ROUTE)}/${payroll?.id}`,
   );
 
-  const itemFormatters = () => [
-    (payroll) => payroll.name,
-    (payroll) => (payroll.paymentPlan
-      ? `${payroll.paymentPlan.code} ${payroll.paymentPlan.name}` : ''),
-    (payroll) => <PayrollStatusChip status={payroll.status} />,
-    (payroll) => (payroll.paymentMethod
-      ? `${payroll.paymentMethod}` : ''),
-    (payroll) => <PayrollReconciliationFilesDialog classes={classes} payroll={payroll} />,
-    (payroll) => <PaymentReconciliationSummaryDialog classes={classes} payrollDetail={payroll} />,
-  ];
+  const columns = payrollListColumns(modulesManager, [
+    {
+      key: 'name',
+      header: 'payroll.name',
+      sort: ['name', true],
+      formatter: (payroll) => payroll.name,
+    },
+    {
+      key: 'paymentPlan',
+      header: 'payroll.paymentPlan',
+      sort: ['paymentPlan', true],
+      formatter: (payroll) => (payroll.paymentPlan
+        ? `${payroll.paymentPlan.code} ${payroll.paymentPlan.name}` : ''),
+    },
+    {
+      key: 'status',
+      header: 'payroll.status',
+      sort: ['status', true],
+      formatter: (payroll) => <PayrollStatusChip status={payroll.status} />,
+    },
+    {
+      key: 'paymentMethod',
+      header: 'payroll.paymentMethod',
+      sort: ['paymentMethod', true],
+      formatter: (payroll) => (payroll.paymentMethod
+        ? `${payroll.paymentMethod}` : ''),
+    },
+    {
+      key: 'reconciliationFiles',
+      header: 'emptyLabel',
+      formatter: (payroll) => (
+        <PayrollReconciliationFilesDialog classes={classes} payroll={payroll} />
+      ),
+    },
+    {
+      key: 'summary',
+      header: 'emptyLabel',
+      formatter: (payroll) => (
+        <PaymentReconciliationSummaryDialog classes={classes} payrollDetail={payroll} />
+      ),
+    },
+  ]);
 
   const onDoubleClick = (payroll) => openPayroll(payroll);
 
@@ -112,10 +129,10 @@ function PayrollSearcherReconciled({
       fetchingItems={fetchingPayrolls}
       errorItems={errorPayrolls}
       tableTitle={formatMessageWithValues('payrollSearcher.results', { totalCount })}
-      headers={headers}
-      columnWidths={['28%', '24%', '16%', '16%', '64px', '64px']}
-      itemFormatters={itemFormatters}
-      sorts={sorts}
+      headers={columns.headers}
+      columnWidths={columns.columnWidths}
+      itemFormatters={columns.itemFormatters}
+      sorts={columns.sorts}
       rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
       defaultPageSize={DEFAULT_PAGE_SIZE}
       rowIdentifier={rowIdentifier}
