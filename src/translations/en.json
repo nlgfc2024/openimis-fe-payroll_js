@@ -31,6 +31,7 @@
   "payroll.payroll.taskCreated.message": "The payroll has been created and is awaiting reviewer approval.",
   "payroll.payroll.creationFailed.title": "Payroll was not created",
   "payroll.payroll.creationFailed.message": "The payroll creation request failed. Check the mutation details and try again.",
+  "payroll.payroll.defaultPaymentPlan.error": "The configured default payment plan could not be loaded. Verify the payroll module configuration.",
   "payroll.payroll.mutation.deleteLabel": "Delete Payroll {id}",
   "payroll.payroll.paymentPoint": "Payment Point",
   "payroll.paymentPoint.label": "Payment Point",

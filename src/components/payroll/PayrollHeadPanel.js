@@ -14,6 +14,7 @@ import {
 import FilterDialog from './FilterDialog';
 import PayrollStatusPicker from './PayrollStatusPicker';
 import PaymentMethodPicker from '../../pickers/PaymentMethodPicker';
+import { hiddenPayrollFormFields } from '../../utils/payroll-ui-config';
 
 const styles = (theme) => ({
   tableTitle: theme.table.title,
@@ -27,8 +28,13 @@ class PayrollHeadPanel extends FormPanel {
   render() {
     const {
       edited, classes, intl, readOnly, isPayrollFromFailedInvoices, benefitPlanId,
+      modulesManager,
     } = this.props;
     const payroll = { ...edited };
+    const hiddenFields = hiddenPayrollFormFields(modulesManager);
+    const showField = (field, value, required = false) => (
+      !hiddenFields.has(field) || (required && !readOnly && !value)
+    );
 
     let effectiveBenefitPlanId = benefitPlanId;
     if (!effectiveBenefitPlanId && payroll?.paymentPlan?.benefitPlan) {
@@ -40,28 +46,32 @@ class PayrollHeadPanel extends FormPanel {
     return (
       <>
         <Grid container className={classes.item}>
-          <Grid item xs={3} className={classes.item}>
-            <PublishedComponent
-              pubRef="contributionPlan.PaymentPlanPicker"
-              required
-              filterLabels={false}
-              onChange={(paymentPlan) => this.updateAttribute('paymentPlan', paymentPlan)}
-              value={payroll?.paymentPlan}
-              readOnly={readOnly}
-              benefitPlanId={effectiveBenefitPlanId}
-            />
-          </Grid>
-          <Grid item xs={3} className={classes.item}>
-            <PublishedComponent
-              pubRef="payroll.PaymentPointPicker"
-              withLabel
-              withPlaceholder
-              filterLabels={false}
-              onChange={(paymentPoint) => this.updateAttribute('paymentPoint', paymentPoint)}
-              value={payroll?.paymentPoint}
-              readOnly={readOnly}
-            />
-          </Grid>
+          {showField('paymentPlan', payroll?.paymentPlan, true) && (
+            <Grid item xs={3} className={classes.item}>
+              <PublishedComponent
+                pubRef="contributionPlan.PaymentPlanPicker"
+                required
+                filterLabels={false}
+                onChange={(paymentPlan) => this.updateAttribute('paymentPlan', paymentPlan)}
+                value={payroll?.paymentPlan}
+                readOnly={readOnly}
+                benefitPlanId={effectiveBenefitPlanId}
+              />
+            </Grid>
+          )}
+          {showField('paymentPoint', payroll?.paymentPoint) && (
+            <Grid item xs={3} className={classes.item}>
+              <PublishedComponent
+                pubRef="payroll.PaymentPointPicker"
+                withLabel
+                withPlaceholder
+                filterLabels={false}
+                onChange={(paymentPoint) => this.updateAttribute('paymentPoint', paymentPoint)}
+                value={payroll?.paymentPoint}
+                readOnly={readOnly}
+              />
+            </Grid>
+          )}
           <Grid item xs={3} className={classes.item}>
             <PublishedComponent
               pubRef="paymentCycle.PaymentCyclePicker"
@@ -74,7 +84,7 @@ class PayrollHeadPanel extends FormPanel {
               readOnly={isPayrollFromFailedInvoices ? !isPayrollFromFailedInvoices : readOnly}
             />
           </Grid>
-          {readOnly && !isPayrollFromFailedInvoices && (
+          {readOnly && !isPayrollFromFailedInvoices && showField('status', payroll?.status) && (
           <Grid item xs={3} className={classes.item}>
             <PayrollStatusPicker
               required
@@ -84,16 +94,18 @@ class PayrollHeadPanel extends FormPanel {
             />
           </Grid>
           )}
-          <Grid item xs={3} className={classes.item}>
-            <PaymentMethodPicker
-              required
-              withNull={false}
-              readOnly={readOnly}
-              value={!!payroll?.paymentMethod && payroll.paymentMethod}
-              onChange={(paymentMethod) => this.updateAttribute('paymentMethod', paymentMethod)}
-              label={formatMessage(intl, 'payroll', 'paymentMethod')}
-            />
-          </Grid>
+          {showField('paymentMethod', payroll?.paymentMethod, true) && (
+            <Grid item xs={3} className={classes.item}>
+              <PaymentMethodPicker
+                required
+                withNull={false}
+                readOnly={readOnly}
+                value={!!payroll?.paymentMethod && payroll.paymentMethod}
+                onChange={(paymentMethod) => this.updateAttribute('paymentMethod', paymentMethod)}
+                label={formatMessage(intl, 'payroll', 'paymentMethod')}
+              />
+            </Grid>
+          )}
           <Grid item xs={3} className={classes.item}>
             <PublishedComponent
               pubRef="core.DatePicker"

@@ -25,6 +25,7 @@ import {
   RIGHT_PAYROLL_SEARCH, ROWS_PER_PAGE_OPTIONS, PAYROLL_STATUS,
 } from '../../constants';
 import { mutationLabel, pageTitle } from '../../utils/string-utils';
+import { payrollListColumns } from '../../utils/payroll-ui-config';
 import { fetchPayrolls, deletePayrolls } from '../../actions';
 
 const useStyles = makeStyles(() => ({
@@ -110,23 +111,6 @@ function PayrollSearcher({
     prevSubmittingMutationRef.current = submittingMutation;
   });
 
-  const headers = () => [
-    'payroll.name',
-    'payroll.paymentPlan',
-    'payroll.status',
-    'payroll.paymentPoint',
-    'payroll.paymentMethod',
-    'emptyLabel',
-  ];
-
-  const sorts = () => [
-    ['name', true],
-    ['paymentPlan', true],
-    ['status', true],
-    ['paymentPoint', true],
-    ['paymentMethod', true],
-  ];
-
   const defaultFilters = () => ({
     isDeleted: {
       value: false,
@@ -144,21 +128,54 @@ function PayrollSearcher({
 
   const onDelete = (payroll) => setPayrollToDelete(payroll);
 
-  const itemFormatters = () => [
-    (payroll) => payroll.name,
-    (payroll) => (payroll.paymentPlan
-      ? `${payroll.paymentPlan.code} ${payroll.paymentPlan.name}` : ''),
-    (payroll) => <PayrollStatusChip status={payroll.status} />,
-    (payroll) => (payroll.paymentPoint
-      ? `${payroll.paymentPoint.name}` : ''),
-    (payroll) => (payroll.paymentMethod ? (
-      <Tooltip title={payroll.paymentMethod}>
-        <span className={classes.paymentMethod}>
-          {payroll.paymentMethod}
-        </span>
-      </Tooltip>
-    ) : ''),
-    (payroll) => (
+  const columns = payrollListColumns(modulesManager, [
+    {
+      key: 'name',
+      header: 'payroll.name',
+      sort: ['name', true],
+      width: '20%',
+      formatter: (payroll) => payroll.name,
+    },
+    {
+      key: 'paymentPlan',
+      header: 'payroll.paymentPlan',
+      sort: ['paymentPlan', true],
+      width: '20%',
+      formatter: (payroll) => (payroll.paymentPlan
+        ? `${payroll.paymentPlan.code} ${payroll.paymentPlan.name}` : ''),
+    },
+    {
+      key: 'status',
+      header: 'payroll.status',
+      sort: ['status', true],
+      width: '16%',
+      formatter: (payroll) => <PayrollStatusChip status={payroll.status} />,
+    },
+    {
+      key: 'paymentPoint',
+      header: 'payroll.paymentPoint',
+      sort: ['paymentPoint', true],
+      width: '16%',
+      formatter: (payroll) => (payroll.paymentPoint
+        ? `${payroll.paymentPoint.name}` : ''),
+    },
+    {
+      key: 'paymentMethod',
+      header: 'payroll.paymentMethod',
+      sort: ['paymentMethod', true],
+      formatter: (payroll) => (payroll.paymentMethod ? (
+        <Tooltip title={payroll.paymentMethod}>
+          <span className={classes.paymentMethod}>
+            {payroll.paymentMethod}
+          </span>
+        </Tooltip>
+      ) : ''),
+    },
+    {
+      key: 'actions',
+      header: 'emptyLabel',
+      width: '112px',
+      formatter: (payroll) => (
       <span className={classes.rowActions}>
         <Tooltip title={formatMessage('tooltip.viewDetails')}>
           <IconButton onClick={() => openPayroll(payroll)}>
@@ -174,8 +191,9 @@ function PayrollSearcher({
           </IconButton>
         </Tooltip>
       </span>
-    ),
-  ];
+      ),
+    },
+  ]);
 
   const onDoubleClick = (payroll) => openPayroll(payroll);
 
@@ -196,10 +214,10 @@ function PayrollSearcher({
       fetchingItems={fetchingPayrolls}
       errorItems={errorPayrolls}
       tableTitle={formatMessageWithValues('payrollSearcher.results', { totalCount })}
-      headers={headers}
-      columnWidths={['20%', '20%', '16%', '16%', undefined, '112px']}
-      itemFormatters={itemFormatters}
-      sorts={sorts}
+      headers={columns.headers}
+      columnWidths={columns.columnWidths}
+      itemFormatters={columns.itemFormatters}
+      sorts={columns.sorts}
       rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
       defaultPageSize={DEFAULT_PAGE_SIZE}
       rowIdentifier={rowIdentifier}
