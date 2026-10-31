@@ -137,7 +137,7 @@
   "payroll.benefitConsumption.payedOnTime": "Payed On Time",
   "payroll.benefitConsumption.paymentDate": "Payment Date",
   "payroll.paymentData.upload.label": "Upload Payment Data",
-  "payroll.reconciliationUpload.invalidFile": "Choose a CSV reconciliation file.",
+  "payroll.reconciliationUpload.invalidFile": "Choose the protected Excel reconciliation file (.xlsx).",
   "payroll.reconciliationUpload.processingFailed": "The reconciliation file could not be processed. Please correct the file and upload it again.",
   "payroll.reconciliationUpload.networkFailed": "The reconciliation file could not be processed. Please try again.",
   "payroll.reconciliationUpload.statusSummary": "Upload {status}. {total} total, {matched} matched, {paid} paid, {unpaid} unpaid, {unmatched} unmatched.",

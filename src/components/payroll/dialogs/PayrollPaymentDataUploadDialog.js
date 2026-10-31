@@ -82,7 +82,8 @@ function PayrollPaymentDataUploadDialog({
     const file = values?.file;
     if (!file) return;
     const fileFormat = file.type;
-    if (!file.name.toLowerCase().endsWith('.csv') && !fileFormat.includes('csv')) {
+    if (!file.name.toLowerCase().endsWith('.xlsx')
+      && fileFormat !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
       setFeedback({ severity: 'error', message: formatMessage('payroll.reconciliationUpload.invalidFile') });
       return;
     }
@@ -229,7 +230,7 @@ function PayrollPaymentDataUploadDialog({
                       required
                       id="import-button"
                       inputProps={{
-                        accept: '.csv, application/csv, text/csv',
+                        accept: '.xlsx, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                       }}
                       type="file"
                     />
