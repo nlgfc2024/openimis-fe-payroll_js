@@ -167,11 +167,11 @@ function ConsolidatePayrollsDialog({
           {error && <Grid item xs={12}><Typography color="error">{String(error)}</Typography></Grid>}
         </Grid>
         <Table size="small"><TableHead><TableRow>
-          <TableCell><Checkbox {...checkboxIcons} checked={allSelected} onChange={() => setSelected(allSelected ? [] : candidates.map((item) => item.id))} /></TableCell>
+          <TableCell><Checkbox {...checkboxIcons} checked={allSelected} inputProps={{ 'aria-label': formatMessage('payroll.consolidation.selectAll') }} onChange={() => setSelected(allSelected ? [] : candidates.map((item) => item.id))} /></TableCell>
           <TableCell>{formatMessage('payroll.name')}</TableCell><TableCell>{formatMessage('payroll.summary.beneficiaries')}</TableCell><TableCell>{formatMessage('payroll.amount')}</TableCell>
         </TableRow></TableHead><TableBody>
           {candidates.map((item) => <TableRow key={item.id}>
-            <TableCell><Checkbox {...checkboxIcons} checked={selected.includes(item.id)} onChange={() => toggle(item.id)} /></TableCell>
+            <TableCell><Checkbox {...checkboxIcons} checked={selected.includes(item.id)} inputProps={{ 'aria-label': item.name }} onChange={() => toggle(item.id)} /></TableCell>
             <TableCell>{item.name}</TableCell><TableCell>{item.benefitConsumption.length}</TableCell>
             <TableCell>{item.benefitConsumption.reduce((sum, benefit) => sum + Number(benefit.amount || 0), 0)}</TableCell>
           </TableRow>)}

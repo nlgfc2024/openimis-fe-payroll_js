@@ -6,10 +6,10 @@ import { MODULE_NAME, PAYROLL_PAYROLL_ROUTE, RIGHT_PAYROLL_SEARCH } from '../../
 export const CONSOLIDATED_PAYROLLS_TAB_VALUE = 'consolidatedPayrollsTab';
 
 export function ConsolidatedPayrollsTabLabel({
-  onChange, tabStyle, isSelected, modulesManager, isInTask,
+  onChange, tabStyle, isSelected, modulesManager, isInTask, payrollType,
 }) {
   const { formatMessage } = useTranslations(MODULE_NAME, modulesManager);
-  if (isInTask) return null;
+  if (isInTask || payrollType !== 'CONSOLIDATED') return null;
   return <Tab onChange={onChange} className={tabStyle(CONSOLIDATED_PAYROLLS_TAB_VALUE)} selected={isSelected(CONSOLIDATED_PAYROLLS_TAB_VALUE)} value={CONSOLIDATED_PAYROLLS_TAB_VALUE} label={formatMessage('payroll.consolidation.sourcePayrolls')} />;
 }
 
