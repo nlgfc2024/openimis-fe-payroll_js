@@ -24,6 +24,12 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(0.75, 0.5),
     whiteSpace: 'normal',
     lineHeight: 1.2,
+    overflowWrap: 'anywhere',
+    '& .MuiButton-label': {
+      whiteSpace: 'normal',
+      overflowWrap: 'anywhere',
+      wordBreak: 'normal',
+    },
   },
 }));
 
