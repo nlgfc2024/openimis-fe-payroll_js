@@ -90,7 +90,11 @@ function PayrollSearcherReconciled({
       ? `${payroll.paymentPlan.code} ${payroll.paymentPlan.name}` : ''),
     (payroll) => <PayrollStatusChip status={payroll.status} />,
     (payroll) => (payroll.paymentMethod
-      ? `${payroll.paymentMethod}` : ''),
+      ? (
+        <span style={{ display: 'block', overflowWrap: 'anywhere' }}>
+          {payroll.paymentMethod}
+        </span>
+      ) : ''),
     (payroll) => <PayrollReconciliationFilesDialog classes={classes} payroll={payroll} />,
     (payroll) => <PaymentReconciliationSummaryDialog classes={classes} payrollDetail={payroll} />,
   ];
@@ -113,7 +117,7 @@ function PayrollSearcherReconciled({
       errorItems={errorPayrolls}
       tableTitle={formatMessageWithValues('payrollSearcher.results', { totalCount })}
       headers={headers}
-      columnWidths={['28%', '24%', '16%', '16%', '64px', '64px']}
+      columnWidths={['16%', '19%', '11%', '18%', '18%', '18%']}
       itemFormatters={itemFormatters}
       sorts={sorts}
       rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}

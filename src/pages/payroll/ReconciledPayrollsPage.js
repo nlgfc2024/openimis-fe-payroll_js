@@ -18,8 +18,18 @@ const useStyles = makeStyles((theme) => ({
   page: theme.page,
   fab: theme.fab,
   button: {
-    margin: theme.spacing(1, 2, 1, 1),
-    whiteSpace: 'nowrap',
+    boxSizing: 'border-box',
+    width: '100%',
+    minWidth: 0,
+    padding: theme.spacing(0.75, 0.5),
+    whiteSpace: 'normal',
+    lineHeight: 1.2,
+    overflowWrap: 'anywhere',
+    '& .MuiButton-label': {
+      whiteSpace: 'normal',
+      overflowWrap: 'anywhere',
+      wordBreak: 'normal',
+    },
   },
 }));
 
