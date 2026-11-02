@@ -73,6 +73,7 @@ function PayrollTab({
               isSelected={isSelected}
               tabStyle={tabStyle}
               payrollUuid={payrollUuid}
+              payrollType={payroll?.payrollType}
               isInTask={isInTask}
               isPayrollFromFailedInvoices={isPayrollFromFailedInvoices}
             />
@@ -109,6 +110,7 @@ function PayrollTab({
         value={activeTab}
         setConfirmedAction={setConfirmedAction}
         payrollUuid={payrollUuid}
+        payrollType={payroll?.payrollType}
         isInTask={isInTask}
         isPayrollFromFailedInvoices={isPayrollFromFailedInvoices}
       />

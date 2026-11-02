@@ -141,7 +141,7 @@ function PayrollPage({
       } else {
         setEditedPayroll(payroll);
       }
-      if (!payrollUuid && payroll?.id && !isPayrollFromFailedInvoices) {
+      if (!taskPayrollUuid && !payrollUuid && payroll?.id && !isPayrollFromFailedInvoices) {
         const payrollRouteRef = modulesManager.getRef('payroll.route.payroll');
         history.replace(`/${payrollRouteRef}/${payroll.id}`);
       }

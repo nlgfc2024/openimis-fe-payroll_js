@@ -141,6 +141,7 @@
   "payroll.consolidation.title": "Create Consolidated Payroll",
   "payroll.consolidation.confirm": "Create Consolidated Payroll",
   "payroll.consolidation.loading": "Loading eligible approved payrolls…",
+  "payroll.consolidation.selectAll": "Select all eligible payrolls",
   "payroll.consolidation.creating": "Creating consolidated payroll…",
   "payroll.consolidation.createSuccess.title": "Consolidated payroll created",
   "payroll.consolidation.createSuccess.message": "Payroll for {district} was created successfully and is waiting for approval.",
