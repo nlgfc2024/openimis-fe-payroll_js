@@ -65,15 +65,9 @@ function BenefitConsumptionSearcher({
   ];
 
   const checkBenefitDueDate = (benefitConsumption) => {
-    if (!benefitConsumption.receipt) {
-      return ''; // return empty string if datePayed is null
-    }
-
-    return (
-      benefitConsumption
-      && benefitConsumption.dateDue
-      >= benefitConsumption.benefitAttachment[0].bill.datePayed)
-      ? 'True' : 'False';
+    const datePaid = benefitConsumption?.benefitAttachment?.[0]?.bill?.datePayed;
+    if (!benefitConsumption?.receipt || !benefitConsumption?.dateDue || !datePaid) return '';
+    return benefitConsumption.dateDue >= datePaid ? 'True' : 'False';
   };
 
   const itemFormatters = () => [
