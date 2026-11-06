@@ -99,7 +99,7 @@ class PayrollHeadPanel extends FormPanel {
                 required
                 withNull={false}
                 readOnly={readOnly}
-                value={!!payroll?.paymentMethod && payroll.paymentMethod}
+                value={payroll?.paymentMethod || null}
                 onChange={(paymentMethod) => this.updateAttribute('paymentMethod', paymentMethod)}
                 label={formatMessage(intl, 'payroll', 'paymentMethod')}
               />
