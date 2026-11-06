@@ -40,6 +40,21 @@ const useStyles = makeStyles((theme) => ({
   page: theme.page,
 }));
 
+const getPaymentPlanBenefitPlanId = (paymentPlan) => {
+  if (!paymentPlan?.benefitPlan) return null;
+  try {
+    return JSON.parse(JSON.parse(paymentPlan.benefitPlan))?.id ?? null;
+  } catch {
+    return null;
+  }
+};
+
+const showConfigurationAlert = (reportedErrors, coreAlert, formatMessage, key, message) => {
+  if (reportedErrors.current.has(key)) return;
+  reportedErrors.current.add(key);
+  coreAlert(formatMessage('payroll.payroll.configurationError.title'), message);
+};
+
 function PayrollPage({
   statePayrollUuid,
   taskPayrollUuid,
@@ -69,6 +84,7 @@ function PayrollPage({
   const [isPayrollFromFailedInvoices, setIsPayrollFromFailedInvoices] = useState(false);
   const [confirmedAction, setConfirmedAction] = useState(() => null);
   const prevSubmittingMutationRef = useRef();
+  const reportedConfigurationErrorsRef = useRef(new Set());
 
   const defaultPaymentPlanId = modulesManager.getConf(
     PAYROLL_CONFIG_MODULE,
@@ -86,6 +102,12 @@ function PayrollPage({
     null,
   );
   const isEditingExistingPayroll = !!(statePayrollUuid || taskPayrollUuid);
+  const isCreatingFromFailedInvoices = (
+    createPayrollFromFailedInvoices === PAYROLL_FROM_FAILED_INVOICES_URL_PARAM
+  );
+  const isNewPayroll = !isEditingExistingPayroll
+    && !isCreatingFromFailedInvoices
+    && !isPayrollFromFailedInvoices;
   const {
     data: defaultPaymentPlanData,
     error: defaultPaymentPlanError,
@@ -99,16 +121,54 @@ function PayrollPage({
       }
     }`,
     { id: defaultPaymentPlanId },
-    { skip: !defaultPaymentPlanId || isEditingExistingPayroll || isPayrollFromFailedInvoices },
+    { skip: !defaultPaymentPlanId || !isNewPayroll },
   );
   const defaultPaymentPlan = defaultPaymentPlanData?.paymentPlan?.edges?.[0]?.node;
+  const defaultPaymentPlanBenefitPlanId = getPaymentPlanBenefitPlanId(defaultPaymentPlan);
+  const isDefaultPaymentPlanValid = !!defaultPaymentPlan
+    && (!benefitPlanId || defaultPaymentPlanBenefitPlanId === benefitPlanId);
+  const {
+    data: defaultPaymentPointData,
+    error: defaultPaymentPointError,
+    isLoading: isLoadingDefaultPaymentPoint,
+  } = useGraphqlQuery(
+    `query ConfiguredDefaultPaymentPoint($id: ID!) {
+      paymentPoint(id: $id) {
+        edges {
+          node { id name }
+        }
+      }
+    }`,
+    { id: defaultPaymentPointId },
+    { skip: !defaultPaymentPointId || !isNewPayroll },
+  );
+  const defaultPaymentPoint = defaultPaymentPointData?.paymentPoint?.edges?.[0]?.node;
+  const {
+    data: paymentMethodsData,
+    error: paymentMethodsError,
+  } = useGraphqlQuery(
+    `query ConfiguredPaymentMethods {
+      paymentMethods {
+        paymentMethods { name }
+      }
+    }`,
+    {},
+    { skip: !defaultPaymentMethod || !isNewPayroll },
+  );
+  const configuredPaymentMethods = paymentMethodsData?.paymentMethods?.paymentMethods ?? [];
+  const isDefaultPaymentMethodValid = !!defaultPaymentMethod
+    && configuredPaymentMethods.some(({ name }) => name === defaultPaymentMethod);
 
   const back = () => history.goBack();
 
   useEffect(() => {
+    if (!isNewPayroll) return;
     if (defaultPaymentPlanError) {
-      coreAlert(
-        formatMessage('payroll.payroll.creationFailed.title'),
+      showConfigurationAlert(
+        reportedConfigurationErrorsRef,
+        coreAlert,
+        formatMessage,
+        `paymentPlan:${defaultPaymentPlanId}`,
         defaultPaymentPlanError.message
           || formatMessage('payroll.payroll.defaultPaymentPlan.error'),
       );
@@ -118,8 +178,11 @@ function PayrollPage({
       && !isLoadingDefaultPaymentPlan
       && !defaultPaymentPlan
     ) {
-      coreAlert(
-        formatMessage('payroll.payroll.creationFailed.title'),
+      showConfigurationAlert(
+        reportedConfigurationErrorsRef,
+        coreAlert,
+        formatMessage,
+        `paymentPlan:${defaultPaymentPlanId}`,
         formatMessage('payroll.payroll.defaultPaymentPlan.error'),
       );
     }
@@ -129,25 +192,87 @@ function PayrollPage({
     defaultPaymentPlanData,
     isLoadingDefaultPaymentPlan,
     defaultPaymentPlan,
+    isNewPayroll,
+    coreAlert,
+    formatMessage,
   ]);
 
   useEffect(() => {
-    if (isEditingExistingPayroll || isPayrollFromFailedInvoices) return;
+    if (!isNewPayroll) return;
+    if (defaultPaymentPointError) {
+      showConfigurationAlert(
+        reportedConfigurationErrorsRef,
+        coreAlert,
+        formatMessage,
+        `paymentPoint:${defaultPaymentPointId}`,
+        defaultPaymentPointError.message
+          || formatMessage('payroll.payroll.defaultPaymentPoint.error'),
+      );
+    } else if (
+      defaultPaymentPointId
+      && defaultPaymentPointData
+      && !isLoadingDefaultPaymentPoint
+      && !defaultPaymentPoint
+    ) {
+      showConfigurationAlert(
+        reportedConfigurationErrorsRef,
+        coreAlert,
+        formatMessage,
+        `paymentPoint:${defaultPaymentPointId}`,
+        formatMessage('payroll.payroll.defaultPaymentPoint.error'),
+      );
+    }
+  }, [
+    defaultPaymentPointError,
+    defaultPaymentPointId,
+    defaultPaymentPointData,
+    isLoadingDefaultPaymentPoint,
+    defaultPaymentPoint,
+    isNewPayroll,
+    coreAlert,
+    formatMessage,
+  ]);
+
+  useEffect(() => {
+    if (!defaultPaymentMethod || !isNewPayroll) return;
+    if (paymentMethodsError || (paymentMethodsData && !isDefaultPaymentMethodValid)) {
+      showConfigurationAlert(
+        reportedConfigurationErrorsRef,
+        coreAlert,
+        formatMessage,
+        `paymentMethod:${defaultPaymentMethod}`,
+        paymentMethodsError?.message
+          || formatMessage('payroll.payroll.defaultPaymentMethod.error'),
+      );
+    }
+  }, [
+    defaultPaymentMethod,
+    paymentMethodsData,
+    paymentMethodsError,
+    isDefaultPaymentMethodValid,
+    isNewPayroll,
+    coreAlert,
+    formatMessage,
+  ]);
+
+  useEffect(() => {
+    if (!isNewPayroll) return;
     setEditedPayroll((current) => ({
       ...current,
-      ...(defaultPaymentPlan && !current.paymentPlan
+      ...(isDefaultPaymentPlanValid && !current.paymentPlan
         ? { paymentPlan: defaultPaymentPlan } : {}),
-      ...(defaultPaymentMethod && !current.paymentMethod
+      ...(isDefaultPaymentMethodValid && !current.paymentMethod
         ? { paymentMethod: defaultPaymentMethod } : {}),
-      ...(defaultPaymentPointId && !current.paymentPoint
-        ? { paymentPoint: { id: defaultPaymentPointId } } : {}),
+      ...(defaultPaymentPoint && !current.paymentPoint
+        ? { paymentPoint: defaultPaymentPoint } : {}),
     }));
   }, [
     defaultPaymentPlan,
+    isDefaultPaymentPlanValid,
     defaultPaymentMethod,
-    defaultPaymentPointId,
-    isEditingExistingPayroll,
-    isPayrollFromFailedInvoices,
+    isDefaultPaymentMethodValid,
+    defaultPaymentPoint,
+    isNewPayroll,
   ]);
 
   useEffect(() => {
@@ -287,6 +412,9 @@ function PayrollPage({
         readOnly={readOnly}
         isPayrollFromFailedInvoices={isPayrollFromFailedInvoices}
         benefitPlanId={benefitPlanId}
+        canHideDefaultPaymentPlan={!isNewPayroll || isDefaultPaymentPlanValid}
+        canHideDefaultPaymentMethod={!isNewPayroll || isDefaultPaymentMethodValid}
+        canHideDefaultPaymentPoint={!isNewPayroll || !defaultPaymentPointId || !!defaultPaymentPoint}
       />
     </div>
     )

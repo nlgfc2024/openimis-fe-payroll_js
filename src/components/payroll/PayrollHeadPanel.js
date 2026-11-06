@@ -14,7 +14,6 @@ import {
 import FilterDialog from './FilterDialog';
 import PayrollStatusPicker from './PayrollStatusPicker';
 import PaymentMethodPicker from '../../pickers/PaymentMethodPicker';
-import { hiddenPayrollFormFields } from '../../utils/payroll-ui-config';
 
 const styles = (theme) => ({
   tableTitle: theme.table.title,
@@ -28,12 +27,12 @@ class PayrollHeadPanel extends FormPanel {
   render() {
     const {
       edited, classes, intl, readOnly, isPayrollFromFailedInvoices, benefitPlanId,
-      modulesManager,
+      modulesManager, canHideDefaultPaymentPlan, canHideDefaultPaymentMethod,
+      canHideDefaultPaymentPoint,
     } = this.props;
     const payroll = { ...edited };
-    const hiddenFields = hiddenPayrollFormFields(modulesManager);
-    const showField = (field, value, required = false) => (
-      !hiddenFields.has(field) || (required && !readOnly && !value)
+    const hideField = (field, canHide = true) => (
+      canHide && modulesManager.hideField('payroll', `payroll.form.${field}`)
     );
 
     let effectiveBenefitPlanId = benefitPlanId;
@@ -46,7 +45,7 @@ class PayrollHeadPanel extends FormPanel {
     return (
       <>
         <Grid container className={classes.item}>
-          {showField('paymentPlan', payroll?.paymentPlan, true) && (
+          {!hideField('paymentPlan', canHideDefaultPaymentPlan) && (
             <Grid item xs={3} className={classes.item}>
               <PublishedComponent
                 pubRef="contributionPlan.PaymentPlanPicker"
@@ -59,7 +58,7 @@ class PayrollHeadPanel extends FormPanel {
               />
             </Grid>
           )}
-          {showField('paymentPoint', payroll?.paymentPoint) && (
+          {!hideField('paymentPoint', canHideDefaultPaymentPoint) && (
             <Grid item xs={3} className={classes.item}>
               <PublishedComponent
                 pubRef="payroll.PaymentPointPicker"
@@ -84,7 +83,7 @@ class PayrollHeadPanel extends FormPanel {
               readOnly={isPayrollFromFailedInvoices ? !isPayrollFromFailedInvoices : readOnly}
             />
           </Grid>
-          {readOnly && !isPayrollFromFailedInvoices && showField('status', payroll?.status) && (
+          {readOnly && !isPayrollFromFailedInvoices && !hideField('status') && (
           <Grid item xs={3} className={classes.item}>
             <PayrollStatusPicker
               required
@@ -94,7 +93,7 @@ class PayrollHeadPanel extends FormPanel {
             />
           </Grid>
           )}
-          {showField('paymentMethod', payroll?.paymentMethod, true) && (
+          {!hideField('paymentMethod', canHideDefaultPaymentMethod) && (
             <Grid item xs={3} className={classes.item}>
               <PaymentMethodPicker
                 required

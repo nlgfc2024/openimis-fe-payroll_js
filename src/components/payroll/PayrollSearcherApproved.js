@@ -19,7 +19,6 @@ import {
 import { fetchPayrolls } from '../../actions';
 import PaymentApproveForPaymentSummary from './dialogs/PaymentApproveForPaymentSummary';
 import PayrollReconciliationFilesDialog from './dialogs/PayrollReconciliationFilesDialog';
-import { payrollListColumns } from '../../utils/payroll-ui-config';
 
 function PayrollSearcherApproved({
   fetchingPayrolls,
@@ -69,55 +68,36 @@ function PayrollSearcherApproved({
     `/${modulesManager.getRef(PAYROLL_PAYROLL_ROUTE)}/${payroll?.id}`,
   );
 
-  const columns = payrollListColumns(modulesManager, [
-    {
-      key: 'name',
-      header: 'payroll.name',
-      sort: ['name', true],
-      formatter: (payroll) => payroll.name,
-    },
-    {
-      key: 'paymentPlan',
-      header: 'payroll.paymentPlan',
-      sort: ['paymentPlan', true],
-      formatter: (payroll) => (payroll.paymentPlan
-        ? `${payroll.paymentPlan.code} ${payroll.paymentPlan.name}` : ''),
-    },
-    {
-      key: 'status',
-      header: 'payroll.status',
-      sort: ['status', true],
-      formatter: (payroll) => <PayrollStatusChip status={payroll.status} />,
-    },
-    {
-      key: 'paymentPoint',
-      header: 'payroll.paymentPoint',
-      sort: ['paymentPoint', true],
-      formatter: (payroll) => (payroll.paymentPoint
-        ? `${payroll.paymentPoint.name}` : ''),
-    },
-    {
-      key: 'paymentMethod',
-      header: 'payroll.paymentMethod',
-      sort: ['paymentMethod', true],
-      formatter: (payroll) => (payroll.paymentMethod
-        ? `${payroll.paymentMethod}` : ''),
-    },
-    {
-      key: 'reconciliationFiles',
-      header: 'emptyLabel',
-      formatter: (payroll) => (
-        <PayrollReconciliationFilesDialog classes={classes} payroll={payroll} />
-      ),
-    },
-    {
-      key: 'summary',
-      header: 'emptyLabel',
-      formatter: (payroll) => (
-        <PaymentApproveForPaymentSummary classes={classes} payrollDetail={payroll} />
-      ),
-    },
-  ]);
+  const headers = () => [
+    'payroll.name',
+    'payroll.paymentPlan',
+    'payroll.status',
+    'payroll.paymentPoint',
+    'payroll.paymentMethod',
+    'emptyLabel',
+    'emptyLabel',
+  ];
+
+  const sorts = () => [
+    ['name', true],
+    ['paymentPlan', true],
+    ['status', true],
+    ['paymentPoint', true],
+    ['paymentMethod', true],
+  ];
+
+  const itemFormatters = () => [
+    (payroll) => payroll.name,
+    (payroll) => (payroll.paymentPlan
+      ? `${payroll.paymentPlan.code} ${payroll.paymentPlan.name}` : ''),
+    (payroll) => <PayrollStatusChip status={payroll.status} />,
+    (payroll) => (payroll.paymentPoint
+      ? `${payroll.paymentPoint.name}` : ''),
+    (payroll) => (payroll.paymentMethod
+      ? `${payroll.paymentMethod}` : ''),
+    (payroll) => <PayrollReconciliationFilesDialog classes={classes} payroll={payroll} />,
+    (payroll) => <PaymentApproveForPaymentSummary classes={classes} payrollDetail={payroll} />,
+  ];
 
   const onDoubleClick = (payroll) => openPayroll(payroll);
 
@@ -136,10 +116,9 @@ function PayrollSearcherApproved({
       fetchingItems={fetchingPayrolls}
       errorItems={errorPayrolls}
       tableTitle={formatMessageWithValues('payrollSearcher.results', { totalCount })}
-      headers={columns.headers}
-      columnWidths={columns.columnWidths}
-      itemFormatters={columns.itemFormatters}
-      sorts={columns.sorts}
+      headers={headers}
+      itemFormatters={itemFormatters}
+      sorts={sorts}
       rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
       defaultPageSize={DEFAULT_PAGE_SIZE}
       rowIdentifier={rowIdentifier}
