@@ -110,23 +110,6 @@ function PayrollSearcher({
     prevSubmittingMutationRef.current = submittingMutation;
   });
 
-  const headers = () => [
-    'payroll.name',
-    'payroll.paymentPlan',
-    'payroll.status',
-    'payroll.paymentPoint',
-    'payroll.paymentMethod',
-    'emptyLabel',
-  ];
-
-  const sorts = () => [
-    ['name', true],
-    ['paymentPlan', true],
-    ['status', true],
-    ['paymentPoint', true],
-    ['paymentMethod', true],
-  ];
-
   const defaultFilters = () => ({
     isDeleted: {
       value: false,
@@ -143,6 +126,23 @@ function PayrollSearcher({
   );
 
   const onDelete = (payroll) => setPayrollToDelete(payroll);
+
+  const headers = () => [
+    'payroll.name',
+    'payroll.paymentPlan',
+    'payroll.status',
+    'payroll.paymentPoint',
+    'payroll.paymentMethod',
+    'emptyLabel',
+  ];
+
+  const sorts = () => [
+    ['name', true],
+    ['paymentPlan', true],
+    ['status', true],
+    ['paymentPoint', true],
+    ['paymentMethod', true],
+  ];
 
   const itemFormatters = () => [
     (payroll) => payroll.name,
