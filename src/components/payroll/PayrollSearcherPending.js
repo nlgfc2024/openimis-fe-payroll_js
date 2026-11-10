@@ -49,6 +49,24 @@ function PayrollSearcherPending({
     prevSubmittingMutationRef.current = submittingMutation;
   });
 
+  const headers = () => [
+    'payroll.name',
+    'payroll.paymentPlan',
+    'payroll.status',
+    'payroll.paymentPoint',
+    'payroll.paymentMethod',
+    'emptyLabel',
+    'emptyLabel',
+  ];
+
+  const sorts = () => [
+    ['name', true],
+    ['paymentPlan', true],
+    ['status', true],
+    ['paymentPoint', true],
+    ['paymentMethod', true],
+  ];
+
   const defaultFilters = () => ({
     isDeleted: {
       value: false,
@@ -67,24 +85,6 @@ function PayrollSearcherPending({
   const openPayroll = (payroll) => rights.includes(RIGHT_PAYROLL_SEARCH) && history.push(
     `/${modulesManager.getRef(PAYROLL_PAYROLL_ROUTE)}/${payroll?.id}`,
   );
-
-  const headers = () => [
-    'payroll.name',
-    'payroll.paymentPlan',
-    'payroll.status',
-    'payroll.paymentPoint',
-    'payroll.paymentMethod',
-    'emptyLabel',
-    'emptyLabel',
-  ];
-
-  const sorts = () => [
-    ['name', true],
-    ['paymentPlan', true],
-    ['status', true],
-    ['paymentPoint', true],
-    ['paymentMethod', true],
-  ];
 
   const itemFormatters = () => [
     (payroll) => payroll.name,

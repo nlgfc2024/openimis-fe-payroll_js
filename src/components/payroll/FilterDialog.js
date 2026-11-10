@@ -196,7 +196,7 @@ function FilterDialog({
     <>
       <div className={classes.section}>
         <div className={classes.item}>
-          <Typography variant="body1" color="textSecondary">
+          <Typography variant="subtitle2">
             {formatMessage(intl, 'payroll', 'payroll.filterCriteria')}
           </Typography>
           { readOnly
@@ -208,7 +208,6 @@ function FilterDialog({
         <Grid item xs={4} className={classes.item}>
           <PublishedComponent
             pubRef="location.MwDistrictPicker"
-            withLabel
             value={district}
             onChange={handleDistrictChange}
             readOnly={readOnly}
@@ -238,7 +237,7 @@ function FilterDialog({
 
       <div className={classes.section}>
         <div className={classes.item}>
-          <Typography variant="body1" color="textSecondary">
+          <Typography variant="subtitle2">
             {formatMessage(intl, 'contributionPlan', 'paymentPlan.advancedCriteria')}
           </Typography>
           {!readOnly && (

@@ -280,6 +280,9 @@ function PayrollPage({
     isLoadingDefaultPaymentPoint,
     defaultPaymentPoint,
     isNewPayroll,
+    benefitPlanId,
+    statePayrollUuid,
+    taskPayrollUuid,
   ]);
 
   useEffect(() => {
@@ -416,7 +419,7 @@ function PayrollPage({
         benefitPlanId={benefitPlanId}
         canHideDefaultPaymentPlan={!isNewPayroll || isDefaultPaymentPlanValid}
         canHideDefaultPaymentMethod={!isNewPayroll || isDefaultPaymentMethodValid}
-        canHideDefaultPaymentPoint={!isNewPayroll || !defaultPaymentPointId || !!defaultPaymentPoint}
+        canHideDefaultPaymentPoint={!isNewPayroll || !defaultPaymentPointId}
       />
     </div>
     )

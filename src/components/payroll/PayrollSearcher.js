@@ -110,23 +110,6 @@ function PayrollSearcher({
     prevSubmittingMutationRef.current = submittingMutation;
   });
 
-  const defaultFilters = () => ({
-    isDeleted: {
-      value: false,
-      filter: 'isDeleted: false',
-    },
-  });
-
-  const fetch = (params) => fetchPayrolls(modulesManager, params);
-
-  const rowIdentifier = (payroll) => payroll.id;
-
-  const openPayroll = (payroll) => rights.includes(RIGHT_PAYROLL_SEARCH) && history.push(
-    `/${modulesManager.getRef(PAYROLL_PAYROLL_ROUTE)}/${payroll?.id}`,
-  );
-
-  const onDelete = (payroll) => setPayrollToDelete(payroll);
-
   const headers = () => [
     'payroll.name',
     'payroll.paymentPlan',
@@ -143,6 +126,23 @@ function PayrollSearcher({
     ['paymentPoint', true],
     ['paymentMethod', true],
   ];
+
+  const defaultFilters = () => ({
+    isDeleted: {
+      value: false,
+      filter: 'isDeleted: false',
+    },
+  });
+
+  const fetch = (params) => fetchPayrolls(modulesManager, params);
+
+  const rowIdentifier = (payroll) => payroll.id;
+
+  const openPayroll = (payroll) => rights.includes(RIGHT_PAYROLL_SEARCH) && history.push(
+    `/${modulesManager.getRef(PAYROLL_PAYROLL_ROUTE)}/${payroll?.id}`,
+  );
+
+  const onDelete = (payroll) => setPayrollToDelete(payroll);
 
   const itemFormatters = () => [
     (payroll) => payroll.name,
