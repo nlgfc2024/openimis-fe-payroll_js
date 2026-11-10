@@ -14,6 +14,7 @@ import {
 import FilterDialog from './FilterDialog';
 import PayrollStatusPicker from './PayrollStatusPicker';
 import PaymentMethodPicker from '../../pickers/PaymentMethodPicker';
+import { getPaymentPlanBenefitPlan } from '../../utils/payroll-utils';
 
 const styles = (theme) => ({
   tableTitle: theme.table.title,
@@ -27,21 +28,16 @@ class PayrollHeadPanel extends FormPanel {
   render() {
     const {
       edited, classes, intl, readOnly, isPayrollFromFailedInvoices, benefitPlanId,
-      modulesManager, canHideDefaultPaymentPlan, canHideDefaultPaymentMethod,
-      canHideDefaultPaymentPoint,
+      modulesManager, canHideDefaultPaymentPlan = false, canHideDefaultPaymentMethod = false,
+      canHideDefaultPaymentPoint = false,
     } = this.props;
     const payroll = { ...edited };
     const hideField = (field, canHide = true) => (
       canHide && modulesManager.hideField('payroll', `payroll.form.${field}`)
     );
 
-    let effectiveBenefitPlanId = benefitPlanId;
-    if (!effectiveBenefitPlanId && payroll?.paymentPlan?.benefitPlan) {
-      const benefitPlan = JSON.parse(payroll.paymentPlan.benefitPlan);
-      if (benefitPlan) {
-        effectiveBenefitPlanId = JSON.parse(benefitPlan)?.id;
-      }
-    }
+    const benefitPlan = getPaymentPlanBenefitPlan(payroll?.paymentPlan);
+    const effectiveBenefitPlanId = benefitPlanId || benefitPlan?.id;
     return (
       <>
         <Grid container className={classes.item}>
@@ -131,9 +127,7 @@ class PayrollHeadPanel extends FormPanel {
         <Divider />
         {!isPayrollFromFailedInvoices && (
           <FilterDialog
-            object={payroll?.paymentPlan?.benefitPlan
-              ? JSON.parse(JSON.parse(payroll.paymentPlan.benefitPlan))
-              : null}
+            object={benefitPlan}
             objectToSave={payroll}
             moduleName="social_protection"
             objectType="BenefitPlan"
