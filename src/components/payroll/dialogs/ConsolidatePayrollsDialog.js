@@ -3,9 +3,9 @@ import {
   Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Table, TableBody,
   TableCell, TableHead, TableRow, Typography,
 } from '@material-ui/core';
+import { useTheme } from '@material-ui/core/styles';
 import {
   Autocomplete,
-  decodeId,
   PublishedComponent,
   SearcherActionButton,
   showPageFeedback,
@@ -23,10 +23,6 @@ import { createConsolidatedPayroll } from '../../../actions';
 import { MODULE_NAME } from '../../../constants';
 
 const EMPTY_UUID = '00000000-0000-0000-0000-000000000000';
-const checkboxIcons = {
-  icon: <CheckBoxOutlineBlankIcon style={{ color: '#1b5e20' }} />,
-  checkedIcon: <CheckBoxIcon style={{ color: '#1b5e20' }} />,
-};
 
 function ConsolidatePayrollsDialog({
   createConsolidatedPayroll,
@@ -35,6 +31,11 @@ function ConsolidatePayrollsDialog({
   buttonClassName,
   buttonSize = 'medium',
 }) {
+  const theme = useTheme();
+  const checkboxIcons = {
+    icon: <CheckBoxOutlineBlankIcon style={{ color: theme.palette.primary.main }} />,
+    checkedIcon: <CheckBoxIcon style={{ color: theme.palette.primary.main }} />,
+  };
   const modulesManager = useModulesManager();
   const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
   const [open, setOpen] = useState(false);
@@ -58,7 +59,8 @@ function ConsolidatePayrollsDialog({
   const { data, isLoading, error } = useGraphqlQuery(
     `query ConsolidationCandidates($districtId: UUID!, $benefitPlanId: UUID!, $skipCandidates: Boolean!) {
       consolidationCandidates(districtId: $districtId, benefitPlanId: $benefitPlanId) @skip(if: $skipCandidates) {
-        id name paymentMethod status benefitConsumption { id amount }
+        id name paymentMethod paymentCycle { code } status
+        benefitConsumption { id amount }
       }
     }`,
     {
@@ -74,9 +76,12 @@ function ConsolidatePayrollsDialog({
   const toggle = (id) => setSelected((current) => (current.includes(id)
     ? current.filter((item) => item !== id) : [...current, id]));
   const allSelected = candidates.length > 0 && selected.length === candidates.length;
-  const total = candidates.filter((item) => selected.includes(item.id)).reduce(
-    (sum, item) => sum + item.benefitConsumption.reduce((amount, benefit) => amount + Number(benefit.amount || 0), 0), 0,
-  );
+  const total = candidates
+    .filter((item) => selected.includes(item.id))
+    .reduce((sum, item) => sum + item.benefitConsumption.reduce(
+      (amount, benefit) => amount + Number(benefit.amount || 0),
+      0,
+    ), 0);
   const create = async () => {
     try {
       setIsCreating(true);
@@ -85,12 +90,10 @@ function ConsolidatePayrollsDialog({
         'Create consolidated payroll',
       );
       if (response?.error || response?.payload?.errors?.length) {
-        const error = response?.error || response?.payload?.errors?.[0];
         showPageFeedback({
           severity: 'error',
           title: formatMessage('payroll.consolidation.createFailure.title'),
-          message: error?.message || error?.detail
-            || formatMessage('payroll.consolidation.createFailure.message'),
+          message: formatMessage('payroll.consolidation.createFailure.message'),
         });
         return;
       }
@@ -101,8 +104,7 @@ function ConsolidatePayrollsDialog({
         showPageFeedback({
           severity: 'error',
           title: formatMessage('payroll.consolidation.createFailure.title'),
-          message: result?.error?.message || result?.error?.detail
-            || formatMessage('payroll.consolidation.createFailure.message'),
+          message: formatMessage('payroll.consolidation.createFailure.message'),
         });
         return;
       }
@@ -117,71 +119,149 @@ function ConsolidatePayrollsDialog({
       });
       setOpen(false);
       setSelected([]);
-    } catch (error) {
+    } catch {
       showPageFeedback({
         severity: 'error',
         title: formatMessage('payroll.consolidation.createFailure.title'),
-        message: error?.message || formatMessage('payroll.consolidation.createFailure.message'),
+        message: formatMessage('payroll.consolidation.createFailure.message'),
       });
     } finally {
       setIsCreating(false);
     }
   };
-  return <>
-    <SearcherActionButton
-      onClick={() => setOpen(true)}
-      startIcon={<AddIcon />}
-      label={formatMessage('payroll.consolidation.create')}
-      variant="contained"
-      color="primary"
-      size={buttonSize}
-      className={buttonClassName}
-      borderless={false}
-    />
-    <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="md">
-      <DialogTitle>{formatMessage('payroll.consolidation.title')}</DialogTitle>
-      <DialogContent>
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <PublishedComponent
-              pubRef="location.MwDistrictPicker"
-              value={district}
-              onChange={setDistrict}
-            />
+  return (
+    <>
+      <SearcherActionButton
+        onClick={() => setOpen(true)}
+        startIcon={<AddIcon />}
+        label={formatMessage('payroll.consolidation.create')}
+        variant="contained"
+        color="primary"
+        size={buttonSize}
+        className={buttonClassName}
+        borderless={false}
+      />
+      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="md">
+        <DialogTitle>{formatMessage('payroll.consolidation.title')}</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <PublishedComponent
+                pubRef="location.MwDistrictPicker"
+                value={district}
+                onChange={setDistrict}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Autocomplete
+                withLabel
+                required
+                label={formatMessage('payroll.payroll.benefitPlan')}
+                placeholder={formatMessageWithValues(
+                  'payroll.consolidation.selectBenefitPlan',
+                  { benefitPlan: formatMessage('payroll.payroll.benefitPlan') },
+                )}
+                options={phases}
+                value={benefitPlan}
+                onChange={setBenefitPlan}
+                onInputChange={() => {}}
+                isLoading={phasesLoading}
+                getOptionLabel={(phase) => `${phase.code} - ${phase.name}`}
+              />
+            </Grid>
+            {phasesError && (
+              <Grid item xs={12}>
+                <Typography color="error">
+                  {formatMessage('payroll.consolidation.loadPhases.error')}
+                </Typography>
+              </Grid>
+            )}
+            {error && (
+              <Grid item xs={12}>
+                <Typography color="error">
+                  {formatMessage('payroll.consolidation.loadCandidates.error')}
+                </Typography>
+              </Grid>
+            )}
           </Grid>
-          <Grid item xs={12}>
-            <Autocomplete
-              withLabel
-              required
-              label="Phase"
-              placeholder="Select a Phase"
-              options={phases}
-              value={benefitPlan}
-              onChange={setBenefitPlan}
-              onInputChange={() => {}}
-              isLoading={phasesLoading}
-              getOptionLabel={(phase) => `${phase.code} - ${phase.name}`}
-            />
-          </Grid>
-          {phasesError && <Grid item xs={12}><Typography color="error">{String(phasesError)}</Typography></Grid>}
-          {error && <Grid item xs={12}><Typography color="error">{String(error)}</Typography></Grid>}
-        </Grid>
-        <Table size="small"><TableHead><TableRow>
-          <TableCell><Checkbox {...checkboxIcons} checked={allSelected} inputProps={{ 'aria-label': formatMessage('payroll.consolidation.selectAll') }} onChange={() => setSelected(allSelected ? [] : candidates.map((item) => item.id))} /></TableCell>
-          <TableCell>{formatMessage('payroll.name')}</TableCell><TableCell>{formatMessage('payroll.summary.beneficiaries')}</TableCell><TableCell>{formatMessage('payroll.amount')}</TableCell>
-        </TableRow></TableHead><TableBody>
-          {candidates.map((item) => <TableRow key={item.id}>
-            <TableCell><Checkbox {...checkboxIcons} checked={selected.includes(item.id)} inputProps={{ 'aria-label': item.name }} onChange={() => toggle(item.id)} /></TableCell>
-            <TableCell>{item.name}</TableCell><TableCell>{item.benefitConsumption.length}</TableCell>
-            <TableCell>{item.benefitConsumption.reduce((sum, benefit) => sum + Number(benefit.amount || 0), 0)}</TableCell>
-          </TableRow>)}
-        </TableBody></Table>
-        {isLoading && <Typography>{formatMessage('payroll.consolidation.loading')}</Typography>}
-        <Typography>{formatMessageWithValues('payroll.consolidation.selected', { count: selected.length, amount: total })}</Typography>
-      </DialogContent>
-      <DialogActions><Button onClick={() => setOpen(false)} disabled={isCreating}>{formatMessage('payroll.summary.close')}</Button><Button color="primary" disabled={!selected.length || isCreating} onClick={create}>{formatMessage(isCreating ? 'payroll.consolidation.creating' : 'payroll.consolidation.confirm')}</Button></DialogActions>
-    </Dialog>
-  </>;
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>
+                  <Checkbox
+                    icon={checkboxIcons.icon}
+                    checkedIcon={checkboxIcons.checkedIcon}
+                    checked={allSelected}
+                    inputProps={{ 'aria-label': formatMessage('payroll.consolidation.selectAll') }}
+                    onChange={() => setSelected(
+                      allSelected ? [] : candidates.map((item) => item.id),
+                    )}
+                  />
+                </TableCell>
+                <TableCell>{formatMessage('payroll.name')}</TableCell>
+                <TableCell>{formatMessage('payroll.payroll.paymentCycle')}</TableCell>
+                <TableCell>{formatMessage('payroll.paymentMethod')}</TableCell>
+                <TableCell>{formatMessage('payroll.summary.beneficiaries')}</TableCell>
+                <TableCell>{formatMessage('payroll.amount')}</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {candidates.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>
+                    <Checkbox
+                      icon={checkboxIcons.icon}
+                      checkedIcon={checkboxIcons.checkedIcon}
+                      checked={selected.includes(item.id)}
+                      inputProps={{ 'aria-label': item.name }}
+                      onChange={() => toggle(item.id)}
+                    />
+                  </TableCell>
+                  <TableCell>{item.name}</TableCell>
+                  <TableCell>
+                    {item.paymentCycle?.code
+                      || formatMessage('payroll.reconciliationUpload.notAvailable')}
+                  </TableCell>
+                  <TableCell>
+                    {item.paymentMethod
+                      || formatMessage('payroll.reconciliationUpload.notAvailable')}
+                  </TableCell>
+                  <TableCell>{item.benefitConsumption.length}</TableCell>
+                  <TableCell>
+                    {item.benefitConsumption.reduce(
+                      (sum, benefit) => sum + Number(benefit.amount || 0),
+                      0,
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          {isLoading && <Typography>{formatMessage('payroll.consolidation.loading')}</Typography>}
+          <Typography>
+            {formatMessageWithValues('payroll.consolidation.selected', {
+              count: selected.length,
+              amount: total,
+            })}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)} disabled={isCreating}>
+            {formatMessage('payroll.summary.close')}
+          </Button>
+          <Button
+            color="primary"
+            disabled={!selected.length || isCreating}
+            onClick={create}
+          >
+            {formatMessage(isCreating
+              ? 'payroll.consolidation.creating'
+              : 'payroll.consolidation.confirm')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
 }
 export default connect(null, (dispatch) => bindActionCreators({
   createConsolidatedPayroll,

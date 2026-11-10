@@ -97,6 +97,7 @@ function PayrollTab({
                 && (
                 <PayrollPaymentDataUploadDialog
                   payrollUuid={payrollUuid}
+                  payrollType={payroll.payrollType}
                   onUploadResult={() => setReconciliationRevision((revision) => revision + 1)}
                 />
                 )}

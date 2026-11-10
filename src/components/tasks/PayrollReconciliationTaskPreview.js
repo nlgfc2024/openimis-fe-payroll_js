@@ -9,6 +9,7 @@ import {
   TableRow,
   Typography,
 } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import {
@@ -17,6 +18,14 @@ import {
 import { fetchReconciliationUploadRows } from '../../actions';
 import { MODULE_NAME } from '../../constants';
 import PayrollPage from '../../pages/payroll/PayrollPage';
+
+const useStyles = makeStyles((theme) => ({
+  sourcePayrollCell: {
+    maxWidth: theme.spacing(27.5),
+    whiteSpace: 'normal',
+    overflowWrap: 'anywhere',
+  },
+}));
 
 const parseJson = (value) => {
   if (typeof value !== 'string') return value;
@@ -52,6 +61,7 @@ function PayrollReconciliationTaskPreview({
   error,
   fetchReconciliationUploadRows,
 }) {
+  const classes = useStyles();
   const modulesManager = useModulesManager();
   const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
   const data = taskData(task);
@@ -187,19 +197,18 @@ function PayrollReconciliationTaskPreview({
                   <TableCell>{submittedValue(row, 'individual__last_name')}</TableCell>
                   <TableCell>{row.nationalId || submittedValue(row, 'individual__json_ext__national_id')}</TableCell>
                   <TableCell>{row.code || submittedValue(row, 'code')}</TableCell>
-                  <TableCell style={{
-                    maxWidth: 220,
-                    whiteSpace: 'normal',
-                    overflowWrap: 'anywhere',
-                  }}
-                  >
+                  <TableCell className={classes.sourcePayrollCell}>
                     {submittedValue(row, 'Source Payroll')}
                   </TableCell>
                   <TableCell>{submittedValue(row, 'amount')}</TableCell>
                   <TableCell>{submittedValue(row, 'amount_received', 'Amount Received')}</TableCell>
                   <TableCell>{submittedValue(row, 'Paid')}</TableCell>
                   <TableCell>{submittedValue(row, 'receipt')}</TableCell>
-                  <TableCell>{row.status}: {mismatchReasons(row.mismatchReasons)}</TableCell>
+                  <TableCell>
+                    {row.status}
+                    :
+                    {mismatchReasons(row.mismatchReasons)}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
