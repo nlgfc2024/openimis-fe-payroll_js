@@ -73,6 +73,7 @@ function PayrollTab({
               isSelected={isSelected}
               tabStyle={tabStyle}
               payrollUuid={payrollUuid}
+              payrollType={payroll?.payrollType}
               isInTask={isInTask}
               isPayrollFromFailedInvoices={isPayrollFromFailedInvoices}
             />
@@ -96,6 +97,7 @@ function PayrollTab({
                 && (
                 <PayrollPaymentDataUploadDialog
                   payrollUuid={payrollUuid}
+                  payrollType={payroll.payrollType}
                   onUploadResult={() => setReconciliationRevision((revision) => revision + 1)}
                 />
                 )}
@@ -109,6 +111,7 @@ function PayrollTab({
         value={activeTab}
         setConfirmedAction={setConfirmedAction}
         payrollUuid={payrollUuid}
+        payrollType={payroll?.payrollType}
         isInTask={isInTask}
         isPayrollFromFailedInvoices={isPayrollFromFailedInvoices}
       />
