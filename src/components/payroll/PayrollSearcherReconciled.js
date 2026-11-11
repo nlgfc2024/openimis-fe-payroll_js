@@ -91,7 +91,7 @@ function PayrollSearcherReconciled({
     (payroll) => <PayrollStatusChip status={payroll.status} />,
     (payroll) => (payroll.paymentMethod
       ? (
-        <span style={{ display: 'block', overflowWrap: 'anywhere' }}>
+        <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
           {payroll.paymentMethod}
         </span>
       ) : ''),

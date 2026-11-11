@@ -33,8 +33,8 @@ function ConsolidatePayrollsDialog({
 }) {
   const theme = useTheme();
   const checkboxIcons = {
-    icon: <CheckBoxOutlineBlankIcon style={{ color: theme.palette.primary.main }} />,
-    checkedIcon: <CheckBoxIcon style={{ color: theme.palette.primary.main }} />,
+    icon: <CheckBoxOutlineBlankIcon color="primary" />,
+    checkedIcon: <CheckBoxIcon color="primary" />,
   };
   const modulesManager = useModulesManager();
   const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
