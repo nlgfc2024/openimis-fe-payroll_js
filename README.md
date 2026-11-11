@@ -67,10 +67,12 @@ Payment plan and payment method are required to create a payroll. To hide these
 form fields during creation, provide `defaultPaymentPlanId` and
 `defaultPaymentMethod`; each default is loaded and validated before the field is
 hidden. The payment plan must be active, not deleted, and belong to the Phase
-in the payroll URL (when one is selected). An invalid or mismatched default
+selected in the current payroll creation context. An invalid or mismatched default
 leaves the picker visible and reports a configuration issue. Use payment
 method names supported by the instance's `paymentMethods` query. The payment
 point is optional; when `defaultPaymentPointId` is set, the complete point is
-loaded from the backend and must not be deleted before being used. Payment
-cycle and valid-from/to dates remain visible and required. Omitting these
-settings preserves the existing form and list behavior.
+loaded from the backend and must not be deleted before being used. Note that
+`payroll.form.paymentPoint` cannot hide the field while `defaultPaymentPointId`
+is configured, as the field remains visible and editable. Payment cycle and
+valid-from/to dates remain visible and required. Omitting these settings
+preserves the existing form and list behavior.
