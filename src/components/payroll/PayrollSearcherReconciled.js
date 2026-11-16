@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
+import { makeStyles } from '@material-ui/styles';
 
 import {
   Searcher,
@@ -20,6 +21,14 @@ import { fetchPayrolls } from '../../actions';
 import PaymentReconciliationSummaryDialog from './dialogs/PaymentReconciliationSummaryDialog';
 import PayrollReconciliationFilesDialog from './dialogs/PayrollReconciliationFilesDialog';
 
+const useStyles = makeStyles(() => ({
+  paymentMethod: {
+    display: 'block',
+    maxWidth: '100%',
+    overflowWrap: 'anywhere',
+  },
+}));
+
 function PayrollSearcherReconciled({
   fetchingPayrolls,
   fetchedPayrolls,
@@ -32,6 +41,7 @@ function PayrollSearcherReconciled({
   mutation,
   classes,
 }) {
+  const localClasses = useStyles();
   const history = useHistory();
   const modulesManager = useModulesManager();
   const { formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
@@ -91,7 +101,7 @@ function PayrollSearcherReconciled({
     (payroll) => <PayrollStatusChip status={payroll.status} />,
     (payroll) => (payroll.paymentMethod
       ? (
-        <span style={{ display: 'block', overflowWrap: 'anywhere' }}>
+        <span className={localClasses.paymentMethod}>
           {payroll.paymentMethod}
         </span>
       ) : ''),

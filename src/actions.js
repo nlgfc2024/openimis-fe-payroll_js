@@ -70,13 +70,14 @@ const BENEFIT_ATTACHMENT_PROJECTION = () => [
 
 const PAYROLL_PROJECTION = (modulesManager) => [
   'id',
+  'payrollType',
   'name',
   'paymentMethod',
   'paymentPlan { code, id, name, benefitPlan }',
   `paymentPoint { ${PAYMENT_POINT_PROJECTION(modulesManager).join(' ')} }`,
   'paymentCycle { code, startDate, endDate }',
   // eslint-disable-next-line max-len
-  'benefitConsumption{id, status, code, dateDue, receipt, individual {firstName, lastName}, benefitAttachment{bill{id, code, terms, amountTotal}}}',
+  'benefitConsumption{id, status, code, dateDue, receipt, amount, individual {firstName, lastName}, benefitAttachment{bill{id, code, terms, amountTotal}}}',
   'jsonExt',
   'status',
   'dateValidFrom',
@@ -86,6 +87,7 @@ const PAYROLL_PROJECTION = (modulesManager) => [
 
 const PAYROLL_SEARCHER_PROJECTION = (modulesManager) => [
   'id',
+  'payrollType',
   'name',
   'paymentMethod',
   'paymentPlan { code, id, name, benefitPlan }',
@@ -276,6 +278,18 @@ export function createPayroll(payroll, clientMutationLabel) {
     MUTATION_SERVICE.PAYROLL.CREATE,
     formatPayrollGQL(payroll),
     ACTION_TYPE.CREATE_PAYROLL,
+    clientMutationLabel,
+  );
+}
+
+export function createConsolidatedPayroll(payload, clientMutationLabel) {
+  const input = `districtId: "${payload.district.uuid}"
+    benefitPlanId: "${payload.benefitPlan.uuid}"
+    sourcePayrollIds: [${payload.sourcePayrollIds.map((id) => `"${decodeId(id)}"`).join(', ')}]`;
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.PAYROLL.CREATE_CONSOLIDATED,
+    input,
+    ACTION_TYPE.CREATE_CONSOLIDATED_PAYROLL,
     clientMutationLabel,
   );
 }

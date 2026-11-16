@@ -27,6 +27,7 @@ import {
   PayrollReconciliationTaskTableHeaders,
 } from './components/tasks/PayrollReconciliationTasks';
 import PayrollReconciliationTaskPreview from './components/tasks/PayrollReconciliationTaskPreview';
+import PayrollApprovalTaskPreview from './components/tasks/PayrollApprovalTaskPreview';
 import {
   BenefitConsumptionsTabLabel,
   BenefitConsumptionsTabPanel,
@@ -42,6 +43,7 @@ import {
 import { PayrollDeleteTaskItemFormatters, PayrollDeleteTaskTableHeaders } from './components/tasks/PayrollDeleteTasks';
 import { PayrollPaymentFilesTabLabel, PayrollPaymentFilesTabPanel } from './components/payroll/PayrollPaymentFilesTab';
 import PendingPayrollsPage from './pages/payroll/PendingPayrollsPage';
+import { ConsolidatedPayrollsTabLabel, ConsolidatedPayrollsTabPanel } from './components/payroll/ConsolidatedPayrollsTab';
 
 const ROUTE_PAYMENT_POINTS = 'paymentPoints';
 const ROUTE_PAYMENT_POINT = 'paymentPoints/paymentPoint';
@@ -116,12 +118,13 @@ const DEFAULT_CONFIG = {
       id: 'legalAndFinance.payrollsReconciled',
     },
   ],
-  'payroll.TabPanel.label': [BenefitConsumptionsTabLabel, PayrollTaskTabLabel, PayrollPaymentFilesTabLabel],
-  'payroll.TabPanel.panel': [BenefitConsumptionsTabPanel, PayrollTaskTabPanel, PayrollPaymentFilesTabPanel],
+  'payroll.TabPanel.label': [BenefitConsumptionsTabLabel, ConsolidatedPayrollsTabLabel, PayrollTaskTabLabel, PayrollPaymentFilesTabLabel],
+  'payroll.TabPanel.panel': [BenefitConsumptionsTabPanel, ConsolidatedPayrollsTabPanel, PayrollTaskTabPanel, PayrollPaymentFilesTabPanel],
   'tasksManagement.tasks': [{
     text: <FormattedMessage module="payroll" id="payroll.tasks.update.title" />,
     tableHeaders: PayrollTaskTableHeaders,
     itemFormatters: PayrollTaskItemFormatters,
+    previewComponent: PayrollApprovalTaskPreview,
     taskSource: ['payroll'],
   },
   {

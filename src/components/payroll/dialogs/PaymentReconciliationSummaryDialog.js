@@ -26,6 +26,7 @@ import {
 import downloadPayroll from '../../../utils/export';
 
 import BenefitConsumptionSearcherModal from '../BenefitConsumptionSearcherModal';
+import BenefitConsumptionSearcher from '../BenefitConsumptionSearcher';
 import { fetchPayroll } from '../../../actions';
 
 function PaymentReconcilationSummarytDialog({
@@ -43,6 +44,8 @@ function PaymentReconcilationSummarytDialog({
   const [selectedBeneficiaries, setSelectedBeneficiaries] = useState(0);
   const [totalBillAmount, setTotalBillAmount] = useState(0);
   const [totalReconciledBillAmount, setTotalReconciledBillAmount] = useState(0);
+  const isConsolidatedPayroll = payrollDetail?.payrollType === 'CONSOLIDATED'
+    || payroll?.payrollType === 'CONSOLIDATED';
 
   const handleOpen = () => {
     if (payrollUuid) {
@@ -76,7 +79,14 @@ function PaymentReconcilationSummarytDialog({
       let totalAmount = 0;
       let reconciledAmount = 0;
       benefits.forEach((benefit) => {
-        if (benefit.benefitAttachment && benefit.benefitAttachment.length > 0) {
+        if (isConsolidatedPayroll) {
+          const amount = parseFloat(benefit.amount) || 0;
+          totalAmount += amount;
+          if (benefit.status === BENEFIT_CONSUMPTION_STATUS.RECONCILED) {
+            reconciledAmount += amount;
+          }
+        }
+        if (!isConsolidatedPayroll && benefit.benefitAttachment && benefit.benefitAttachment.length > 0) {
           benefit.benefitAttachment.forEach((attachment) => {
             if (attachment.bill && attachment.bill.amountTotal) {
               totalAmount += parseFloat(attachment.bill.amountTotal);
@@ -90,7 +100,7 @@ function PaymentReconcilationSummarytDialog({
       setTotalBillAmount(totalAmount);
       setTotalReconciledBillAmount(reconciledAmount);
     }
-  }, [isOpen, payroll]);
+  }, [isOpen, payroll, isConsolidatedPayroll]);
 
   const downloadPayrollData = (payrollUuid, payrollName) => {
     downloadPayroll(payrollUuid, payrollName);
@@ -163,7 +173,15 @@ function PaymentReconcilationSummarytDialog({
           <div
             style={{ backgroundColor: '#DFEDEF' }}
           >
-            <BenefitConsumptionSearcherModal payrollUuid={payrollDetail.id} payrollDetail={payrollDetail} reconciledMode />
+            {isConsolidatedPayroll
+              ? <BenefitConsumptionSearcher payrollUuid={payrollDetail.id} />
+              : (
+                <BenefitConsumptionSearcherModal
+                  payrollUuid={payrollDetail.id}
+                  payrollDetail={payrollDetail}
+                  reconciledMode
+                />
+              )}
           </div>
         </DialogContent>
         <DialogActions

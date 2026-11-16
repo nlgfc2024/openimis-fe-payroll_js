@@ -49,6 +49,7 @@ const styles = (theme) => ({
 function PayrollPaymentDataUploadDialog({
   classes,
   payrollUuid,
+  payrollType,
   onUploadResult,
 }) {
   const modulesManager = useModulesManager();
@@ -141,12 +142,17 @@ function PayrollPaymentDataUploadDialog({
   const feedbackSummary = feedback?.summary || {};
   const unmatchedRecords = Number(feedbackSummary.unmatched_records || 0);
   const hasValidationIssues = unmatchedRecords > 0;
+  const isConsolidatedPayroll = payrollType === 'CONSOLIDATED';
   const isDuplicate = feedback?.status === 'DUPLICATE';
   const isSuccessful = feedback?.severity === 'success' && !hasValidationIssues;
 
   const feedbackTitle = () => {
     if (isDuplicate) return formatMessage('payroll.reconciliationUpload.title.duplicate');
-    if (hasValidationIssues) return formatMessage('payroll.reconciliationUpload.title.unmatched');
+    if (hasValidationIssues) {
+      return formatMessage(isConsolidatedPayroll
+        ? 'payroll.reconciliationUpload.title.unmatched'
+        : 'payroll.reconciliationUpload.title.partial');
+    }
     if (isSuccessful) return formatMessage('payroll.reconciliationUpload.title.complete');
     return formatMessage('payroll.reconciliationUpload.title.attention');
   };
@@ -190,10 +196,15 @@ function PayrollPaymentDataUploadDialog({
                 <FeedbackBanner severity={feedbackSeverity()} title={feedbackTitle()}>
                   {hasValidationIssues && (
                     <>
-                      {formatMessage('payroll.reconciliationUpload.message.unmatched')}
+                      {formatMessage(isConsolidatedPayroll
+                        ? 'payroll.reconciliationUpload.message.unmatchedConsolidated'
+                        : 'payroll.reconciliationUpload.message.unmatchedStandard')}
                       <div className={classes.issueMetrics}>
                         <span className={classes.issueMetric}>
-                          {formatMessageWithValues('payroll.reconciliationUpload.metric.unmatched', { count: unmatchedRecords })}
+                          {formatMessageWithValues(
+                            'payroll.reconciliationUpload.metric.unmatched',
+                            { count: unmatchedRecords },
+                          )}
                         </span>
                       </div>
                     </>
@@ -204,16 +215,34 @@ function PayrollPaymentDataUploadDialog({
                     : feedback.message)}
                   {!hasValidationIssues && !isDuplicate && !isSuccessful && feedback.message}
                 </FeedbackBanner>
-                <div className={classes.resultTitle}>{formatMessage('payroll.reconciliationUpload.summary.title')}</div>
+                <div className={classes.resultTitle}>
+                  {formatMessage('payroll.reconciliationUpload.summary.title')}
+                </div>
                 {[
-                  [formatMessage('payroll.reconciliationUpload.summary.totalRecords'), feedbackSummary.total_records],
-                  [formatMessage('payroll.reconciliationUpload.summary.matchedRecords'), feedbackSummary.matched_records],
-                  [formatMessage('payroll.reconciliationUpload.summary.paidRecords'), feedbackSummary.paid_records],
-                  [formatMessage('payroll.reconciliationUpload.summary.unpaidRecords'), feedbackSummary.unpaid_records],
-                  [formatMessage('payroll.reconciliationUpload.summary.unmatchedRecords'), feedbackSummary.unmatched_records],
+                  [
+                    formatMessage('payroll.reconciliationUpload.summary.totalRecords'),
+                    feedbackSummary.total_records,
+                  ],
+                  [
+                    formatMessage('payroll.reconciliationUpload.summary.matchedRecords'),
+                    feedbackSummary.matched_records,
+                  ],
+                  [
+                    formatMessage('payroll.reconciliationUpload.summary.paidRecords'),
+                    feedbackSummary.paid_records,
+                  ],
+                  [
+                    formatMessage('payroll.reconciliationUpload.summary.unpaidRecords'),
+                    feedbackSummary.unpaid_records,
+                  ],
+                  [
+                    formatMessage('payroll.reconciliationUpload.summary.unmatchedRecords'),
+                    feedbackSummary.unmatched_records,
+                  ],
                 ].map(([label, value]) => (
                   <div key={label} className={classes.resultRow}>
-                    <span>{label}</span><span>{value || 0}</span>
+                    <span>{label}</span>
+                    <span>{value || 0}</span>
                   </div>
                 ))}
               </div>
@@ -257,7 +286,9 @@ function PayrollPaymentDataUploadDialog({
                     marginBottom: '15px',
                   }}
                 >
-                  {feedback ? formatMessage('payroll.summary.close') : formatMessage('payroll.advancedFilters.button.cancel')}
+                  {feedback
+                    ? formatMessage('payroll.summary.close')
+                    : formatMessage('payroll.advancedFilters.button.cancel')}
                 </Button>
               </div>
               <div style={{ float: 'right', paddingRight: '16px' }}>
@@ -265,7 +296,12 @@ function PayrollPaymentDataUploadDialog({
                   <Button
                     variant="contained"
                     color="primary"
-                    onClick={() => downloadPayroll(payrollUuid, feedback.fileName, false, feedback.uploadId)}
+                    onClick={() => downloadPayroll(
+                      payrollUuid,
+                      feedback.fileName,
+                      false,
+                      feedback.uploadId,
+                    )}
                   >
                     {feedbackSummary.unmatched_records > 0 || feedback.severity === 'error'
                       ? formatMessage('payroll.reconciliationUpload.downloadErrorReport')
@@ -278,7 +314,9 @@ function PayrollPaymentDataUploadDialog({
                     onClick={() => onSubmit(forms.paymentData)}
                     disabled={isUploading || !(forms.paymentData?.file && payrollUuid)}
                   >
-                    {isUploading ? formatMessage('payroll.reconciliationUpload.uploading') : formatMessage('payroll.paymentData.upload.label')}
+                    {isUploading
+                      ? formatMessage('payroll.reconciliationUpload.uploading')
+                      : formatMessage('payroll.paymentData.upload.label')}
                   </Button>
                 )}
               </div>

@@ -14,11 +14,12 @@ import {
 import PayrollFilter from './PayrollFilter';
 import PayrollStatusChip from './PayrollStatusChip';
 import {
-  DEFAULT_PAGE_SIZE, MODULE_NAME, PAYROLL_PAYROLL_ROUTE, RIGHT_PAYROLL_SEARCH, ROWS_PER_PAGE_OPTIONS, PAYROLL_STATUS,
+  DEFAULT_PAGE_SIZE, MODULE_NAME, PAYROLL_PAYROLL_ROUTE, RIGHT_PAYROLL_CREATE, RIGHT_PAYROLL_SEARCH, ROWS_PER_PAGE_OPTIONS, PAYROLL_STATUS,
 } from '../../constants';
 import { fetchPayrolls } from '../../actions';
 import PaymentApproveForPaymentSummary from './dialogs/PaymentApproveForPaymentSummary';
 import PayrollReconciliationFilesDialog from './dialogs/PayrollReconciliationFilesDialog';
+import ConsolidatePayrollsDialog from './dialogs/ConsolidatePayrollsDialog';
 
 function PayrollSearcherApproved({
   fetchingPayrolls,
@@ -105,6 +106,13 @@ function PayrollSearcherApproved({
     <PayrollFilter filters={filters} onChangeFilters={onChangeFilters} statusReadOnly />
   );
 
+  const searcherActions = [{
+    authorized: rights.includes(RIGHT_PAYROLL_CREATE),
+    render: ({ className, size }) => (
+      <ConsolidatePayrollsDialog buttonClassName={className} buttonSize={size} />
+    ),
+  }];
+
   return (
     <Searcher
       module="payroll"
@@ -124,6 +132,10 @@ function PayrollSearcherApproved({
       rowIdentifier={rowIdentifier}
       onDoubleClick={onDoubleClick}
       defaultFilters={defaultFilters()}
+      searcherActions={searcherActions}
+      enableActionButtons
+      searcherActionsPosition="header-right"
+      compactLayout
     />
   );
 }
