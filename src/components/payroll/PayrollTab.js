@@ -1,8 +1,10 @@
 /* eslint-disable max-len */
 import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Paper, Grid } from '@material-ui/core';
 import {
   Contributions,
+  showPageFeedback,
   useModulesManager,
   useTranslations,
 } from '@openimis/fe-core';
@@ -43,6 +45,7 @@ function PayrollTab({
   rights, setConfirmedAction, payrollUuid, isInTask, payroll, isPayrollFromFailedInvoices,
 }) {
   const classes = useStyles();
+  const dispatch = useDispatch();
 
   const [activeTab, setActiveTab] = useState(BENEFIT_CONSUMPTION_LIST_TAB_VALUE);
   const [reconciliationRevision, setReconciliationRevision] = useState(0);
@@ -57,7 +60,13 @@ function PayrollTab({
   const { formatMessage } = useTranslations(MODULE_NAME, modulesManager);
 
   const downloadPayrollData = (payrollUuid, payrollName) => {
-    downloadPayroll(payrollUuid, payrollName);
+    downloadPayroll(payrollUuid, payrollName, true, null, () => {
+      dispatch(showPageFeedback({
+        severity: 'error',
+        title: formatMessage('payroll.export.failure.title'),
+        message: formatMessage('payroll.export.failure.message'),
+      }));
+    });
   };
 
   return (

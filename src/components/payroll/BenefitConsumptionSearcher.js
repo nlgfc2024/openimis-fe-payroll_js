@@ -85,10 +85,10 @@ function BenefitConsumptionSearcher({
     (benefitConsumption) => benefitConsumption?.individual?.lastName,
     (benefitConsumption) => benefitConsumption?.nationalId,
     (benefitConsumption) => benefitConsumption?.phoneNumber,
-    (benefitConsumption) => benefitConsumption?.individual?.jsonExt?.gender,
-    (benefitConsumption) => benefitConsumption?.individual?.jsonExt?.account_number,
-    (benefitConsumption) => benefitConsumption?.individual?.jsonExt?.account_name,
-    (benefitConsumption) => benefitConsumption?.individual?.jsonExt?.bank,
+    (benefitConsumption) => benefitConsumption?.gender,
+    (benefitConsumption) => benefitConsumption?.accountNumber,
+    (benefitConsumption) => benefitConsumption?.accountName,
+    (benefitConsumption) => benefitConsumption?.bank,
     (benefitConsumption) => (
       benefitConsumption.receipt ? (
         <PhotoCameraOutlinedIcon style={{ fontSize: 150 }} />
