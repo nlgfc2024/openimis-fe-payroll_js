@@ -33,7 +33,7 @@ const BENEFIT_CONSUMPTION_PROJECTION = () => [
   'dateValidTo',
   'id',
   'code',
-  'individual {firstName, lastName}',
+  'individual {firstName, lastName, jsonExt}',
   'nationalId',
   'formNumber',
   'phoneNumber',
@@ -54,7 +54,7 @@ const BENEFIT_CONSUMPTION_PROJECTION = () => [
 const PAYROLL_BENEFIT_CONSUMPTION_PROJECTION = () => [
   'id',
   // eslint-disable-next-line max-len
-  'benefit{id,isDeleted,jsonExt,dateCreated,dateUpdated,dateValidFrom,dateValidTo,id,code,individual {firstName, lastName},benefitAttachment {bill {id, code, terms, datePayed}},receipt,photo,amount,type,status,dateDue}',
+  'benefit{id,isDeleted,jsonExt,dateCreated,dateUpdated,dateValidFrom,dateValidTo,id,code,individual {firstName, lastName, jsonExt},benefitAttachment {bill {id, code, terms, datePayed}},receipt,photo,amount,type,status,dateDue}',
   'payroll {id, name, status, paymentCycle {code, startDate, endDate}, paymentMethod, benefitPlanNameCode}',
 ];
 

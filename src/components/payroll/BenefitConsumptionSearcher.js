@@ -52,6 +52,10 @@ function BenefitConsumptionSearcher({
     'benefitConsumption.individual.lastName',
     'benefitConsumption.nationalId',
     'benefitConsumption.phoneNumber',
+    'benefitConsumption.gender',
+    'benefitConsumption.accountNumber',
+    'benefitConsumption.accountName',
+    'benefitConsumption.bank',
     'benefitConsumption.photo',
     'benefitConsumption.code',
     'benefitConsumption.dateDue',
@@ -81,6 +85,10 @@ function BenefitConsumptionSearcher({
     (benefitConsumption) => benefitConsumption?.individual?.lastName,
     (benefitConsumption) => benefitConsumption?.nationalId,
     (benefitConsumption) => benefitConsumption?.phoneNumber,
+    (benefitConsumption) => benefitConsumption?.individual?.jsonExt?.gender,
+    (benefitConsumption) => benefitConsumption?.individual?.jsonExt?.account_number,
+    (benefitConsumption) => benefitConsumption?.individual?.jsonExt?.account_name,
+    (benefitConsumption) => benefitConsumption?.individual?.jsonExt?.bank,
     (benefitConsumption) => (
       benefitConsumption.receipt ? (
         <PhotoCameraOutlinedIcon style={{ fontSize: 150 }} />
@@ -119,6 +127,10 @@ function BenefitConsumptionSearcher({
     null,
     ['individual_FirstName', true],
     ['individual_LastName', true],
+    null,
+    null,
+    null,
+    null,
     null,
     null,
     ['photo', true],
