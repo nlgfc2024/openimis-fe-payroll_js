@@ -1,6 +1,8 @@
-import { baseApiUrl } from '@openimis/fe-core';
+import { apiHeaders, baseApiUrl } from '@openimis/fe-core';
 
-export default function downloadPayroll(payrollId, payrollFileName, blank = true, uploadId = null) {
+export default function downloadPayroll(
+  payrollId, payrollFileName, blank = true, uploadId = null, onError = null,
+) {
   const url = new URL(
     `${window.location.origin}${baseApiUrl}/payroll/csv_reconciliation/`,
   );
@@ -9,18 +11,28 @@ export default function downloadPayroll(payrollId, payrollFileName, blank = true
   url.searchParams.append('payroll_file_name', payrollFileName);
   if (uploadId) url.searchParams.append('upload_id', uploadId);
 
-  fetch(url)
-    .then((response) => response.blob())
+  const headers = new Headers(apiHeaders());
+  headers.delete('Content-Type');
+
+  return fetch(url, { headers })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`Payroll export failed (${response.status})`);
+      }
+      return response.blob();
+    })
     .then((blob) => {
+      const objectUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
+      link.href = objectUrl;
       link.download = blank ? `${payrollFileName}.csv` : payrollFileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
     })
     .catch((error) => {
-      // eslint-disable-next-line no-console
-      console.error('Export failed, reason: ', error);
+      if (onError) onError(error);
+      return null;
     });
 }

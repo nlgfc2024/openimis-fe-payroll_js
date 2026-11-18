@@ -37,6 +37,10 @@ const BENEFIT_CONSUMPTION_PROJECTION = () => [
   'nationalId',
   'formNumber',
   'phoneNumber',
+  'gender',
+  'accountNumber',
+  'accountName',
+  'bank',
   'districtName',
   'traditionalAuthorityName',
   'groupVillageHeadName',
@@ -54,7 +58,7 @@ const BENEFIT_CONSUMPTION_PROJECTION = () => [
 const PAYROLL_BENEFIT_CONSUMPTION_PROJECTION = () => [
   'id',
   // eslint-disable-next-line max-len
-  'benefit{id,isDeleted,jsonExt,dateCreated,dateUpdated,dateValidFrom,dateValidTo,id,code,individual {firstName, lastName},benefitAttachment {bill {id, code, terms, datePayed}},receipt,photo,amount,type,status,dateDue}',
+  'benefit{id,isDeleted,jsonExt,dateCreated,dateUpdated,dateValidFrom,dateValidTo,id,code,individual {firstName, lastName},gender,accountNumber,accountName,bank,benefitAttachment {bill {id, code, terms, datePayed}},receipt,photo,amount,type,status,dateDue}',
   'payroll {id, name, status, paymentCycle {code, startDate, endDate}, paymentMethod, benefitPlanNameCode}',
 ];
 
@@ -64,7 +68,7 @@ const BENEFIT_CONSUMPTION_SUMMARY_PROJECTION = () => [
 
 const BENEFIT_ATTACHMENT_PROJECTION = () => [
   // Location fields are resolved by the payroll API from the beneficiary's village hierarchy.
-  'benefit{id, status, code, dateDue, receipt, nationalId, formNumber, phoneNumber, districtName, traditionalAuthorityName, groupVillageHeadName, catchmentName, projectName, individual {firstName, lastName}, jsonExt, type, status, amount, receipt}',
+  'benefit{id, status, code, dateDue, receipt, nationalId, formNumber, phoneNumber, gender, accountNumber, accountName, bank, districtName, traditionalAuthorityName, groupVillageHeadName, catchmentName, projectName, individual {firstName, lastName}, jsonExt, type, status, amount, receipt}',
   'bill{id, code, terms, amountTotal, datePayed}',
 ];
 
