@@ -16,6 +16,7 @@ import {
   MODULE_NAME,
 } from '../../constants';
 import PayrollPaymentDataUploadDialog from './dialogs/PayrollPaymentDataUploadDialog';
+import KycPaymentReadinessPanel from './KycPaymentReadinessPanel';
 import downloadPayroll from '../../utils/export';
 
 const useStyles = makeStyles((theme) => ({
@@ -62,6 +63,14 @@ function PayrollTab({
 
   return (
     <Paper className={classes.paper}>
+      {payrollUuid
+        && payroll?.status === PAYROLL_STATUS.APPROVE_FOR_PAYMENT
+        && payroll?.payrollType !== 'CONSOLIDATED'
+        && (
+          <div style={{ padding: '16px 16px 0' }}>
+            <KycPaymentReadinessPanel payrollUuid={payrollUuid} />
+          </div>
+        )}
       <Grid container className={`${classes.tableTitle} ${classes.tabs}`}>
         <div style={{ width: '100%' }}>
           <div style={{ float: 'left' }}>

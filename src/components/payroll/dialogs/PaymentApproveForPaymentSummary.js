@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
@@ -24,6 +24,7 @@ import {
 } from '../../../actions';
 import { mutationLabel } from '../../../utils/string-utils';
 import BenefitConsumptionSearcherModal from '../BenefitConsumptionSearcherModal';
+import KycPaymentReadinessPanel from '../KycPaymentReadinessPanel';
 import downloadPayroll from '../../../utils/export';
 
 function PaymentApproveForPaymentDialog({
@@ -45,11 +46,17 @@ function PaymentApproveForPaymentDialog({
   const [approvedBeneficiaries, setApprovedBeneficiaries] = useState(0);
   const [totalBillAmount, setTotalBillAmount] = useState(0);
   const [totalReconciledBillAmount, setTotalReconciledBillAmount] = useState(0);
+  const [paymentReadiness, setPaymentReadiness] = useState(null);
+
+  const handleReadinessChange = useCallback((readiness) => {
+    setPaymentReadiness(readiness);
+  }, []);
 
   const handleOpen = () => {
     if (payrollUuid) {
       fetchPayroll(modulesManager, [`id: "${payrollUuid}"`]);
     }
+    setPaymentReadiness(null);
     setIsOpen(true);
   };
 
@@ -183,6 +190,12 @@ function PaymentApproveForPaymentDialog({
           {formatMessageWithValues('payroll.reconciliationSummary', { payrollName: payrollDetail.name })}
         </DialogTitle>
         <DialogContent>
+          {isOpen && payrollDetail?.paymentMethod === 'StrategyOnlinePayment' && (
+            <KycPaymentReadinessPanel
+              payrollUuid={payrollDetail.id}
+              onReadinessChange={handleReadinessChange}
+            />
+          )}
           <Grid container spacing={2}>
             <Grid item xs={4}>
               <Paper elevation={3} style={{ padding: '20px' }}>
@@ -281,6 +294,7 @@ function PaymentApproveForPaymentDialog({
                   onClick={() => makePaymentForPayrollCallback(payrollDetail)}
                   variant="contained"
                   color="primary"
+                  disabled={paymentReadiness?.ready_for_payment === false}
                   style={{
                     margin: '0 16px',
                   }}
