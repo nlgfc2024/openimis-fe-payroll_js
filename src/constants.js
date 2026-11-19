@@ -2,9 +2,11 @@
 export const RIGHT_PAYROLL_SEARCH = 202001;
 export const RIGHT_PAYROLL_CREATE = 202002;
 export const RIGHT_PAYROLL_DELETE = 202004;
+export const RIGHT_WITHDRAWAL_FEE_MANAGE = 202005;
 
 export const PAYROLL_PAYMENT_POINT_ROUTE = 'payroll.route.paymentPoint';
 export const PAYROLL_PAYROLL_ROUTE = 'payroll.route.payroll';
+export const PAYROLL_PAYMENT_PROVIDERS_ROUTE = 'payroll.route.paymentProviders';
 export const RIGHT_PAYMENT_POINT_SEARCH = 201001;
 export const RIGHT_PAYMENT_POINT_CREATE = 201002;
 export const RIGHT_PAYMENT_POINT_UPDATE = 201003;

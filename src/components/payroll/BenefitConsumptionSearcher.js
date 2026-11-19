@@ -13,9 +13,12 @@ import {
 import {
   Searcher, useModulesManager, useTranslations,
 } from '@openimis/fe-core';
-import PhotoCameraOutlinedIcon from '@material-ui/icons/PhotoCameraOutlined';
 import { fetchBenefitConsumptions } from '../../actions';
-import { BENEFIT_CONSUMPTION_STATUS, DEFAULT_PAGE_SIZE, ROWS_PER_PAGE_OPTIONS } from '../../constants';
+import {
+  BENEFIT_CONSUMPTION_STATUS,
+  DEFAULT_PAGE_SIZE,
+  ROWS_PER_PAGE_OPTIONS,
+} from '../../constants';
 import BenefitConsumptionFilter from './BenefitConsumptionFilter';
 import AdditionalFieldsDialog from './dialogs/AdditionalFieldsDialog';
 import PayrollPrintTemplate from '../PayrollPrintTemplate';
@@ -32,7 +35,7 @@ function BenefitConsumptionSearcher({
   payrollUuid,
 }) {
   const modulesManager = useModulesManager();
-  const { formatMessageWithValues } = useTranslations('payroll', modulesManager);
+  const { formatMessage, formatMessageWithValues } = useTranslations('payroll', modulesManager);
   const payrollPrintTemplateRef = useRef(null);
 
   const handlePrint = useReactToPrint({
@@ -51,16 +54,15 @@ function BenefitConsumptionSearcher({
     'benefitConsumption.individual.firstName',
     'benefitConsumption.individual.lastName',
     'benefitConsumption.nationalId',
-    'benefitConsumption.phoneNumber',
     'benefitConsumption.gender',
     'benefitConsumption.accountNumber',
     'benefitConsumption.accountName',
     'benefitConsumption.bank',
     'benefitConsumption.photo',
-    'benefitConsumption.code',
     'benefitConsumption.dateDue',
-    'benefitConsumption.receipt',
     'benefitConsumption.amount',
+    'benefitConsumption.withdrawalFee',
+    'benefitConsumption.amountToPay',
     'benefitConsumption.type',
     'benefitConsumption.status',
     'benefitConsumption.payedOnTime',
@@ -70,8 +72,18 @@ function BenefitConsumptionSearcher({
 
   const checkBenefitDueDate = (benefitConsumption) => {
     const datePaid = benefitConsumption?.benefitAttachment?.[0]?.bill?.datePayed;
-    if (!benefitConsumption?.receipt || !benefitConsumption?.dateDue || !datePaid) return '';
+    if (!benefitConsumption?.hasReceipt || !benefitConsumption?.dateDue || !datePaid) return '';
     return benefitConsumption.dateDue >= datePaid ? 'True' : 'False';
+  };
+
+  const formatWithdrawalFee = (benefitConsumption) => {
+    if (benefitConsumption?.withdrawalFee != null) return benefitConsumption.withdrawalFee;
+    if (!benefitConsumption?.withdrawalFeeError) return '';
+    return (
+      <span title={benefitConsumption.withdrawalFeeError}>
+        {formatMessage('payroll.benefitConsumption.withdrawalFeeUnavailable')}
+      </span>
+    );
   };
 
   const itemFormatters = () => [
@@ -84,26 +96,21 @@ function BenefitConsumptionSearcher({
     (benefitConsumption) => benefitConsumption?.individual?.firstName,
     (benefitConsumption) => benefitConsumption?.individual?.lastName,
     (benefitConsumption) => benefitConsumption?.nationalId,
-    (benefitConsumption) => benefitConsumption?.phoneNumber,
     (benefitConsumption) => benefitConsumption?.gender,
     (benefitConsumption) => benefitConsumption?.accountNumber,
     (benefitConsumption) => benefitConsumption?.accountName,
     (benefitConsumption) => benefitConsumption?.bank,
-    (benefitConsumption) => (
-      benefitConsumption.receipt ? (
-        <PhotoCameraOutlinedIcon style={{ fontSize: 150 }} />
-      ) : null
-    ),
-    (benefitConsumption) => benefitConsumption?.code,
+    (benefitConsumption) => benefitConsumption?.photo,
     (benefitConsumption) => benefitConsumption?.dateDue,
-    (benefitConsumption) => benefitConsumption?.receipt,
     (benefitConsumption) => benefitConsumption?.amount,
+    formatWithdrawalFee,
+    (benefitConsumption) => benefitConsumption?.amountToPay,
     (benefitConsumption) => benefitConsumption?.type,
     (benefitConsumption) => (isPayrollFromFailedInvoices
       ? BENEFIT_CONSUMPTION_STATUS.APPROVE_FOR_PAYMENT : benefitConsumption?.status),
     (benefitConsumption) => checkBenefitDueDate(benefitConsumption),
     (benefitConsumption) => (
-      !benefitConsumption.receipt
+      !benefitConsumption.hasReceipt
         ? ''
         : benefitConsumption?.benefitAttachment[0]?.bill?.datePayed
     ),
@@ -132,12 +139,11 @@ function BenefitConsumptionSearcher({
     null,
     null,
     null,
-    null,
     ['photo', true],
-    ['code', true],
     ['dateDue', true],
-    ['receipt', true],
     ['amount', true],
+    null,
+    null,
     ['type', true],
     ['status', true],
     null,

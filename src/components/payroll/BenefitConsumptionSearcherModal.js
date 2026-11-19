@@ -10,7 +10,6 @@ import Typography from '@material-ui/core/Typography';
 import {
   Searcher, useModulesManager, useTranslations, coreConfirm, clearConfirm,
 } from '@openimis/fe-core';
-import PhotoCameraOutlinedIcon from '@material-ui/icons/PhotoCameraOutlined';
 import { fetchBenefitAttachments, deleteBenefitConsumption } from '../../actions';
 import {
   DEFAULT_PAGE_SIZE, ROWS_PER_PAGE_OPTIONS, PAYROLL_STATUS,
@@ -94,9 +93,7 @@ function BenefitConsumptionSearcherModal({
     'benefitConsumption.projectName',
     'benefitConsumption.nationalId',
     'benefitConsumption.formNumber',
-    'benefitConsumption.phoneNumber',
     'benefitConsumption.amount',
-    'benefitConsumption.receipt',
     'benefitConsumption.dateDue',
     'benefitConsumption.payedOnTime',
     'benefitConsumption.paymentDate',
@@ -135,7 +132,7 @@ function BenefitConsumptionSearcherModal({
   }, [confirmed]);
 
   const checkBenefitDueDate = (benefitAttachment) => {
-    if (!benefitAttachment.benefit.receipt) {
+    if (!benefitAttachment.benefit.hasReceipt) {
       return ''; // return empty string if datePayed is null
     }
 
@@ -145,11 +142,7 @@ function BenefitConsumptionSearcherModal({
   };
 
   const itemFormatters = () => [
-    (benefitAttachment) => (
-      benefitAttachment.benefit.receipt ? (
-        <PhotoCameraOutlinedIcon style={{ fontSize: 150 }} />
-      ) : null
-    ),
+    (benefitAttachment) => benefitAttachment?.benefit?.photo,
     (benefitAttachment) => benefitAttachment?.benefit?.individual?.firstName,
     (benefitAttachment) => benefitAttachment?.benefit?.individual?.lastName,
     (benefitAttachment) => benefitAttachment?.benefit?.districtName,
@@ -159,13 +152,11 @@ function BenefitConsumptionSearcherModal({
     (benefitAttachment) => benefitAttachment?.benefit?.projectName,
     (benefitAttachment) => benefitAttachment?.benefit?.nationalId,
     (benefitAttachment) => benefitAttachment?.benefit?.formNumber,
-    (benefitAttachment) => benefitAttachment?.benefit?.phoneNumber,
     (benefitAttachment) => benefitAttachment?.bill?.amountTotal,
-    (benefitAttachment) => benefitAttachment?.benefit?.receipt,
     (benefitAttachment) => benefitAttachment?.benefit?.dateDue,
     (benefitAttachment) => checkBenefitDueDate(benefitAttachment),
     (benefitAttachment) => (
-      !benefitAttachment.benefit.receipt
+      !benefitAttachment.benefit.hasReceipt
         ? ''
         : benefitAttachment?.bill?.datePayed
     ),
@@ -182,7 +173,7 @@ function BenefitConsumptionSearcherModal({
         onClick={() => {}}
         variant="contained"
         color="primary"
-        disabled={!!benefitAttachment.benefit.receipt}
+        disabled={!!benefitAttachment.benefit.hasReceipt}
       >
         {formatMessage('payroll.summary.confirm')}
       </Button>
@@ -220,7 +211,6 @@ function BenefitConsumptionSearcherModal({
     ['benefit_individual_FirstName', true],
     ['benefit_individual_LastName', true],
     ['bill_amountTotal', true],
-    ['benefit_receipt', true],
     ['benefit_dateDue', true],
   ];
 

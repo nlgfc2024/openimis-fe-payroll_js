@@ -128,14 +128,6 @@ function BenefitConsumptionPayrollFilter({ filters, onChangeFilters, benefitPlan
         />
       </Grid>
       <Grid item xs={2} className={classes.item}>
-        <TextInput
-          module="payroll"
-          label="benefitConsumption.receipt"
-          value={filterTextFieldValue('benefit_Receipt')}
-          onChange={onChangeStringFilter('benefit_Receipt', CONTAINS_LOOKUP)}
-        />
-      </Grid>
-      <Grid item xs={2} className={classes.item}>
         <PublishedComponent
           pubRef="core.DatePicker"
           module="payroll"

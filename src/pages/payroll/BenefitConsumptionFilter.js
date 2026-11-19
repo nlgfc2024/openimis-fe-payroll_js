@@ -116,14 +116,6 @@ function BenefitConsumptionFilter({ filters, onChangeFilters }) {
       <Grid item xs={2} className={classes.item}>
         <TextInput
           module="payroll"
-          label="benefitConsumption.receipt"
-          value={filterTextFieldValue('receipt')}
-          onChange={onChangeStringFilter('receipt', CONTAINS_LOOKUP)}
-        />
-      </Grid>
-      <Grid item xs={2} className={classes.item}>
-        <TextInput
-          module="payroll"
           label="benefitConsumption.type"
           value={filterTextFieldValue('type')}
           onChange={onChangeStringFilter('type', CONTAINS_LOOKUP)}

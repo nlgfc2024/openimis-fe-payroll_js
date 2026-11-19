@@ -89,7 +89,7 @@ const PayrollPrintTemplate = forwardRef(({ benefitConsumptions }, ref) => {
       {benefitConsumptions.map((benefitConsumption, index) => (
         <div key={index} className={classes.detailsContainer}>
           <div className={classes.sectionTitle}>
-            {`Payment: ${benefitConsumption.code} - ${benefitConsumption.individual.firstName}, ${benefitConsumption.individual.lastName}`}
+            {`Payment: ${benefitConsumption.individual.firstName}, ${benefitConsumption.individual.lastName}`}
           </div>
           <div className={classes.detailRow}>
             <div className={classes.detailName}>{formatMessage('payroll.benefitConsumption.individual.firstName')}</div>
@@ -98,10 +98,6 @@ const PayrollPrintTemplate = forwardRef(({ benefitConsumptions }, ref) => {
           <div className={classes.detailRow}>
             <div className={classes.detailName}>{formatMessage('payroll.benefitConsumption.individual.lastName')}</div>
             <div className={classes.detailValue}>{benefitConsumption.individual.lastName}</div>
-          </div>
-          <div className={classes.detailRow}>
-            <div className={classes.detailName}>{formatMessage('payroll.benefitConsumption.code')}</div>
-            <div className={classes.detailValue}>{benefitConsumption.code}</div>
           </div>
           {[
             ['district', benefitConsumption.districtName],
@@ -121,12 +117,21 @@ const PayrollPrintTemplate = forwardRef(({ benefitConsumptions }, ref) => {
             <div className={classes.detailValue}>{benefitConsumption.dateDue}</div>
           </div>
           <div className={classes.detailRow}>
-            <div className={classes.detailName}>{formatMessage('payroll.benefitConsumption.receipt')}</div>
-            <div className={classes.detailValue}>{benefitConsumption.receipt}</div>
-          </div>
-          <div className={classes.detailRow}>
             <div className={classes.detailName}>{formatMessage('payroll.benefitConsumption.amount')}</div>
             <div className={classes.detailValue}>{benefitConsumption.amount}</div>
+          </div>
+          <div className={classes.detailRow}>
+            <div className={classes.detailName}>{formatMessage('payroll.benefitConsumption.withdrawalFee')}</div>
+            <div className={classes.detailValue} title={benefitConsumption.withdrawalFeeError || ''}>
+              {benefitConsumption.withdrawalFee
+                ?? (benefitConsumption.withdrawalFeeError
+                  ? formatMessage('payroll.benefitConsumption.withdrawalFeeUnavailable')
+                  : '')}
+            </div>
+          </div>
+          <div className={classes.detailRow}>
+            <div className={classes.detailName}>{formatMessage('payroll.benefitConsumption.amountToPay')}</div>
+            <div className={classes.detailValue}>{benefitConsumption.amountToPay ?? ''}</div>
           </div>
           <div className={classes.detailRow}>
             <div className={classes.detailName}>{formatMessage('payroll.benefitConsumption.type')}</div>
@@ -139,7 +144,7 @@ const PayrollPrintTemplate = forwardRef(({ benefitConsumptions }, ref) => {
           <div className={classes.detailRow}>
             <div className={classes.detailName}>{formatMessage('payroll.benefitConsumption.paymentDate')}</div>
             <div className={classes.detailValue}>
-              {!benefitConsumption.receipt
+              {!benefitConsumption.hasReceipt
                 ? ''
                 : benefitConsumption?.benefitAttachment[0]?.bill?.datePayed}
             </div>

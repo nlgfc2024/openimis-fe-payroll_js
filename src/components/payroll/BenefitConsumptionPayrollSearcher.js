@@ -12,7 +12,10 @@ import {
 } from '@material-ui/core';
 import Typography from '@material-ui/core/Typography';
 import { fetchPayrollBenefitConsumptions, fetchBenefitsSummary } from '../../actions';
-import { DEFAULT_PAGE_SIZE, ROWS_PER_PAGE_OPTIONS } from '../../constants';
+import {
+  DEFAULT_PAGE_SIZE,
+  ROWS_PER_PAGE_OPTIONS,
+} from '../../constants';
 import BenefitConsumptionPayrollFilter from './BenefitConsumptionPayrollFilter';
 
 function BenefitConsumptionPayrollSearcher({
@@ -49,17 +52,17 @@ function BenefitConsumptionPayrollSearcher({
     'benefitConsumption.accountName',
     'benefitConsumption.bank',
     'benefitConsumption.status',
-    'benefitConsumption.code',
-    'benefitConsumption.receipt',
     'benefitConsumption.dateDue',
     'benefitConsumption.amount',
+    'benefitConsumption.withdrawalFee',
+    'benefitConsumption.amountToPay',
     'benefitConsumption.type',
     'benefitConsumption.payedOnTime',
     'benefitConsumption.paymentDate',
   ];
 
   const checkBenefitDueDate = (payrollBenefitConsumption) => {
-    if (!payrollBenefitConsumption.benefit.receipt) {
+    if (!payrollBenefitConsumption.benefit.hasReceipt) {
       return ''; // return empty string if datePayed is null
     }
 
@@ -68,6 +71,17 @@ function BenefitConsumptionPayrollSearcher({
       && payrollBenefitConsumption.benefit.dateDue
       >= payrollBenefitConsumption.benefit.benefitAttachment[0].bill.datePayed)
       ? 'True' : 'False';
+  };
+
+  const formatWithdrawalFee = (payrollBenefitConsumption) => {
+    const benefit = payrollBenefitConsumption?.benefit;
+    if (benefit?.withdrawalFee != null) return benefit.withdrawalFee;
+    if (!benefit?.withdrawalFeeError) return '';
+    return (
+      <span title={benefit.withdrawalFeeError}>
+        {formatMessage('payroll.benefitConsumption.withdrawalFeeUnavailable')}
+      </span>
+    );
   };
 
   const itemFormatters = () => [
@@ -83,14 +97,14 @@ function BenefitConsumptionPayrollSearcher({
     (payrollBenefitConsumption) => payrollBenefitConsumption?.benefit?.accountName,
     (payrollBenefitConsumption) => payrollBenefitConsumption?.benefit?.bank,
     (payrollBenefitConsumption) => payrollBenefitConsumption?.benefit?.status,
-    (payrollBenefitConsumption) => payrollBenefitConsumption?.benefit?.code,
-    (payrollBenefitConsumption) => payrollBenefitConsumption?.benefit?.receipt,
     (payrollBenefitConsumption) => payrollBenefitConsumption?.benefit?.dateDue,
     (payrollBenefitConsumption) => payrollBenefitConsumption?.benefit?.amount,
+    formatWithdrawalFee,
+    (payrollBenefitConsumption) => payrollBenefitConsumption?.benefit?.amountToPay,
     (payrollBenefitConsumption) => payrollBenefitConsumption?.benefit?.type,
     (payrollBenefitConsumption) => checkBenefitDueDate(payrollBenefitConsumption),
     (payrollBenefitConsumption) => (
-      !payrollBenefitConsumption.benefit.receipt
+      !payrollBenefitConsumption.benefit.hasReceipt
         ? ''
         : payrollBenefitConsumption?.benefit?.benefitAttachment[0]?.bill?.datePayed
     ),
@@ -110,11 +124,13 @@ function BenefitConsumptionPayrollSearcher({
     null,
     null,
     ['benefit_Status', true],
-    ['benefit_Code', true],
-    ['benefit_Receipt', true],
     ['benefit_DateDue', true],
     ['benefit_Amount', true],
+    null,
+    null,
     ['benefit_Type', true],
+    null,
+    null,
   ];
 
   const defaultFilters = () => {

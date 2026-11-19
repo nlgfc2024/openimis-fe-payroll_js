@@ -7,7 +7,13 @@ import { PinDrop } from '@material-ui/icons';
 import MonetizationOnIcon from '@material-ui/icons/MonetizationOn';
 
 import { FormattedMessage } from '@openimis/fe-core';
-import { RIGHT_PAYMENT_POINT_SEARCH, RIGHT_PAYROLL_CREATE, RIGHT_PAYROLL_SEARCH } from './constants';
+import {
+  RIGHT_PAYMENT_POINT_SEARCH,
+  RIGHT_PAYROLL_CREATE,
+  RIGHT_PAYROLL_SEARCH,
+  RIGHT_WITHDRAWAL_FEE_MANAGE,
+  PAYROLL_PAYMENT_PROVIDERS_ROUTE,
+} from './constants';
 import reducer from './reducer';
 import messages_en from './translations/en.json';
 import PaymentPointPage from './pages/payment-point/PaymentPointPage';
@@ -44,6 +50,7 @@ import { PayrollDeleteTaskItemFormatters, PayrollDeleteTaskTableHeaders } from '
 import { PayrollPaymentFilesTabLabel, PayrollPaymentFilesTabPanel } from './components/payroll/PayrollPaymentFilesTab';
 import PendingPayrollsPage from './pages/payroll/PendingPayrollsPage';
 import { ConsolidatedPayrollsTabLabel, ConsolidatedPayrollsTabPanel } from './components/payroll/ConsolidatedPayrollsTab';
+import PaymentProviderSettingsPage from './pages/payroll/PaymentProviderSettingsPage';
 
 const ROUTE_PAYMENT_POINTS = 'paymentPoints';
 const ROUTE_PAYMENT_POINT = 'paymentPoints/paymentPoint';
@@ -64,6 +71,7 @@ const DEFAULT_CONFIG = {
     { key: 'payroll.route.payrollsPending', ref: ROUTE_PAYROLLS_PENDING },
     { key: 'payroll.route.payrollsReconciled', ref: ROUTE_PAYROLLS_RECONCILED },
     { key: 'payroll.route.payroll', ref: ROUTE_PAYROLL },
+    { key: PAYROLL_PAYMENT_PROVIDERS_ROUTE, ref: 'paymentProviders' },
     { key: 'payroll.PaymentPointPicker', ref: PaymentPointPicker },
     { key: 'payroll.PaymentPointPicker.projection', ref: ['id', 'name', 'location'] },
     { key: 'payroll.benefitConsumptionPayrollSearcher', ref: BenefitConsumptionPayrollSearcher },
@@ -76,6 +84,7 @@ const DEFAULT_CONFIG = {
     { path: ROUTE_PAYROLLS_APPROVED, component: ApprovedPayrollsPage },
     { path: ROUTE_PAYROLLS_PENDING, component: PendingPayrollsPage },
     { path: ROUTE_PAYROLLS_RECONCILED, component: ReconciledPayrollsPage },
+    { path: 'paymentProviders', component: PaymentProviderSettingsPage },
     {
       path: `${ROUTE_PAYROLL}/:payroll_uuid?/:createPayrollFromFailedInvoices?/:benefitPlanId?`,
       component: PayrollPage,
@@ -116,6 +125,15 @@ const DEFAULT_CONFIG = {
       route: `/${ROUTE_PAYROLLS_RECONCILED}`,
       filter: (rights) => rights.includes(RIGHT_PAYROLL_SEARCH),
       id: 'legalAndFinance.payrollsReconciled',
+    },
+  ],
+  'admin.MainMenu': [
+    {
+      text: <FormattedMessage module="payroll" id="payroll.withdrawalFees.title" />,
+      icon: <MonetizationOnIcon />,
+      route: '/paymentProviders',
+      filter: (rights) => rights.includes(RIGHT_WITHDRAWAL_FEE_MANAGE),
+      id: 'admin.paymentProviderSettings',
     },
   ],
   'payroll.TabPanel.label': [BenefitConsumptionsTabLabel, ConsolidatedPayrollsTabLabel, PayrollTaskTabLabel, PayrollPaymentFilesTabLabel],
