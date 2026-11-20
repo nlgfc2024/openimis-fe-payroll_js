@@ -311,6 +311,8 @@
   "payroll.withdrawalFees.band.create": "Create withdrawal fee band",
   "payroll.withdrawalFees.band.update": "Update withdrawal fee band",
   "payroll.withdrawalFees.band.delete": "Delete withdrawal fee band",
+  "payroll.withdrawalFees.band.delete.confirm.title": "Delete withdrawal fee band",
+  "payroll.withdrawalFees.band.delete.confirm.message": "Are you sure you want to delete this withdrawal fee band? This change cannot be undone.",
   "payroll.withdrawalFees.band.empty": "No withdrawal charge bands have been configured.",
   "payroll.gql_withdrawal_fee_manage_perms": "Payroll | Manage PSPs and withdrawal fees",
   "payroll.gql_payment_point_search_perms": "Payroll | Payment Point Search",

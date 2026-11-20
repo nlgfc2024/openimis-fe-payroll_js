@@ -20,6 +20,8 @@ import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 import {
   coreAlert,
+  coreConfirm,
+  clearConfirm,
   formatGQLString,
   Helmet,
   journalize,
@@ -105,6 +107,9 @@ function PaymentProviderSettingsPage({
   waitForMutation,
   journalize,
   coreAlert,
+  coreConfirm,
+  clearConfirm,
+  confirmed,
 }) {
   const classes = useStyles();
   const modulesManager = useModulesManager();
@@ -114,6 +119,7 @@ function PaymentProviderSettingsPage({
   const [providerFormOpen, setProviderFormOpen] = useState(false);
   const [bandForm, setBandForm] = useState(newFeeBand());
   const [bandSearcherKey, setBandSearcherKey] = useState(0);
+  const [bandToDelete, setBandToDelete] = useState(null);
   const previousSubmittingRef = useRef(false);
 
   useEffect(() => {
@@ -157,6 +163,28 @@ function PaymentProviderSettingsPage({
       );
     }
   }, [providersError]);
+
+  useEffect(() => {
+    if (!bandToDelete) return;
+    coreConfirm(
+      formatMessage('payroll.withdrawalFees.band.delete.confirm.title'),
+      formatMessage('payroll.withdrawalFees.band.delete.confirm.message'),
+      null,
+      'warning',
+    );
+  }, [bandToDelete]);
+
+  useEffect(() => {
+    if (!bandToDelete) return undefined;
+    if (confirmed) {
+      deleteWithdrawalFeeBand(
+        bandToDelete,
+        formatMessage('payroll.withdrawalFees.band.delete'),
+      );
+    }
+    if (confirmed !== null) setBandToDelete(null);
+    return () => confirmed && clearConfirm(false);
+  }, [confirmed]);
 
   if (!rights.includes(RIGHT_WITHDRAWAL_FEE_MANAGE)) return null;
 
@@ -303,10 +331,7 @@ function PaymentProviderSettingsPage({
           <span>
             <IconButton
               aria-label={formatMessage('payroll.withdrawalFees.delete')}
-              onClick={() => deleteWithdrawalFeeBand(
-                band,
-                formatMessage('payroll.withdrawalFees.band.delete'),
-              )}
+              onClick={() => setBandToDelete(band)}
               disabled={submittingMutation}
             >
               <DeleteIcon />
@@ -523,6 +548,7 @@ const mapStateToProps = (state) => ({
   bandsError: state.payroll.errorWithdrawalFeeBands,
   mutation: state.payroll.mutation,
   submittingMutation: state.payroll.submittingMutation,
+  confirmed: state.core.confirmed,
 });
 
 const mapDispatchToProps = (dispatch) => bindActionCreators({
@@ -533,6 +559,8 @@ const mapDispatchToProps = (dispatch) => bindActionCreators({
   waitForMutation,
   journalize,
   coreAlert,
+  coreConfirm,
+  clearConfirm,
 }, dispatch);
 
 export default connect(mapStateToProps, mapDispatchToProps)(PaymentProviderSettingsPage);
