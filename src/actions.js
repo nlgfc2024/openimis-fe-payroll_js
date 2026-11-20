@@ -47,9 +47,13 @@ const BENEFIT_CONSUMPTION_PROJECTION = () => [
   'catchmentName',
   'projectName',
   'benefitAttachment {bill {id, code, terms, datePayed}}',
+  'hasReceipt',
   'receipt',
   'photo',
   'amount',
+  'withdrawalFee',
+  'withdrawalFeeError',
+  'amountToPay',
   'type',
   'status',
   'dateDue',
@@ -58,7 +62,7 @@ const BENEFIT_CONSUMPTION_PROJECTION = () => [
 const PAYROLL_BENEFIT_CONSUMPTION_PROJECTION = () => [
   'id',
   // eslint-disable-next-line max-len
-  'benefit{id,isDeleted,jsonExt,dateCreated,dateUpdated,dateValidFrom,dateValidTo,id,code,individual {firstName, lastName},gender,accountNumber,accountName,bank,benefitAttachment {bill {id, code, terms, datePayed}},receipt,photo,amount,type,status,dateDue}',
+  'benefit{id,isDeleted,jsonExt,dateCreated,dateUpdated,dateValidFrom,dateValidTo,id,code,individual {firstName, lastName},gender,accountNumber,accountName,bank,benefitAttachment {bill {id, code, terms, datePayed}},hasReceipt,receipt,photo,amount,withdrawalFee,withdrawalFeeError,amountToPay,type,status,dateDue}',
   'payroll {id, name, status, paymentCycle {code, startDate, endDate}, paymentMethod, benefitPlanNameCode}',
 ];
 
@@ -68,7 +72,7 @@ const BENEFIT_CONSUMPTION_SUMMARY_PROJECTION = () => [
 
 const BENEFIT_ATTACHMENT_PROJECTION = () => [
   // Location fields are resolved by the payroll API from the beneficiary's village hierarchy.
-  'benefit{id, status, code, dateDue, receipt, nationalId, formNumber, phoneNumber, gender, accountNumber, accountName, bank, districtName, traditionalAuthorityName, groupVillageHeadName, catchmentName, projectName, individual {firstName, lastName}, jsonExt, type, status, amount, receipt}',
+  'benefit{id, status, code, dateDue, hasReceipt, receipt, nationalId, formNumber, phoneNumber, gender, accountNumber, accountName, bank, districtName, traditionalAuthorityName, groupVillageHeadName, catchmentName, projectName, individual {firstName, lastName}, jsonExt, type, status, amount, withdrawalFee, withdrawalFeeError, amountToPay}',
   'bill{id, code, terms, amountTotal, datePayed}',
 ];
 
@@ -81,7 +85,7 @@ const PAYROLL_PROJECTION = (modulesManager) => [
   `paymentPoint { ${PAYMENT_POINT_PROJECTION(modulesManager).join(' ')} }`,
   'paymentCycle { code, startDate, endDate }',
   // eslint-disable-next-line max-len
-  'benefitConsumption{id, status, code, dateDue, receipt, amount, individual {firstName, lastName}, benefitAttachment{bill{id, code, terms, amountTotal}}}',
+  'benefitConsumption{id, status, code, dateDue, hasReceipt, receipt, amount, withdrawalFee, withdrawalFeeError, amountToPay, individual {firstName, lastName}, benefitAttachment{bill{id, code, terms, amountTotal}}}',
   'jsonExt',
   'status',
   'dateValidFrom',
@@ -245,6 +249,142 @@ export function updatePaymentPoint(paymentPoint, clientMutationLabel) {
   );
 }
 
+const formatPaymentProviderGQL = (provider) => `
+  ${provider?.id ? `id: "${provider.id}"` : ''}
+  ${provider?.code ? `code: "${formatGQLString(provider.code)}"` : ''}
+  ${provider?.name ? `name: "${formatGQLString(provider.name)}"` : ''}
+  ${provider?.providerType ? `providerType: "${provider.providerType}"` : ''}
+  ${provider?.isActive !== undefined ? `isActive: ${provider.isActive}` : ''}
+`;
+
+const formatWithdrawalFeeBandGQL = (band) => `
+  ${band?.id ? `id: "${band.id}"` : ''}
+  ${band?.providerId ? `providerId: "${band.providerId}"` : ''}
+  ${band?.minimumAmount !== undefined
+    ? `minimumAmount: "${formatGQLString(String(band.minimumAmount))}"`
+    : ''}
+  ${band?.maximumAmount !== undefined
+    ? `maximumAmount: ${band.maximumAmount === ''
+      ? 'null'
+      : `"${formatGQLString(String(band.maximumAmount))}"`}`
+    : ''}
+  ${band?.transferCost !== undefined
+    ? `transferCost: "${formatGQLString(String(band.transferCost))}"`
+    : ''}
+  ${band?.effectiveFrom ? `effectiveFrom: "${band.effectiveFrom}"` : ''}
+  ${band?.effectiveTo !== undefined
+    ? `effectiveTo: ${band.effectiveTo ? `"${band.effectiveTo}"` : 'null'}`
+    : ''}
+`;
+
+const formatPaymentProviderWithFeeBandGQL = (provider, band) => `
+  ${provider?.id ? `providerId: "${provider.id}"` : ''}
+  ${band?.id ? `feeBandId: "${band.id}"` : ''}
+  ${provider?.code ? `code: "${formatGQLString(provider.code)}"` : ''}
+  ${provider?.name ? `name: "${formatGQLString(provider.name)}"` : ''}
+  ${provider?.providerType ? `providerType: "${provider.providerType}"` : ''}
+  ${provider?.isActive !== undefined ? `isActive: ${provider.isActive}` : ''}
+  ${band?.minimumAmount !== undefined
+    ? `minimumAmount: "${formatGQLString(String(band.minimumAmount))}"`
+    : ''}
+  ${band?.maximumAmount !== undefined
+    ? `maximumAmount: ${band.maximumAmount === ''
+      ? 'null'
+      : `"${formatGQLString(String(band.maximumAmount))}"`}`
+    : ''}
+  ${band?.transferCost !== undefined
+    ? `transferCost: "${formatGQLString(String(band.transferCost))}"`
+    : ''}
+  ${band?.effectiveFrom ? `effectiveFrom: "${band.effectiveFrom}"` : ''}
+  ${band?.effectiveTo !== undefined
+    ? `effectiveTo: ${band.effectiveTo ? `"${band.effectiveTo}"` : 'null'}`
+    : ''}
+`;
+
+export function fetchPaymentProviders() {
+  const payload = `
+    query PaymentProviders {
+      paymentProviders(activeOnly: false) {
+        id
+        code
+        name
+        providerType
+        isActive
+        isDeleted
+      }
+    }
+  `;
+  return graphql(payload, ACTION_TYPE.GET_PAYMENT_PROVIDERS);
+}
+
+export function fetchWithdrawalFeeBands(params) {
+  const projection = [
+    'id',
+    'minimumAmount',
+    'maximumAmount',
+    'transferCost',
+    'effectiveFrom',
+    'effectiveTo',
+    'provider { id uuid code name providerType isActive }',
+  ];
+  const payload = formatPageQueryWithCount('withdrawalFeeBands', params, projection);
+  return graphql(payload, ACTION_TYPE.GET_WITHDRAWAL_FEE_BANDS);
+}
+
+export function createPaymentProvider(provider, clientMutationLabel) {
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.WITHDRAWAL_FEES.CREATE_PROVIDER,
+    formatPaymentProviderGQL(provider),
+    ACTION_TYPE.CREATE_PAYMENT_PROVIDER,
+    clientMutationLabel,
+  );
+}
+
+export function updatePaymentProvider(provider, clientMutationLabel) {
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.WITHDRAWAL_FEES.UPDATE_PROVIDER,
+    formatPaymentProviderGQL(provider),
+    ACTION_TYPE.UPDATE_PAYMENT_PROVIDER,
+    clientMutationLabel,
+  );
+}
+
+export function createWithdrawalFeeBand(band, clientMutationLabel) {
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.WITHDRAWAL_FEES.CREATE_BAND,
+    formatWithdrawalFeeBandGQL(band),
+    ACTION_TYPE.CREATE_WITHDRAWAL_FEE_BAND,
+    clientMutationLabel,
+  );
+}
+
+export function savePaymentProviderWithFeeBand(provider, band, clientMutationLabel) {
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.WITHDRAWAL_FEES.SAVE_PROVIDER_WITH_FEE_BAND,
+    formatPaymentProviderWithFeeBandGQL(provider, band),
+    ACTION_TYPE.SAVE_PROVIDER_WITH_FEE_BAND,
+    clientMutationLabel,
+  );
+}
+
+export function updateWithdrawalFeeBand(band, clientMutationLabel) {
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.WITHDRAWAL_FEES.UPDATE_BAND,
+    formatWithdrawalFeeBandGQL(band),
+    ACTION_TYPE.UPDATE_WITHDRAWAL_FEE_BAND,
+    clientMutationLabel,
+  );
+}
+
+export function deleteWithdrawalFeeBand(band, clientMutationLabel) {
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.WITHDRAWAL_FEES.DELETE_BAND,
+    `id: "${band?.id}"`,
+    ACTION_TYPE.DELETE_WITHDRAWAL_FEE_BAND,
+    clientMutationLabel,
+  );
+}
+
 export function fetchPayrolls(modulesManager, params) {
   const payload = formatPageQueryWithCount('payroll', params, PAYROLL_SEARCHER_PROJECTION(modulesManager));
   return graphql(payload, ACTION_TYPE.SEARCH_PAYROLLS);
@@ -294,6 +434,16 @@ export function createConsolidatedPayroll(payload, clientMutationLabel) {
     MUTATION_SERVICE.PAYROLL.CREATE_CONSOLIDATED,
     input,
     ACTION_TYPE.CREATE_CONSOLIDATED_PAYROLL,
+    clientMutationLabel,
+  );
+}
+
+export function refreshWithdrawalFeeSnapshots(payroll, clientMutationLabel) {
+  const payrollId = decodeId(payroll.id);
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.PAYROLL.REFRESH_WITHDRAWAL_FEE_SNAPSHOTS,
+    `payrollId: "${payrollId}"`,
+    ACTION_TYPE.REFRESH_WITHDRAWAL_FEE_SNAPSHOTS,
     clientMutationLabel,
   );
 }

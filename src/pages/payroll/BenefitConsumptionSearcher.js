@@ -7,7 +7,11 @@ import {
   Searcher, useModulesManager, useTranslations,
 } from '@openimis/fe-core';
 import { fetchBenefitConsumptions } from '../../actions';
-import { DEFAULT_PAGE_SIZE, ROWS_PER_PAGE_OPTIONS } from '../../constants';
+import { formatAmountWithoutCurrency } from '../../utils/payroll-utils';
+import {
+  DEFAULT_PAGE_SIZE,
+  ROWS_PER_PAGE_OPTIONS,
+} from '../../constants';
 import BenefitConsumptionFilter from './BenefitConsumptionFilter';
 
 function BenefitConsumptionSearcher({
@@ -21,7 +25,8 @@ function BenefitConsumptionSearcher({
   payrollUuid,
 }) {
   const modulesManager = useModulesManager();
-  const { formatMessageWithValues } = useTranslations('payroll', modulesManager);
+  const { formatMessage, formatMessageWithValues } = useTranslations('payroll', modulesManager);
+  const formatAmount = (amount) => formatAmountWithoutCurrency(amount, modulesManager);
 
   const fetch = (params) => fetchBenefitConsumptions(modulesManager, params);
 
@@ -33,9 +38,21 @@ function BenefitConsumptionSearcher({
     'benefitConsumption.dateDue',
     'benefitConsumption.receipt',
     'benefitConsumption.amount',
+    'benefitConsumption.withdrawalFee',
+    'benefitConsumption.amountToPay',
     'benefitConsumption.type',
     'benefitConsumption.status',
   ];
+
+  const formatWithdrawalFee = (benefitConsumption) => {
+    if (benefitConsumption?.withdrawalFee != null) return formatAmount(benefitConsumption.withdrawalFee);
+    if (!benefitConsumption?.withdrawalFeeError) return '';
+    return (
+      <span title={benefitConsumption.withdrawalFeeError}>
+        {formatMessage('payroll.benefitConsumption.withdrawalFeeUnavailable')}
+      </span>
+    );
+  };
 
   const itemFormatters = () => [
     (benefitConsumption) => benefitConsumption?.individual?.firstName,
@@ -45,6 +62,10 @@ function BenefitConsumptionSearcher({
     (benefitConsumption) => benefitConsumption?.dateDue,
     (benefitConsumption) => benefitConsumption?.receipt,
     (benefitConsumption) => benefitConsumption?.amount,
+    formatWithdrawalFee,
+    (benefitConsumption) => (benefitConsumption?.amountToPay != null
+      ? formatAmount(benefitConsumption.amountToPay)
+      : ''),
     (benefitConsumption) => benefitConsumption?.type,
     (benefitConsumption) => benefitConsumption?.status,
   ];
@@ -59,6 +80,8 @@ function BenefitConsumptionSearcher({
     ['dateDue', true],
     ['receipt', true],
     ['amount', true],
+    null,
+    null,
     ['type', true],
     ['status', true],
   ];

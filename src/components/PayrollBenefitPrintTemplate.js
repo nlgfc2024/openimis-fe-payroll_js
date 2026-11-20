@@ -13,6 +13,7 @@ import {
   useTranslations, useModulesManager,
 } from '@openimis/fe-core';
 import { MODULE_NAME } from '../constants';
+import { formatAmountWithoutCurrency } from '../utils/payroll-utils';
 
 const useStyles = makeStyles(() => ({
   topHeader: {
@@ -82,7 +83,8 @@ const PayrollBenefitPrintTemplate = forwardRef(({ benefitAttachments }, ref) => 
   if (!benefitAttachments) return null;
   const classes = useStyles();
   const modulesManager = useModulesManager();
-  const { formatMessage } = useTranslations(modulesManager, MODULE_NAME);
+  const { formatMessage } = useTranslations(MODULE_NAME, modulesManager);
+  const formatAmount = (amount) => formatAmountWithoutCurrency(amount, modulesManager);
 
   return (
     <div ref={ref} className={classes.printContainer}>
@@ -129,6 +131,27 @@ const PayrollBenefitPrintTemplate = forwardRef(({ benefitAttachments }, ref) => 
             <div className={classes.detailValue}>{benefitAttachment.benefit.amount}</div>
           </div>
           <div className={classes.detailRow}>
+            <div className={classes.detailName}>{formatMessage('payroll.benefitConsumption.withdrawalFee')}</div>
+            <div
+              className={classes.detailValue}
+              title={benefitAttachment.benefit.withdrawalFeeError || ''}
+            >
+              {benefitAttachment.benefit.withdrawalFee != null
+                ? formatAmount(benefitAttachment.benefit.withdrawalFee)
+                : benefitAttachment.benefit.withdrawalFeeError
+                  ? formatMessage('payroll.benefitConsumption.withdrawalFeeUnavailable')
+                  : ''}
+            </div>
+          </div>
+          <div className={classes.detailRow}>
+            <div className={classes.detailName}>{formatMessage('payroll.benefitConsumption.amountToPay')}</div>
+            <div className={classes.detailValue}>
+              {benefitAttachment.benefit.amountToPay != null
+                ? formatAmount(benefitAttachment.benefit.amountToPay)
+                : ''}
+            </div>
+          </div>
+          <div className={classes.detailRow}>
             <div className={classes.detailName}>{formatMessage('payroll.benefitConsumption.type')}</div>
             <div className={classes.detailValue}>{benefitAttachment.benefit.type}</div>
           </div>
@@ -143,7 +166,7 @@ const PayrollBenefitPrintTemplate = forwardRef(({ benefitAttachments }, ref) => 
           <div className={classes.detailRow}>
             <div className={classes.detailName}>{formatMessage('payroll.benefitConsumption.paymentDate')}</div>
             <div className={classes.detailValue}>
-              {!benefitAttachment.benefit.receipt
+              {!benefitAttachment.benefit.hasReceipt
                 ? ''
                 : benefitAttachment?.bill?.datePayed}
             </div>

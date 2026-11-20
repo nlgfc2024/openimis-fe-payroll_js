@@ -22,9 +22,18 @@ export const ACTION_TYPE = {
   SEARCH_PAYMENT_POINTS: 'PAYROLL_PAYMENT_POINTS',
   CREATE_PAYROLL: 'PAYROLL_MUTATION_CREATE_PAYROLL',
   CREATE_CONSOLIDATED_PAYROLL: 'PAYROLL_MUTATION_CREATE_CONSOLIDATED_PAYROLL',
+  REFRESH_WITHDRAWAL_FEE_SNAPSHOTS: 'PAYROLL_MUTATION_REFRESH_WITHDRAWAL_FEE_SNAPSHOTS',
   DELETE_PAYROLL: 'PAYROLL_MUTATION_DELETE_PAYROLL',
   SEARCH_PAYROLLS: 'PAYROLL_PAYROLLS',
   GET_PAYMENT_POINT: 'PAYROLL_PAYMENT_POINT',
+  GET_PAYMENT_PROVIDERS: 'PAYROLL_PAYMENT_PROVIDERS',
+  GET_WITHDRAWAL_FEE_BANDS: 'PAYROLL_WITHDRAWAL_FEE_BANDS',
+  CREATE_PAYMENT_PROVIDER: 'PAYROLL_MUTATION_CREATE_PAYMENT_PROVIDER',
+  UPDATE_PAYMENT_PROVIDER: 'PAYROLL_MUTATION_UPDATE_PAYMENT_PROVIDER',
+  CREATE_WITHDRAWAL_FEE_BAND: 'PAYROLL_MUTATION_CREATE_WITHDRAWAL_FEE_BAND',
+  UPDATE_WITHDRAWAL_FEE_BAND: 'PAYROLL_MUTATION_UPDATE_WITHDRAWAL_FEE_BAND',
+  DELETE_WITHDRAWAL_FEE_BAND: 'PAYROLL_MUTATION_DELETE_WITHDRAWAL_FEE_BAND',
+  SAVE_PROVIDER_WITH_FEE_BAND: 'PAYROLL_MUTATION_SAVE_PROVIDER_WITH_FEE_BAND',
   GET_PAYROLL: 'PAYROLL_GET_PAYROLL',
   GET_BENEFIT_CONSUMPTION: 'PAYROLL_BENEFIT_CONSUMPTION',
   GET_PAYROLL_BENEFIT_CONSUMPTION: 'PAYROLL_PAYROLL_BENEFIT_CONSUMPTION',
@@ -45,9 +54,18 @@ export const MUTATION_SERVICE = {
     DELETE: 'deletePaymentPoint',
     UPDATE: 'updatePaymentPoint',
   },
+  WITHDRAWAL_FEES: {
+    CREATE_PROVIDER: 'createPaymentProvider',
+    UPDATE_PROVIDER: 'updatePaymentProvider',
+    CREATE_BAND: 'createWithdrawalFeeBand',
+    UPDATE_BAND: 'updateWithdrawalFeeBand',
+    DELETE_BAND: 'deleteWithdrawalFeeBand',
+    SAVE_PROVIDER_WITH_FEE_BAND: 'savePaymentProviderWithFeeBand',
+  },
   PAYROLL: {
     CREATE: 'createPayroll',
     CREATE_CONSOLIDATED: 'createConsolidatedPayroll',
+    REFRESH_WITHDRAWAL_FEE_SNAPSHOTS: 'refreshWithdrawalFeeSnapshots',
     DELETE: 'deletePayroll',
     CLOSE: 'closePayroll',
     REJECT: 'rejectPayroll',
@@ -71,6 +89,16 @@ const STORE_STATE = {
   fetchedPaymentPoint: false,
   paymentPoint: {},
   errorPaymentPoint: null,
+  paymentProviders: [],
+  fetchingPaymentProviders: false,
+  fetchedPaymentProviders: false,
+  errorPaymentProviders: null,
+  withdrawalFeeBands: [],
+  withdrawalFeeBandsPageInfo: {},
+  withdrawalFeeBandsTotalCount: 0,
+  fetchingWithdrawalFeeBands: false,
+  fetchedWithdrawalFeeBands: false,
+  errorWithdrawalFeeBands: null,
 
   fetchingPayrolls: false,
   fetchedPayrolls: false,
@@ -214,6 +242,63 @@ function reducer(
         ...state,
         fetchingPaymentPoint: false,
         errorPaymentPoint: formatServerError(action.payload),
+      };
+    case REQUEST(ACTION_TYPE.GET_PAYMENT_PROVIDERS):
+      return {
+        ...state,
+        fetchingPaymentProviders: true,
+        fetchedPaymentProviders: false,
+        errorPaymentProviders: null,
+      };
+    case SUCCESS(ACTION_TYPE.GET_PAYMENT_PROVIDERS):
+      return {
+        ...state,
+        paymentProviders: (action.payload.data.paymentProviders ?? []).map((provider) => ({
+          ...provider,
+          id: provider.uuid || decodeId(provider.id),
+        })),
+        fetchingPaymentProviders: false,
+        fetchedPaymentProviders: true,
+        errorPaymentProviders: formatGraphQLError(action.payload),
+      };
+    case ERROR(ACTION_TYPE.GET_PAYMENT_PROVIDERS):
+      return {
+        ...state,
+        fetchingPaymentProviders: false,
+        errorPaymentProviders: formatServerError(action.payload),
+      };
+    case REQUEST(ACTION_TYPE.GET_WITHDRAWAL_FEE_BANDS):
+      return {
+        ...state,
+        withdrawalFeeBands: [],
+        withdrawalFeeBandsPageInfo: {},
+        withdrawalFeeBandsTotalCount: 0,
+        fetchingWithdrawalFeeBands: true,
+        fetchedWithdrawalFeeBands: false,
+        errorWithdrawalFeeBands: null,
+      };
+    case SUCCESS(ACTION_TYPE.GET_WITHDRAWAL_FEE_BANDS):
+      return {
+        ...state,
+        withdrawalFeeBands: parseData(action.payload.data.withdrawalFeeBands)?.map((band) => ({
+          ...band,
+          id: decodeId(band.id),
+          provider: band.provider ? {
+            ...band.provider,
+            id: band.provider.uuid || decodeId(band.provider.id),
+          } : null,
+        })),
+        withdrawalFeeBandsPageInfo: pageInfo(action.payload.data.withdrawalFeeBands),
+        withdrawalFeeBandsTotalCount: action.payload.data.withdrawalFeeBands?.totalCount ?? 0,
+        fetchingWithdrawalFeeBands: false,
+        fetchedWithdrawalFeeBands: true,
+        errorWithdrawalFeeBands: formatGraphQLError(action.payload),
+      };
+    case ERROR(ACTION_TYPE.GET_WITHDRAWAL_FEE_BANDS):
+      return {
+        ...state,
+        fetchingWithdrawalFeeBands: false,
+        errorWithdrawalFeeBands: formatServerError(action.payload),
       };
     case CLEAR(ACTION_TYPE.GET_PAYMENT_POINT):
       return {
@@ -478,10 +563,28 @@ function reducer(
       return dispatchMutationResp(state, MUTATION_SERVICE.PAYMENT_POINT.DELETE, action);
     case SUCCESS(ACTION_TYPE.UPDATE_PAYMENT_POINT):
       return dispatchMutationResp(state, MUTATION_SERVICE.PAYMENT_POINT.UPDATE, action);
+    case SUCCESS(ACTION_TYPE.CREATE_PAYMENT_PROVIDER):
+      return dispatchMutationResp(state, MUTATION_SERVICE.WITHDRAWAL_FEES.CREATE_PROVIDER, action);
+    case SUCCESS(ACTION_TYPE.UPDATE_PAYMENT_PROVIDER):
+      return dispatchMutationResp(state, MUTATION_SERVICE.WITHDRAWAL_FEES.UPDATE_PROVIDER, action);
+    case SUCCESS(ACTION_TYPE.CREATE_WITHDRAWAL_FEE_BAND):
+      return dispatchMutationResp(state, MUTATION_SERVICE.WITHDRAWAL_FEES.CREATE_BAND, action);
+    case SUCCESS(ACTION_TYPE.UPDATE_WITHDRAWAL_FEE_BAND):
+      return dispatchMutationResp(state, MUTATION_SERVICE.WITHDRAWAL_FEES.UPDATE_BAND, action);
+    case SUCCESS(ACTION_TYPE.DELETE_WITHDRAWAL_FEE_BAND):
+      return dispatchMutationResp(state, MUTATION_SERVICE.WITHDRAWAL_FEES.DELETE_BAND, action);
+    case SUCCESS(ACTION_TYPE.SAVE_PROVIDER_WITH_FEE_BAND):
+      return dispatchMutationResp(state, MUTATION_SERVICE.WITHDRAWAL_FEES.SAVE_PROVIDER_WITH_FEE_BAND, action);
     case SUCCESS(ACTION_TYPE.CREATE_PAYROLL):
       return dispatchMutationResp(state, MUTATION_SERVICE.PAYROLL.CREATE, action);
     case SUCCESS(ACTION_TYPE.CREATE_CONSOLIDATED_PAYROLL):
       return dispatchMutationResp(state, MUTATION_SERVICE.PAYROLL.CREATE_CONSOLIDATED, action);
+    case SUCCESS(ACTION_TYPE.REFRESH_WITHDRAWAL_FEE_SNAPSHOTS):
+      return dispatchMutationResp(
+        state,
+        MUTATION_SERVICE.PAYROLL.REFRESH_WITHDRAWAL_FEE_SNAPSHOTS,
+        action,
+      );
     case SUCCESS(ACTION_TYPE.DELETE_PAYROLL):
       return dispatchMutationResp(state, MUTATION_SERVICE.PAYROLL.DELETE, action);
     case SUCCESS(ACTION_TYPE.CLOSE_PAYROLL):
