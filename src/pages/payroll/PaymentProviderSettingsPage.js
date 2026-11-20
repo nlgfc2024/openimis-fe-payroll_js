@@ -5,6 +5,7 @@ import {
   Button,
   FormControl,
   Grid,
+  IconButton,
   InputLabel,
   MenuItem,
   Paper,
@@ -15,9 +16,12 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Tooltip,
   Typography,
 } from '@material-ui/core';
 import { makeStyles } from '@material-ui/styles';
+import EditIcon from '@material-ui/icons/Edit';
+import DeleteIcon from '@material-ui/icons/Delete';
 import {
   coreAlert,
   Helmet,
@@ -468,22 +472,31 @@ function PaymentProviderSettingsPage({
                     <TableCell className={classes.tableCell}>{band.effectiveFrom}</TableCell>
                     <TableCell className={classes.tableCell}>{band.effectiveTo || '-'}</TableCell>
                     <TableCell className={classes.tableCell}>
-                      <Button
-                        onClick={() => editBand(band)}
-                        disabled={!selectedProvider.isActive}
-                      >
-                        {formatMessage('payroll.withdrawalFees.edit')}
-                      </Button>
-                      <Button
-                        color="secondary"
-                        onClick={() => deleteWithdrawalFeeBand(
-                          band,
-                          formatMessage('payroll.withdrawalFees.band.delete'),
-                        )}
-                        disabled={submittingMutation}
-                      >
-                        {formatMessage('payroll.withdrawalFees.delete')}
-                      </Button>
+                      <Tooltip title={formatMessage('payroll.withdrawalFees.edit')}>
+                        <span>
+                          <IconButton
+                            aria-label={formatMessage('payroll.withdrawalFees.edit')}
+                            onClick={() => editBand(band)}
+                            disabled={!selectedProvider.isActive}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                      <Tooltip title={formatMessage('payroll.withdrawalFees.delete')}>
+                        <span>
+                          <IconButton
+                            aria-label={formatMessage('payroll.withdrawalFees.delete')}
+                            onClick={() => deleteWithdrawalFeeBand(
+                              band,
+                              formatMessage('payroll.withdrawalFees.band.delete'),
+                            )}
+                            disabled={submittingMutation}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 ))}
