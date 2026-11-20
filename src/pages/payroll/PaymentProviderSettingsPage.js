@@ -44,6 +44,7 @@ import {
   ROWS_PER_PAGE_OPTIONS,
 } from '../../constants';
 import { ACTION_TYPE } from '../../reducer';
+import { formatAmountWithoutCurrency } from '../../utils/payroll-utils';
 
 const useStyles = makeStyles((theme) => ({
   page: theme.page,
@@ -120,16 +121,7 @@ function PaymentProviderSettingsPage({
   const classes = useStyles();
   const modulesManager = useModulesManager();
   const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
-  const amountLocale = modulesManager.getConf('fe-core', 'thousandSeparator', 'en');
-  const amountDecimals = modulesManager.getConf('fe-core', 'numberOfDecimals', 2);
-  const formatFeeAmount = (amount) => {
-    if (!amountLocale) return Number(amount).toFixed(amountDecimals);
-
-    return new Intl.NumberFormat(amountLocale, {
-      minimumFractionDigits: amountDecimals,
-      maximumFractionDigits: amountDecimals,
-    }).format(amount || 0);
-  };
+  const formatFeeAmount = (amount) => formatAmountWithoutCurrency(amount, modulesManager);
   const rights = useSelector((store) => store.core.user.i_user.rights ?? []);
   const [providerForm, setProviderForm] = useState(emptyProvider);
   const [providerFormOpen, setProviderFormOpen] = useState(false);

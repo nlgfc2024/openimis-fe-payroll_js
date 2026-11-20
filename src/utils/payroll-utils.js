@@ -16,6 +16,17 @@ export const getPaymentPlanBenefitPlanId = (paymentPlan) => (
   getPaymentPlanBenefitPlan(paymentPlan)?.id ?? null
 );
 
+export const formatAmountWithoutCurrency = (amount, modulesManager) => {
+  const amountLocale = modulesManager.getConf('fe-core', 'thousandSeparator', 'en');
+  const amountDecimals = modulesManager.getConf('fe-core', 'numberOfDecimals', 2);
+  if (!amountLocale) return Number(amount).toFixed(amountDecimals);
+
+  return new Intl.NumberFormat(amountLocale, {
+    minimumFractionDigits: amountDecimals,
+    maximumFractionDigits: amountDecimals,
+  }).format(amount || 0);
+};
+
 export const isPaymentPlanActive = (paymentPlan, now = new Date()) => {
   if (!paymentPlan || paymentPlan.isDeleted) return false;
   const today = [

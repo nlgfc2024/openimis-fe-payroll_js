@@ -22,6 +22,7 @@ import {
 import BenefitConsumptionFilter from './BenefitConsumptionFilter';
 import AdditionalFieldsDialog from './dialogs/AdditionalFieldsDialog';
 import PayrollPrintTemplate from '../PayrollPrintTemplate';
+import { formatAmountWithoutCurrency } from '../../utils/payroll-utils';
 
 function BenefitConsumptionSearcher({
   fetchBenefitConsumptions,
@@ -35,7 +36,8 @@ function BenefitConsumptionSearcher({
   payrollUuid,
 }) {
   const modulesManager = useModulesManager();
-  const { formatAmount, formatMessage, formatMessageWithValues } = useTranslations('payroll', modulesManager);
+  const { formatMessage, formatMessageWithValues } = useTranslations('payroll', modulesManager);
+  const formatAmount = (amount) => formatAmountWithoutCurrency(amount, modulesManager);
   const payrollPrintTemplateRef = useRef(null);
 
   const handlePrint = useReactToPrint({

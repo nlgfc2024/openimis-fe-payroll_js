@@ -24,6 +24,7 @@ import {
 import BenefitConsumptionSearcherModal from '../BenefitConsumptionSearcherModal';
 import downloadPayroll from '../../../utils/export';
 import { fetchPayroll, refreshWithdrawalFeeSnapshots } from '../../../actions';
+import { formatAmountWithoutCurrency } from '../../../utils/payroll-utils';
 
 function PaymentPendingPayrollPaymentDialog({
   classes,
@@ -55,7 +56,8 @@ function PaymentPendingPayrollPaymentDialog({
     setIsOpen(false);
   };
 
-  const { formatAmount, formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
+  const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
+  const formatAmount = (amount) => formatAmountWithoutCurrency(amount, modulesManager);
   const payrollBenefits = payroll?.id === payrollUuid ? payroll.benefitConsumption || [] : [];
   const feeIssues = payrollBenefits.filter((benefit) => benefit.withdrawalFeeError);
   const withdrawalFeeTotal = payrollBenefits.reduce(
