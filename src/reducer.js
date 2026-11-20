@@ -32,6 +32,7 @@ export const ACTION_TYPE = {
   CREATE_WITHDRAWAL_FEE_BAND: 'PAYROLL_MUTATION_CREATE_WITHDRAWAL_FEE_BAND',
   UPDATE_WITHDRAWAL_FEE_BAND: 'PAYROLL_MUTATION_UPDATE_WITHDRAWAL_FEE_BAND',
   DELETE_WITHDRAWAL_FEE_BAND: 'PAYROLL_MUTATION_DELETE_WITHDRAWAL_FEE_BAND',
+  SAVE_PROVIDER_WITH_FEE_BAND: 'PAYROLL_MUTATION_SAVE_PROVIDER_WITH_FEE_BAND',
   GET_PAYROLL: 'PAYROLL_GET_PAYROLL',
   GET_BENEFIT_CONSUMPTION: 'PAYROLL_BENEFIT_CONSUMPTION',
   GET_PAYROLL_BENEFIT_CONSUMPTION: 'PAYROLL_PAYROLL_BENEFIT_CONSUMPTION',
@@ -58,6 +59,7 @@ export const MUTATION_SERVICE = {
     CREATE_BAND: 'createWithdrawalFeeBand',
     UPDATE_BAND: 'updateWithdrawalFeeBand',
     DELETE_BAND: 'deleteWithdrawalFeeBand',
+    SAVE_PROVIDER_WITH_FEE_BAND: 'savePaymentProviderWithFeeBand',
   },
   PAYROLL: {
     CREATE: 'createPayroll',
@@ -90,6 +92,8 @@ const STORE_STATE = {
   fetchedPaymentProviders: false,
   errorPaymentProviders: null,
   withdrawalFeeBands: [],
+  withdrawalFeeBandsPageInfo: {},
+  withdrawalFeeBandsTotalCount: 0,
   fetchingWithdrawalFeeBands: false,
   fetchedWithdrawalFeeBands: false,
   errorWithdrawalFeeBands: null,
@@ -265,6 +269,8 @@ function reducer(
       return {
         ...state,
         withdrawalFeeBands: [],
+        withdrawalFeeBandsPageInfo: {},
+        withdrawalFeeBandsTotalCount: 0,
         fetchingWithdrawalFeeBands: true,
         fetchedWithdrawalFeeBands: false,
         errorWithdrawalFeeBands: null,
@@ -272,14 +278,16 @@ function reducer(
     case SUCCESS(ACTION_TYPE.GET_WITHDRAWAL_FEE_BANDS):
       return {
         ...state,
-        withdrawalFeeBands: (action.payload.data.withdrawalFeeBands ?? []).map((band) => ({
+        withdrawalFeeBands: parseData(action.payload.data.withdrawalFeeBands)?.map((band) => ({
           ...band,
-          id: band.uuid || decodeId(band.id),
+          id: decodeId(band.id),
           provider: band.provider ? {
             ...band.provider,
             id: band.provider.uuid || decodeId(band.provider.id),
           } : null,
         })),
+        withdrawalFeeBandsPageInfo: pageInfo(action.payload.data.withdrawalFeeBands),
+        withdrawalFeeBandsTotalCount: action.payload.data.withdrawalFeeBands?.totalCount ?? 0,
         fetchingWithdrawalFeeBands: false,
         fetchedWithdrawalFeeBands: true,
         errorWithdrawalFeeBands: formatGraphQLError(action.payload),
@@ -563,6 +571,8 @@ function reducer(
       return dispatchMutationResp(state, MUTATION_SERVICE.WITHDRAWAL_FEES.UPDATE_BAND, action);
     case SUCCESS(ACTION_TYPE.DELETE_WITHDRAWAL_FEE_BAND):
       return dispatchMutationResp(state, MUTATION_SERVICE.WITHDRAWAL_FEES.DELETE_BAND, action);
+    case SUCCESS(ACTION_TYPE.SAVE_PROVIDER_WITH_FEE_BAND):
+      return dispatchMutationResp(state, MUTATION_SERVICE.WITHDRAWAL_FEES.SAVE_PROVIDER_WITH_FEE_BAND, action);
     case SUCCESS(ACTION_TYPE.CREATE_PAYROLL):
       return dispatchMutationResp(state, MUTATION_SERVICE.PAYROLL.CREATE, action);
     case SUCCESS(ACTION_TYPE.CREATE_CONSOLIDATED_PAYROLL):

@@ -10,38 +10,35 @@ import {
   MenuItem,
   Paper,
   Select,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   TextField,
   Tooltip,
   Typography,
 } from '@material-ui/core';
 import { makeStyles } from '@material-ui/styles';
+import AddIcon from '@material-ui/icons/Add';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 import {
   coreAlert,
+  formatGQLString,
   Helmet,
   journalize,
+  Searcher,
   useModulesManager,
   useTranslations,
   waitForMutation,
 } from '@openimis/fe-core';
 import {
-  createPaymentProvider,
-  createWithdrawalFeeBand,
   deleteWithdrawalFeeBand,
   fetchPaymentProviders,
   fetchWithdrawalFeeBands,
-  updatePaymentProvider,
-  updateWithdrawalFeeBand,
+  savePaymentProviderWithFeeBand,
 } from '../../actions';
 import {
+  DEFAULT_PAGE_SIZE,
   MODULE_NAME,
   RIGHT_WITHDRAWAL_FEE_MANAGE,
+  ROWS_PER_PAGE_OPTIONS,
 } from '../../constants';
 import { ACTION_TYPE } from '../../reducer';
 
@@ -72,24 +69,6 @@ const useStyles = makeStyles((theme) => ({
   formActions: {
     marginTop: theme.spacing(2),
   },
-  feeBandForm: {
-    marginBottom: theme.spacing(2),
-  },
-  feeBandActions: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: theme.spacing(1),
-    [theme.breakpoints.down('sm')]: {
-      justifyContent: 'flex-start',
-    },
-  },
-  tableHead: {
-    ...theme.table.header,
-    backgroundColor: theme.paper.header.backgroundColor,
-  },
-  tableRow: theme.table.row,
-  tableCell: theme.table.cell,
 }));
 
 const emptyProvider = {
@@ -110,18 +89,18 @@ const newFeeBand = () => ({
 function PaymentProviderSettingsPage({
   providers,
   bands,
+  bandsPageInfo,
+  bandsTotalCount,
   fetchingProviders,
   fetchingBands,
+  fetchedBands,
   providersError,
   bandsError,
   mutation,
   submittingMutation,
   fetchPaymentProviders,
   fetchWithdrawalFeeBands,
-  createPaymentProvider,
-  updatePaymentProvider,
-  createWithdrawalFeeBand,
-  updateWithdrawalFeeBand,
+  savePaymentProviderWithFeeBand,
   deleteWithdrawalFeeBand,
   waitForMutation,
   journalize,
@@ -129,40 +108,18 @@ function PaymentProviderSettingsPage({
 }) {
   const classes = useStyles();
   const modulesManager = useModulesManager();
-  const { formatMessage } = useTranslations(MODULE_NAME, modulesManager);
+  const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
   const rights = useSelector((store) => store.core.user.i_user.rights ?? []);
-  const [selectedProviderId, setSelectedProviderId] = useState('');
   const [providerForm, setProviderForm] = useState(emptyProvider);
+  const [providerFormOpen, setProviderFormOpen] = useState(false);
   const [bandForm, setBandForm] = useState(newFeeBand());
+  const [bandSearcherKey, setBandSearcherKey] = useState(0);
   const previousSubmittingRef = useRef(false);
-
-  const selectedProvider = providers.find(({ id }) => id === selectedProviderId);
 
   useEffect(() => {
     if (!rights.includes(RIGHT_WITHDRAWAL_FEE_MANAGE)) return;
     fetchPaymentProviders();
   }, [rights.includes(RIGHT_WITHDRAWAL_FEE_MANAGE)]);
-
-  useEffect(() => {
-    setBandForm(newFeeBand());
-    if (selectedProviderId) {
-      fetchWithdrawalFeeBands(selectedProviderId);
-    }
-  }, [selectedProviderId]);
-
-  useEffect(() => {
-    if (!selectedProvider) {
-      setProviderForm(emptyProvider);
-      return;
-    }
-    setProviderForm({
-      id: selectedProvider.id,
-      code: selectedProvider.code,
-      name: selectedProvider.name,
-      providerType: selectedProvider.providerType,
-      isActive: selectedProvider.isActive,
-    });
-  }, [selectedProviderId]);
 
   useEffect(() => {
     if (previousSubmittingRef.current && !submittingMutation) {
@@ -172,14 +129,11 @@ function PaymentProviderSettingsPage({
           const result = await waitForMutation(mutation.clientMutationId);
           if (result?.status === 2) {
             fetchPaymentProviders();
-            if (selectedProviderId) fetchWithdrawalFeeBands(selectedProviderId);
-            if (mutation?.actionType === ACTION_TYPE.CREATE_WITHDRAWAL_FEE_BAND
-              || mutation?.actionType === ACTION_TYPE.UPDATE_WITHDRAWAL_FEE_BAND) {
-              setBandForm(newFeeBand());
-            }
-            if (mutation?.actionType === ACTION_TYPE.CREATE_PAYMENT_PROVIDER
-              || mutation?.actionType === ACTION_TYPE.UPDATE_PAYMENT_PROVIDER) {
+            setBandSearcherKey((key) => key + 1);
+            if (mutation?.actionType === ACTION_TYPE.SAVE_PROVIDER_WITH_FEE_BAND) {
               setProviderForm(emptyProvider);
+              setBandForm(newFeeBand());
+              setProviderFormOpen(false);
             }
             return;
           }
@@ -204,162 +158,250 @@ function PaymentProviderSettingsPage({
     }
   }, [providersError]);
 
-  useEffect(() => {
-    if (bandsError) {
-      coreAlert(
-        formatMessage('payroll.withdrawalFees.error.title'),
-        bandsError.message || formatMessage('payroll.withdrawalFees.error.message'),
-      );
-    }
-  }, [bandsError]);
-
   if (!rights.includes(RIGHT_WITHDRAWAL_FEE_MANAGE)) return null;
 
+  const selectFormProvider = (event) => {
+    const provider = providers.find(({ id }) => id === event.target.value);
+    setProviderForm(provider ? {
+      id: provider.id,
+      code: provider.code,
+      name: provider.name,
+      providerType: provider.providerType,
+      isActive: provider.isActive,
+    } : emptyProvider);
+    setBandForm(newFeeBand());
+  };
+
+  const addProvider = () => {
+    setProviderForm(emptyProvider);
+    setBandForm(newFeeBand());
+    setProviderFormOpen(true);
+  };
+
   const handleProviderSubmit = () => {
-    if (providerForm.id) {
-      updatePaymentProvider(providerForm, formatMessage('payroll.withdrawalFees.provider.update'));
-    } else {
-      createPaymentProvider(providerForm, formatMessage('payroll.withdrawalFees.provider.create'));
+    if (!providerForm.code.trim() || !providerForm.name.trim()) {
+      coreAlert(
+        formatMessage('payroll.withdrawalFees.error.title'),
+        formatMessage('payroll.withdrawalFees.provider.required'),
+      );
+      return;
     }
+    if (
+      !providerForm.isActive
+      || !bandForm.minimumAmount
+      || !bandForm.transferCost
+      || !bandForm.effectiveFrom
+    ) {
+      coreAlert(
+        formatMessage('payroll.withdrawalFees.error.title'),
+        formatMessage('payroll.withdrawalFees.band.required'),
+      );
+      return;
+    }
+    savePaymentProviderWithFeeBand(
+      providerForm,
+      bandForm,
+      formatMessage(providerForm.id
+        ? 'payroll.withdrawalFees.provider.saveWithBand'
+        : 'payroll.withdrawalFees.provider.createWithBand'),
+    );
   };
 
-  const handleBandSubmit = () => {
-    const payload = {
-      ...bandForm,
-      providerId: selectedProviderId,
-      maximumAmount: bandForm.maximumAmount || '',
-      effectiveTo: bandForm.effectiveTo || null,
-    };
-    if (bandForm.id) {
-      updateWithdrawalFeeBand(payload, formatMessage('payroll.withdrawalFees.band.update'));
-    } else {
-      createWithdrawalFeeBand(payload, formatMessage('payroll.withdrawalFees.band.create'));
-    }
+  const editBand = (band) => {
+    setProviderForm({
+      id: band.provider?.id,
+      code: band.provider?.code ?? '',
+      name: band.provider?.name ?? '',
+      providerType: band.provider?.providerType ?? 'BANK',
+      isActive: band.provider?.isActive ?? true,
+    });
+    setBandForm({
+      id: band.id,
+      minimumAmount: band.minimumAmount,
+      maximumAmount: band.maximumAmount ?? '',
+      transferCost: band.transferCost,
+      effectiveFrom: band.effectiveFrom,
+      effectiveTo: band.effectiveTo ?? '',
+    });
+    setProviderFormOpen(true);
   };
 
-  const editBand = (band) => setBandForm({
-    id: band.id,
-    minimumAmount: band.minimumAmount,
-    maximumAmount: band.maximumAmount ?? '',
-    transferCost: band.transferCost,
-    effectiveFrom: band.effectiveFrom,
-    effectiveTo: band.effectiveTo ?? '',
-  });
+  const fetchBands = (params) => fetchWithdrawalFeeBands(params);
+  const searcherActions = () => [{
+    label: formatMessage('payroll.withdrawalFees.provider.add'),
+    icon: <AddIcon />,
+    authorized: true,
+    onClick: addProvider,
+    variant: 'contained',
+  }];
+  const feeBandFilter = ({ filters, onChangeFilters }) => (
+    <Grid container spacing={1}>
+      <Grid item xs={12} md={4}>
+        <TextField
+          fullWidth
+          label={formatMessage('payroll.withdrawalFees.provider.name')}
+          value={filters?.providerName?.value ?? ''}
+          onChange={(event) => {
+            const { value } = event.target;
+            onChangeFilters([{
+              id: 'providerName',
+              value: value || null,
+              filter: value ? `providerName: "${formatGQLString(value)}"` : null,
+            }]);
+          }}
+        />
+      </Grid>
+      <Grid item xs={12} md={4}>
+        <TextField
+          fullWidth
+          label={formatMessage('payroll.withdrawalFees.provider.code')}
+          value={filters?.providerCode?.value ?? ''}
+          onChange={(event) => {
+            const { value } = event.target;
+            onChangeFilters([{
+              id: 'providerCode',
+              value: value || null,
+              filter: value ? `providerCode: "${formatGQLString(value)}"` : null,
+            }]);
+          }}
+        />
+      </Grid>
+    </Grid>
+  );
+  const headers = () => [
+    'withdrawalFees.provider.name',
+    'withdrawalFees.provider.code',
+    'withdrawalFees.band.minimum',
+    'withdrawalFees.band.maximum',
+    'withdrawalFees.band.transferCost',
+    'withdrawalFees.band.effectiveFrom',
+    'withdrawalFees.band.effectiveTo',
+    'emptyLabel',
+  ];
+  const itemFormatters = () => [
+    (band) => band.provider?.name ?? '',
+    (band) => band.provider?.code ?? '',
+    (band) => `MWK ${band.minimumAmount}`,
+    (band) => (band.maximumAmount ? `MWK ${band.maximumAmount}` : '-'),
+    (band) => `MWK ${band.transferCost}`,
+    (band) => band.effectiveFrom,
+    (band) => band.effectiveTo || '-',
+    (band) => (
+      <span style={{ display: 'inline-flex', whiteSpace: 'nowrap' }}>
+        <Tooltip title={formatMessage('payroll.withdrawalFees.edit')}>
+          <span>
+            <IconButton
+              aria-label={formatMessage('payroll.withdrawalFees.edit')}
+              onClick={() => editBand(band)}
+              disabled={!band.provider?.isActive}
+            >
+              <EditIcon />
+            </IconButton>
+          </span>
+        </Tooltip>
+        <Tooltip title={formatMessage('payroll.withdrawalFees.delete')}>
+          <span>
+            <IconButton
+              aria-label={formatMessage('payroll.withdrawalFees.delete')}
+              onClick={() => deleteWithdrawalFeeBand(
+                band,
+                formatMessage('payroll.withdrawalFees.band.delete'),
+              )}
+              disabled={submittingMutation}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </span>
+        </Tooltip>
+      </span>
+    ),
+  ];
+  const rowIdentifier = (band) => band.id;
 
   return (
     <div className={classes.page}>
       <Helmet title={formatMessage('payroll.withdrawalFees.title')} />
-      <Paper className={classes.panel}>
-        <div className={classes.panelHeader}>
-          <Typography variant="h5" className={classes.sectionTitle}>
-            {formatMessage('payroll.withdrawalFees.title')}
-          </Typography>
-        </div>
-        <div className={classes.panelContent}>
-          <Typography variant="body2" className={classes.sectionDescription}>
-            {formatMessage('payroll.withdrawalFees.provider.listHelp')}
-          </Typography>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel>{formatMessage('payroll.withdrawalFees.provider.select')}</InputLabel>
-                <Select
-                  value={selectedProviderId}
-                  onChange={(event) => setSelectedProviderId(event.target.value)}
-                  disabled={fetchingProviders}
-                >
-                  {providers.map((provider) => (
-                    <MenuItem key={provider.id} value={provider.id}>
-                      {provider.name}
-                      {provider.isActive ? '' : ` (${formatMessage('payroll.withdrawalFees.provider.inactive')})`}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-          <Grid container spacing={2} className={classes.formActions}>
-            <Grid item xs={12} sm={6} lg={3}>
-              <TextField
-                fullWidth
-                label={formatMessage('payroll.withdrawalFees.provider.code')}
-                value={providerForm.code}
-                onChange={(event) => setProviderForm({ ...providerForm, code: event.target.value })}
-                inputProps={{ maxLength: 64 }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} lg={3}>
-              <TextField
-                fullWidth
-                label={formatMessage('payroll.withdrawalFees.provider.name')}
-                value={providerForm.name}
-                onChange={(event) => setProviderForm({ ...providerForm, name: event.target.value })}
-                inputProps={{ maxLength: 255 }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} lg={3}>
-              <FormControl fullWidth>
-                <InputLabel>{formatMessage('payroll.withdrawalFees.provider.type')}</InputLabel>
-                <Select
-                  value={providerForm.providerType}
-                  onChange={(event) => setProviderForm({ ...providerForm, providerType: event.target.value })}
-                >
-                  <MenuItem value="BANK">{formatMessage('payroll.withdrawalFees.provider.type.bank')}</MenuItem>
-                  <MenuItem value="MOBILE_MONEY">
-                    {formatMessage('payroll.withdrawalFees.provider.type.mobileMoney')}
-                  </MenuItem>
-                  <MenuItem value="OTHER">{formatMessage('payroll.withdrawalFees.provider.type.other')}</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6} lg={3}>
-              <FormControl fullWidth>
-                <InputLabel>{formatMessage('payroll.withdrawalFees.provider.status')}</InputLabel>
-                <Select
-                  value={providerForm.isActive ? 'active' : 'inactive'}
-                  onChange={(event) => setProviderForm({
-                    ...providerForm,
-                    isActive: event.target.value === 'active',
-                  })}
-                >
-                  <MenuItem value="active">{formatMessage('payroll.withdrawalFees.provider.active')}</MenuItem>
-                  <MenuItem value="inactive">{formatMessage('payroll.withdrawalFees.provider.inactive')}</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12}>
-              <Button
-                color="primary"
-                variant="contained"
-                onClick={handleProviderSubmit}
-                disabled={!providerForm.code.trim() || !providerForm.name.trim() || submittingMutation}
-              >
-                {formatMessage(providerForm.id
-                  ? 'payroll.withdrawalFees.provider.save'
-                  : 'payroll.withdrawalFees.provider.add')}
-              </Button>
-              {providerForm.id && (
-                <Button onClick={() => setProviderForm(emptyProvider)}>
-                  {formatMessage('payroll.withdrawalFees.cancel')}
-                </Button>
-              )}
-            </Grid>
-          </Grid>
-        </div>
-      </Paper>
-
-      {selectedProvider && (
+      {providerFormOpen && (
         <Paper className={classes.panel}>
           <div className={classes.panelHeader}>
-            <Typography variant="h6" className={classes.sectionTitle}>
-              {`${selectedProvider.name} - ${formatMessage('payroll.withdrawalFees.bands.title')}`}
+            <Typography variant="h5" className={classes.sectionTitle}>
+              {formatMessage(providerForm.id
+                ? 'payroll.withdrawalFees.provider.updateWithBandTitle'
+                : 'payroll.withdrawalFees.provider.createWithBandTitle')}
             </Typography>
           </div>
           <div className={classes.panelContent}>
             <Typography variant="body2" className={classes.sectionDescription}>
-              {formatMessage('payroll.withdrawalFees.band.openEnded')}
+              {formatMessage('payroll.withdrawalFees.provider.listHelp')}
             </Typography>
-            <Grid container spacing={2} alignItems="flex-end" className={classes.feeBandForm}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
+                  <InputLabel>{formatMessage('payroll.withdrawalFees.provider.selectExisting')}</InputLabel>
+                  <Select
+                    value={providerForm.id ?? ''}
+                    onChange={selectFormProvider}
+                    disabled={fetchingProviders || !!bandForm.id}
+                  >
+                    <MenuItem value="">{formatMessage('payroll.withdrawalFees.provider.new')}</MenuItem>
+                    {providers.map((provider) => (
+                      <MenuItem key={provider.id} value={provider.id}>
+                        {`${provider.name} (${provider.code})`}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+            <Grid container spacing={2} className={classes.formActions}>
+              <Grid item xs={12} sm={6} lg={3}>
+                <TextField
+                  fullWidth
+                  label={formatMessage('payroll.withdrawalFees.provider.code')}
+                  value={providerForm.code}
+                  onChange={(event) => setProviderForm({ ...providerForm, code: event.target.value })}
+                  inputProps={{ maxLength: 64 }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} lg={3}>
+                <TextField
+                  fullWidth
+                  label={formatMessage('payroll.withdrawalFees.provider.name')}
+                  value={providerForm.name}
+                  onChange={(event) => setProviderForm({ ...providerForm, name: event.target.value })}
+                  inputProps={{ maxLength: 255 }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} lg={3}>
+                <FormControl fullWidth>
+                  <InputLabel>{formatMessage('payroll.withdrawalFees.provider.type')}</InputLabel>
+                  <Select
+                    value={providerForm.providerType}
+                    onChange={(event) => setProviderForm({ ...providerForm, providerType: event.target.value })}
+                  >
+                    <MenuItem value="BANK">{formatMessage('payroll.withdrawalFees.provider.type.bank')}</MenuItem>
+                    <MenuItem value="MOBILE_MONEY">
+                      {formatMessage('payroll.withdrawalFees.provider.type.mobileMoney')}
+                    </MenuItem>
+                    <MenuItem value="OTHER">{formatMessage('payroll.withdrawalFees.provider.type.other')}</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6} lg={3}>
+                <FormControl fullWidth>
+                  <InputLabel>{formatMessage('payroll.withdrawalFees.provider.status')}</InputLabel>
+                  <Select
+                    value={providerForm.isActive ? 'active' : 'inactive'}
+                    onChange={(event) => setProviderForm({
+                      ...providerForm,
+                      isActive: event.target.value === 'active',
+                    })}
+                  >
+                    <MenuItem value="active">{formatMessage('payroll.withdrawalFees.provider.active')}</MenuItem>
+                    <MenuItem value="inactive">{formatMessage('payroll.withdrawalFees.provider.inactive')}</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
               <Grid item xs={12} sm={6} lg={4}>
                 <TextField
                   fullWidth
@@ -368,7 +410,7 @@ function PaymentProviderSettingsPage({
                   value={bandForm.minimumAmount}
                   onChange={(event) => setBandForm({ ...bandForm, minimumAmount: event.target.value })}
                   inputProps={{ min: 0, step: '0.01' }}
-                  disabled={!selectedProvider.isActive}
+                  disabled={!providerForm.isActive}
                 />
               </Grid>
               <Grid item xs={12} sm={6} lg={4}>
@@ -379,7 +421,7 @@ function PaymentProviderSettingsPage({
                   value={bandForm.maximumAmount}
                   onChange={(event) => setBandForm({ ...bandForm, maximumAmount: event.target.value })}
                   inputProps={{ min: 0, step: '0.01' }}
-                  disabled={!selectedProvider.isActive}
+                  disabled={!providerForm.isActive}
                 />
               </Grid>
               <Grid item xs={12} sm={6} lg={4}>
@@ -390,7 +432,7 @@ function PaymentProviderSettingsPage({
                   value={bandForm.transferCost}
                   onChange={(event) => setBandForm({ ...bandForm, transferCost: event.target.value })}
                   inputProps={{ min: 0, step: '0.01' }}
-                  disabled={!selectedProvider.isActive}
+                  disabled={!providerForm.isActive}
                 />
               </Grid>
               <Grid item xs={12} sm={6} lg={3}>
@@ -401,7 +443,7 @@ function PaymentProviderSettingsPage({
                   value={bandForm.effectiveFrom}
                   onChange={(event) => setBandForm({ ...bandForm, effectiveFrom: event.target.value })}
                   InputLabelProps={{ shrink: true }}
-                  disabled={!selectedProvider.isActive}
+                  disabled={!providerForm.isActive}
                 />
               </Grid>
               <Grid item xs={12} sm={6} lg={3}>
@@ -412,105 +454,58 @@ function PaymentProviderSettingsPage({
                   value={bandForm.effectiveTo}
                   onChange={(event) => setBandForm({ ...bandForm, effectiveTo: event.target.value })}
                   InputLabelProps={{ shrink: true }}
-                  disabled={!selectedProvider.isActive}
+                  disabled={!providerForm.isActive}
                 />
               </Grid>
-              <Grid item xs={12} lg={6} className={classes.feeBandActions}>
+              <Grid item xs={12}>
                 <Button
                   color="primary"
                   variant="contained"
-                  onClick={handleBandSubmit}
-                  disabled={
-                    !bandForm.minimumAmount
-                    || !bandForm.transferCost
-                    || !bandForm.effectiveFrom
-                    || !selectedProvider.isActive
-                    || fetchingBands
-                    || submittingMutation
-                  }
+                  onClick={handleProviderSubmit}
+                  disabled={submittingMutation}
                 >
-                  {formatMessage(bandForm.id
-                    ? 'payroll.withdrawalFees.band.save'
-                    : 'payroll.withdrawalFees.band.add')}
+                  {formatMessage(providerForm.id
+                    ? 'payroll.withdrawalFees.provider.saveWithBand'
+                    : 'payroll.withdrawalFees.provider.createWithBand')}
                 </Button>
-                {bandForm.id && (
-                  <Button onClick={() => setBandForm(newFeeBand())}>
-                    {formatMessage('payroll.withdrawalFees.cancel')}
-                  </Button>
-                )}
+                <Button onClick={() => {
+                  setProviderForm(emptyProvider);
+                  setBandForm(newFeeBand());
+                  setProviderFormOpen(false);
+                }}
+                >
+                  {formatMessage('payroll.withdrawalFees.cancel')}
+                </Button>
               </Grid>
             </Grid>
-            <Table size="small">
-              <TableHead className={classes.tableHead}>
-                <TableRow>
-                  <TableCell className={classes.tableCell}>
-                    {formatMessage('payroll.withdrawalFees.band.minimum')}
-                  </TableCell>
-                  <TableCell className={classes.tableCell}>
-                    {formatMessage('payroll.withdrawalFees.band.maximum')}
-                  </TableCell>
-                  <TableCell className={classes.tableCell}>
-                    {formatMessage('payroll.withdrawalFees.band.transferCost')}
-                  </TableCell>
-                  <TableCell className={classes.tableCell}>
-                    {formatMessage('payroll.withdrawalFees.band.effectiveFrom')}
-                  </TableCell>
-                  <TableCell className={classes.tableCell}>
-                    {formatMessage('payroll.withdrawalFees.band.effectiveTo')}
-                  </TableCell>
-                  <TableCell className={classes.tableCell} />
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {bands.map((band) => (
-                  <TableRow key={band.id} className={classes.tableRow}>
-                    <TableCell className={classes.tableCell}>{`MWK ${band.minimumAmount}`}</TableCell>
-                    <TableCell className={classes.tableCell}>
-                      {band.maximumAmount ? `MWK ${band.maximumAmount}` : '-'}
-                    </TableCell>
-                    <TableCell className={classes.tableCell}>{`MWK ${band.transferCost}`}</TableCell>
-                    <TableCell className={classes.tableCell}>{band.effectiveFrom}</TableCell>
-                    <TableCell className={classes.tableCell}>{band.effectiveTo || '-'}</TableCell>
-                    <TableCell className={classes.tableCell}>
-                      <Tooltip title={formatMessage('payroll.withdrawalFees.edit')}>
-                        <span>
-                          <IconButton
-                            aria-label={formatMessage('payroll.withdrawalFees.edit')}
-                            onClick={() => editBand(band)}
-                            disabled={!selectedProvider.isActive}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                      <Tooltip title={formatMessage('payroll.withdrawalFees.delete')}>
-                        <span>
-                          <IconButton
-                            aria-label={formatMessage('payroll.withdrawalFees.delete')}
-                            onClick={() => deleteWithdrawalFeeBand(
-                              band,
-                              formatMessage('payroll.withdrawalFees.band.delete'),
-                            )}
-                            disabled={submittingMutation}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {!fetchingBands && bands.length === 0 && (
-                  <TableRow>
-                    <TableCell className={classes.tableCell} colSpan={6}>
-                      {formatMessage('payroll.withdrawalFees.band.empty')}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
           </div>
         </Paper>
+      )}
+
+      {!providerFormOpen && (
+        <Searcher
+          key={bandSearcherKey}
+          module={MODULE_NAME}
+          FilterPane={feeBandFilter}
+          fetch={fetchBands}
+          items={bands}
+          itemsPageInfo={bandsPageInfo}
+          fetchingItems={fetchingBands}
+          fetchedItems={fetchedBands}
+          errorItems={bandsError}
+          tableTitle={formatMessageWithValues(
+            'payroll.withdrawalFees.band.searcherResultsTitle',
+            { withdrawalFeeBandsTotalCount: bandsTotalCount },
+          )}
+          headers={headers}
+          itemFormatters={itemFormatters}
+          rowIdentifier={rowIdentifier}
+          rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
+          defaultPageSize={DEFAULT_PAGE_SIZE}
+          enableActionButtons
+          searcherActionsPosition="header-right"
+          searcherActions={searcherActions()}
+        />
       )}
     </div>
   );
@@ -519,7 +514,10 @@ function PaymentProviderSettingsPage({
 const mapStateToProps = (state) => ({
   providers: state.payroll.paymentProviders,
   bands: state.payroll.withdrawalFeeBands,
+  bandsPageInfo: state.payroll.withdrawalFeeBandsPageInfo,
+  bandsTotalCount: state.payroll.withdrawalFeeBandsTotalCount,
   fetchingProviders: state.payroll.fetchingPaymentProviders,
+  fetchedBands: state.payroll.fetchedWithdrawalFeeBands,
   fetchingBands: state.payroll.fetchingWithdrawalFeeBands,
   providersError: state.payroll.errorPaymentProviders,
   bandsError: state.payroll.errorWithdrawalFeeBands,
@@ -530,10 +528,7 @@ const mapStateToProps = (state) => ({
 const mapDispatchToProps = (dispatch) => bindActionCreators({
   fetchPaymentProviders,
   fetchWithdrawalFeeBands,
-  createPaymentProvider,
-  updatePaymentProvider,
-  createWithdrawalFeeBand,
-  updateWithdrawalFeeBand,
+  savePaymentProviderWithFeeBand,
   deleteWithdrawalFeeBand,
   waitForMutation,
   journalize,

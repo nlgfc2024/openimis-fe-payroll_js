@@ -6,7 +6,6 @@ import {
   formatPageQueryWithCount,
   formatQuery,
   graphql,
-  graphqlWithVariables,
 } from '@openimis/fe-core';
 
 import { ACTION_TYPE, MUTATION_SERVICE } from './reducer';
@@ -277,6 +276,30 @@ const formatWithdrawalFeeBandGQL = (band) => `
     : ''}
 `;
 
+const formatPaymentProviderWithFeeBandGQL = (provider, band) => `
+  ${provider?.id ? `providerId: "${provider.id}"` : ''}
+  ${band?.id ? `feeBandId: "${band.id}"` : ''}
+  ${provider?.code ? `code: "${formatGQLString(provider.code)}"` : ''}
+  ${provider?.name ? `name: "${formatGQLString(provider.name)}"` : ''}
+  ${provider?.providerType ? `providerType: "${provider.providerType}"` : ''}
+  ${provider?.isActive !== undefined ? `isActive: ${provider.isActive}` : ''}
+  ${band?.minimumAmount !== undefined
+    ? `minimumAmount: "${formatGQLString(String(band.minimumAmount))}"`
+    : ''}
+  ${band?.maximumAmount !== undefined
+    ? `maximumAmount: ${band.maximumAmount === ''
+      ? 'null'
+      : `"${formatGQLString(String(band.maximumAmount))}"`}`
+    : ''}
+  ${band?.transferCost !== undefined
+    ? `transferCost: "${formatGQLString(String(band.transferCost))}"`
+    : ''}
+  ${band?.effectiveFrom ? `effectiveFrom: "${band.effectiveFrom}"` : ''}
+  ${band?.effectiveTo !== undefined
+    ? `effectiveTo: ${band.effectiveTo ? `"${band.effectiveTo}"` : 'null'}`
+    : ''}
+`;
+
 export function fetchPaymentProviders() {
   const payload = `
     query PaymentProviders {
@@ -293,21 +316,18 @@ export function fetchPaymentProviders() {
   return graphql(payload, ACTION_TYPE.GET_PAYMENT_PROVIDERS);
 }
 
-export function fetchWithdrawalFeeBands(providerId) {
-  const payload = `
-    query WithdrawalFeeBands($providerId: UUID) {
-      withdrawalFeeBands(providerId: $providerId) {
-        id
-        minimumAmount
-        maximumAmount
-        transferCost
-        effectiveFrom
-        effectiveTo
-        provider { id code name }
-      }
-    }
-  `;
-  return graphqlWithVariables(payload, { providerId }, ACTION_TYPE.GET_WITHDRAWAL_FEE_BANDS);
+export function fetchWithdrawalFeeBands(params) {
+  const projection = [
+    'id',
+    'minimumAmount',
+    'maximumAmount',
+    'transferCost',
+    'effectiveFrom',
+    'effectiveTo',
+    'provider { id uuid code name providerType isActive }',
+  ];
+  const payload = formatPageQueryWithCount('withdrawalFeeBands', params, projection);
+  return graphql(payload, ACTION_TYPE.GET_WITHDRAWAL_FEE_BANDS);
 }
 
 export function createPaymentProvider(provider, clientMutationLabel) {
@@ -333,6 +353,15 @@ export function createWithdrawalFeeBand(band, clientMutationLabel) {
     MUTATION_SERVICE.WITHDRAWAL_FEES.CREATE_BAND,
     formatWithdrawalFeeBandGQL(band),
     ACTION_TYPE.CREATE_WITHDRAWAL_FEE_BAND,
+    clientMutationLabel,
+  );
+}
+
+export function savePaymentProviderWithFeeBand(provider, band, clientMutationLabel) {
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.WITHDRAWAL_FEES.SAVE_PROVIDER_WITH_FEE_BAND,
+    formatPaymentProviderWithFeeBandGQL(provider, band),
+    ACTION_TYPE.SAVE_PROVIDER_WITH_FEE_BAND,
     clientMutationLabel,
   );
 }
