@@ -37,7 +37,7 @@ function BenefitConsumptionSearcherModal({
   confirmed,
 }) {
   const modulesManager = useModulesManager();
-  const { formatMessage, formatMessageWithValues } = useTranslations('payroll', modulesManager);
+  const { formatAmount, formatMessage, formatMessageWithValues } = useTranslations('payroll', modulesManager);
   const [selectedBenefitAttachment, setSelectedBenefitAttachment] = useState(null);
   const [benefitToDelete, setBenefitToDelete] = useState(null);
   const payrollPrintTemplateRef = useRef(null);
@@ -100,6 +100,8 @@ function BenefitConsumptionSearcherModal({
     'benefitConsumption.payedOnTime',
     'benefitConsumption.paymentDate',
     'benefitConsumption.status',
+    'benefitConsumption.withdrawalFee',
+    'benefitConsumption.amountToPay',
     '',
     '',
   ];
@@ -165,6 +167,21 @@ function BenefitConsumptionSearcherModal({
         : benefitAttachment?.bill?.datePayed
     ),
     (benefitAttachment) => benefitAttachment?.benefit?.status,
+    (benefitAttachment) => {
+      const benefit = benefitAttachment?.benefit;
+      if (benefit?.withdrawalFee != null) return formatAmount(benefit.withdrawalFee);
+      if (benefit?.withdrawalFeeError) {
+        return (
+          <span title={benefit.withdrawalFeeError}>
+            {formatMessage('payroll.benefitConsumption.withdrawalFeeUnavailable')}
+          </span>
+        );
+      }
+      return '';
+    },
+    (benefitAttachment) => (benefitAttachment?.benefit?.amountToPay != null
+      ? formatAmount(benefitAttachment.benefit.amountToPay)
+      : ''),
     (benefitAttachment) => (
       <AdditionalFieldsDialog
         jsonExt={benefitAttachment?.benefit?.jsonExt}

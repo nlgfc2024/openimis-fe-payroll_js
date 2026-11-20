@@ -85,7 +85,7 @@ const PAYROLL_PROJECTION = (modulesManager) => [
   `paymentPoint { ${PAYMENT_POINT_PROJECTION(modulesManager).join(' ')} }`,
   'paymentCycle { code, startDate, endDate }',
   // eslint-disable-next-line max-len
-  'benefitConsumption{id, status, code, dateDue, hasReceipt, receipt, amount, individual {firstName, lastName}, benefitAttachment{bill{id, code, terms, amountTotal}}}',
+  'benefitConsumption{id, status, code, dateDue, hasReceipt, receipt, amount, withdrawalFee, withdrawalFeeError, amountToPay, individual {firstName, lastName}, benefitAttachment{bill{id, code, terms, amountTotal}}}',
   'jsonExt',
   'status',
   'dateValidFrom',
@@ -434,6 +434,16 @@ export function createConsolidatedPayroll(payload, clientMutationLabel) {
     MUTATION_SERVICE.PAYROLL.CREATE_CONSOLIDATED,
     input,
     ACTION_TYPE.CREATE_CONSOLIDATED_PAYROLL,
+    clientMutationLabel,
+  );
+}
+
+export function refreshWithdrawalFeeSnapshots(payroll, clientMutationLabel) {
+  const payrollId = decodeId(payroll.id);
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.PAYROLL.REFRESH_WITHDRAWAL_FEE_SNAPSHOTS,
+    `payrollId: "${payrollId}"`,
+    ACTION_TYPE.REFRESH_WITHDRAWAL_FEE_SNAPSHOTS,
     clientMutationLabel,
   );
 }

@@ -6,8 +6,10 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import {
+  showPageFeedback,
   useModulesManager,
   useTranslations,
+  waitForMutation,
 } from '@openimis/fe-core';
 import {
   Paper,
@@ -16,20 +18,27 @@ import {
 import Typography from '@material-ui/core/Typography';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { MODULE_NAME, BENEFIT_CONSUMPTION_STATUS } from '../../../constants';
+import {
+  MODULE_NAME, BENEFIT_CONSUMPTION_STATUS, PAYROLL_STATUS, RIGHT_PAYROLL_CREATE,
+} from '../../../constants';
 import BenefitConsumptionSearcherModal from '../BenefitConsumptionSearcherModal';
 import downloadPayroll from '../../../utils/export';
-import { fetchPayroll } from '../../../actions';
+import { fetchPayroll, refreshWithdrawalFeeSnapshots } from '../../../actions';
 
 function PaymentPendingPayrollPaymentDialog({
   classes,
   payroll,
   fetchPayroll,
+  refreshWithdrawalFeeSnapshots,
+  showPageFeedback,
+  waitForMutation: waitForMutationStatus,
   payrollDetail,
+  rights,
 }) {
   const modulesManager = useModulesManager();
   const [payrollUuid] = useState(payrollDetail?.id ?? null);
   const [isOpen, setIsOpen] = useState(false);
+  const [refreshingFees, setRefreshingFees] = useState(false);
   const [totalBeneficiaries, setTotalBeneficiaries] = useState(0);
   const [selectedBeneficiaries, setSelectedBeneficiaries] = useState(0);
   const [totalBillAmount, setTotalBillAmount] = useState(0);
@@ -46,10 +55,20 @@ function PaymentPendingPayrollPaymentDialog({
     setIsOpen(false);
   };
 
-  const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
+  const { formatAmount, formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
+  const payrollBenefits = payroll?.id === payrollUuid ? payroll.benefitConsumption || [] : [];
+  const feeIssues = payrollBenefits.filter((benefit) => benefit.withdrawalFeeError);
+  const withdrawalFeeTotal = payrollBenefits.reduce(
+    (total, benefit) => total + Number(benefit.withdrawalFee || 0),
+    0,
+  );
+  const canRefreshFees = payrollDetail.payrollType === 'CONSOLIDATED'
+    && payrollDetail.status === PAYROLL_STATUS.PENDING_APPROVAL
+    && rights.includes(RIGHT_PAYROLL_CREATE)
+    && feeIssues.length > 0;
 
   useEffect(() => {
-    if (isOpen && Object.keys(payroll).length > 0) {
+    if (isOpen && payroll?.id === payrollUuid) {
       // Calculate total benefits and reconciled benefits
       const total = payroll.benefitConsumption.length;
       const selected = payroll.benefitConsumption.filter(
@@ -82,6 +101,47 @@ function PaymentPendingPayrollPaymentDialog({
 
   const downloadPayrollData = (payrollUuid, payrollName) => {
     downloadPayroll(payrollUuid, payrollName);
+  };
+
+  const refreshFees = async () => {
+    setRefreshingFees(true);
+    try {
+      const response = await refreshWithdrawalFeeSnapshots(
+        payrollDetail,
+        formatMessageWithValues('payroll.mutation.refreshWithdrawalFeesLabel', {
+          payrollName: payrollDetail.name,
+        }),
+      );
+      if (response?.error || response?.payload?.errors?.length) {
+        throw new Error(
+          response?.payload?.errors?.[0]?.message
+            || formatMessage('payroll.consolidation.refreshFeesFailure.message'),
+        );
+      }
+      const clientMutationId = response?.payload?.data?.refreshWithdrawalFeeSnapshots?.clientMutationId;
+      if (!clientMutationId) {
+        throw new Error(formatMessage('payroll.consolidation.refreshFeesFailure.message'));
+      }
+      const result = await waitForMutationStatus(clientMutationId);
+      if (result?.status !== 2) {
+        throw new Error(formatMessage('payroll.consolidation.refreshFeesFailure.message'));
+      }
+
+      await fetchPayroll(modulesManager, [`id: "${payrollUuid}"`]);
+      showPageFeedback({
+        severity: 'success',
+        title: formatMessage('payroll.consolidation.refreshFeesSuccess.title'),
+        message: formatMessage('payroll.consolidation.refreshFeesSuccess.message'),
+      });
+    } catch (error) {
+      showPageFeedback({
+        severity: 'error',
+        title: formatMessage('payroll.consolidation.refreshFeesFailure.title'),
+        message: error?.message || formatMessage('payroll.consolidation.refreshFeesFailure.message'),
+      });
+    } finally {
+      setRefreshingFees(false);
+    }
   };
 
   return (
@@ -117,7 +177,7 @@ function PaymentPendingPayrollPaymentDialog({
         </DialogTitle>
         <DialogContent>
           <Grid container spacing={2}>
-            <Grid item xs={4}>
+            <Grid item xs={3}>
               <Paper elevation={3} style={{ padding: '20px' }}>
                 <Typography variant="h6" gutterBottom>
                   {formatMessage('payroll.summary.selectedBeneficiaries')}
@@ -127,7 +187,7 @@ function PaymentPendingPayrollPaymentDialog({
                 </Typography>
               </Paper>
             </Grid>
-            <Grid item xs={4}>
+            <Grid item xs={3}>
               <Paper elevation={3} style={{ padding: '20px' }}>
                 <Typography variant="h6" gutterBottom>
                   {formatMessage('payroll.summary.totalAmountForInvoice')}
@@ -137,7 +197,7 @@ function PaymentPendingPayrollPaymentDialog({
                 </Typography>
               </Paper>
             </Grid>
-            <Grid item xs={4}>
+            <Grid item xs={3}>
               <Paper elevation={3} style={{ padding: '20px' }}>
                 <Typography variant="h6" gutterBottom>
                   {formatMessage('payroll.summary.deliveredReconciliation')}
@@ -145,6 +205,21 @@ function PaymentPendingPayrollPaymentDialog({
                 <Typography variant="body1">
                   {totalReconciledBillAmount}
                 </Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={3}>
+              <Paper elevation={3} style={{ padding: '20px' }}>
+                <Typography variant="h6" gutterBottom>
+                  {formatMessage('payroll.consolidation.withdrawalFees')}
+                </Typography>
+                <Typography variant="body1">{formatAmount(withdrawalFeeTotal)}</Typography>
+                {feeIssues.length > 0 && (
+                  <Typography color="error">
+                    {formatMessageWithValues('payroll.consolidation.unresolvedFeesCount', {
+                      count: feeIssues.length,
+                    })}
+                  </Typography>
+                )}
               </Paper>
             </Grid>
           </Grid>
@@ -165,6 +240,22 @@ function PaymentPendingPayrollPaymentDialog({
         >
           <div style={{ maxWidth: '3000px' }}>
             <div style={{ float: 'left' }}>
+              {canRefreshFees && (
+                <Button
+                  onClick={refreshFees}
+                  variant="contained"
+                  color="primary"
+                  disabled={refreshingFees}
+                  style={{
+                    margin: '0 16px',
+                    marginBottom: '15px',
+                  }}
+                >
+                  {formatMessage(refreshingFees
+                    ? 'payroll.consolidation.refreshFees.loading'
+                    : 'payroll.consolidation.refreshFees.button')}
+                </Button>
+              )}
               <Button
                 onClick={() => downloadPayrollData(payrollDetail.id, payrollDetail.name)}
                 variant="contained"
@@ -206,6 +297,9 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => bindActionCreators({
   fetchPayroll,
+  refreshWithdrawalFeeSnapshots,
+  showPageFeedback,
+  waitForMutation,
 }, dispatch);
 
 export default connect(mapStateToProps, mapDispatchToProps)(PaymentPendingPayrollPaymentDialog);
