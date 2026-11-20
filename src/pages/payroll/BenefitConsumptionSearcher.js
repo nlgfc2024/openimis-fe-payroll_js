@@ -24,7 +24,7 @@ function BenefitConsumptionSearcher({
   payrollUuid,
 }) {
   const modulesManager = useModulesManager();
-  const { formatMessage, formatMessageWithValues } = useTranslations('payroll', modulesManager);
+  const { formatAmount, formatMessage, formatMessageWithValues } = useTranslations('payroll', modulesManager);
 
   const fetch = (params) => fetchBenefitConsumptions(modulesManager, params);
 
@@ -32,7 +32,9 @@ function BenefitConsumptionSearcher({
     'benefitConsumption.individual.firstName',
     'benefitConsumption.individual.lastName',
     'benefitConsumption.photo',
+    'benefitConsumption.code',
     'benefitConsumption.dateDue',
+    'benefitConsumption.receipt',
     'benefitConsumption.amount',
     'benefitConsumption.withdrawalFee',
     'benefitConsumption.amountToPay',
@@ -41,7 +43,7 @@ function BenefitConsumptionSearcher({
   ];
 
   const formatWithdrawalFee = (benefitConsumption) => {
-    if (benefitConsumption?.withdrawalFee != null) return benefitConsumption.withdrawalFee;
+    if (benefitConsumption?.withdrawalFee != null) return formatAmount(benefitConsumption.withdrawalFee);
     if (!benefitConsumption?.withdrawalFeeError) return '';
     return (
       <span title={benefitConsumption.withdrawalFeeError}>
@@ -54,10 +56,14 @@ function BenefitConsumptionSearcher({
     (benefitConsumption) => benefitConsumption?.individual?.firstName,
     (benefitConsumption) => benefitConsumption?.individual?.lastName,
     (benefitConsumption) => benefitConsumption?.photo,
+    (benefitConsumption) => benefitConsumption?.code,
     (benefitConsumption) => benefitConsumption?.dateDue,
+    (benefitConsumption) => benefitConsumption?.receipt,
     (benefitConsumption) => benefitConsumption?.amount,
     formatWithdrawalFee,
-    (benefitConsumption) => benefitConsumption?.amountToPay,
+    (benefitConsumption) => (benefitConsumption?.amountToPay != null
+      ? formatAmount(benefitConsumption.amountToPay)
+      : ''),
     (benefitConsumption) => benefitConsumption?.type,
     (benefitConsumption) => benefitConsumption?.status,
   ];
@@ -68,7 +74,9 @@ function BenefitConsumptionSearcher({
     ['individual_FirstName', true],
     ['individual_LastName', true],
     ['photo', true],
+    ['code', true],
     ['dateDue', true],
+    ['receipt', true],
     ['amount', true],
     null,
     null,

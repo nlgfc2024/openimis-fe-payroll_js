@@ -35,7 +35,7 @@ function BenefitConsumptionSearcher({
   payrollUuid,
 }) {
   const modulesManager = useModulesManager();
-  const { formatMessage, formatMessageWithValues } = useTranslations('payroll', modulesManager);
+  const { formatAmount, formatMessage, formatMessageWithValues } = useTranslations('payroll', modulesManager);
   const payrollPrintTemplateRef = useRef(null);
 
   const handlePrint = useReactToPrint({
@@ -54,12 +54,15 @@ function BenefitConsumptionSearcher({
     'benefitConsumption.individual.firstName',
     'benefitConsumption.individual.lastName',
     'benefitConsumption.nationalId',
+    'benefitConsumption.phoneNumber',
     'benefitConsumption.gender',
     'benefitConsumption.accountNumber',
     'benefitConsumption.accountName',
     'benefitConsumption.bank',
     'benefitConsumption.photo',
+    'benefitConsumption.code',
     'benefitConsumption.dateDue',
+    'benefitConsumption.receipt',
     'benefitConsumption.amount',
     'benefitConsumption.withdrawalFee',
     'benefitConsumption.amountToPay',
@@ -77,7 +80,7 @@ function BenefitConsumptionSearcher({
   };
 
   const formatWithdrawalFee = (benefitConsumption) => {
-    if (benefitConsumption?.withdrawalFee != null) return benefitConsumption.withdrawalFee;
+    if (benefitConsumption?.withdrawalFee != null) return formatAmount(benefitConsumption.withdrawalFee);
     if (!benefitConsumption?.withdrawalFeeError) return '';
     return (
       <span title={benefitConsumption.withdrawalFeeError}>
@@ -96,15 +99,20 @@ function BenefitConsumptionSearcher({
     (benefitConsumption) => benefitConsumption?.individual?.firstName,
     (benefitConsumption) => benefitConsumption?.individual?.lastName,
     (benefitConsumption) => benefitConsumption?.nationalId,
+    (benefitConsumption) => benefitConsumption?.phoneNumber,
     (benefitConsumption) => benefitConsumption?.gender,
     (benefitConsumption) => benefitConsumption?.accountNumber,
     (benefitConsumption) => benefitConsumption?.accountName,
     (benefitConsumption) => benefitConsumption?.bank,
     (benefitConsumption) => benefitConsumption?.photo,
+    (benefitConsumption) => benefitConsumption?.code,
     (benefitConsumption) => benefitConsumption?.dateDue,
+    (benefitConsumption) => benefitConsumption?.receipt,
     (benefitConsumption) => benefitConsumption?.amount,
     formatWithdrawalFee,
-    (benefitConsumption) => benefitConsumption?.amountToPay,
+    (benefitConsumption) => (benefitConsumption?.amountToPay != null
+      ? formatAmount(benefitConsumption.amountToPay)
+      : ''),
     (benefitConsumption) => benefitConsumption?.type,
     (benefitConsumption) => (isPayrollFromFailedInvoices
       ? BENEFIT_CONSUMPTION_STATUS.APPROVE_FOR_PAYMENT : benefitConsumption?.status),
@@ -139,8 +147,11 @@ function BenefitConsumptionSearcher({
     null,
     null,
     null,
+    null,
     ['photo', true],
+    ['code', true],
     ['dateDue', true],
+    ['receipt', true],
     ['amount', true],
     null,
     null,

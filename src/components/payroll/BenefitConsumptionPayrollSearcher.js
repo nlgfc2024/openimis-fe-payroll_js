@@ -35,7 +35,7 @@ function BenefitConsumptionPayrollSearcher({
   paymentCycleUuid,
 }) {
   const modulesManager = useModulesManager();
-  const { formatMessage, formatMessageWithValues } = useTranslations('payroll', modulesManager);
+  const { formatAmount, formatMessage, formatMessageWithValues } = useTranslations('payroll', modulesManager);
   const [totalNumberOfBenefits, setTotalNumberOfBenefits] = useState(0);
 
   const fetch = (params) => fetchPayrollBenefitConsumptions(modulesManager, params);
@@ -52,6 +52,8 @@ function BenefitConsumptionPayrollSearcher({
     'benefitConsumption.accountName',
     'benefitConsumption.bank',
     'benefitConsumption.status',
+    'benefitConsumption.code',
+    'benefitConsumption.receipt',
     'benefitConsumption.dateDue',
     'benefitConsumption.amount',
     'benefitConsumption.withdrawalFee',
@@ -75,7 +77,7 @@ function BenefitConsumptionPayrollSearcher({
 
   const formatWithdrawalFee = (payrollBenefitConsumption) => {
     const benefit = payrollBenefitConsumption?.benefit;
-    if (benefit?.withdrawalFee != null) return benefit.withdrawalFee;
+    if (benefit?.withdrawalFee != null) return formatAmount(benefit.withdrawalFee);
     if (!benefit?.withdrawalFeeError) return '';
     return (
       <span title={benefit.withdrawalFeeError}>
@@ -97,10 +99,14 @@ function BenefitConsumptionPayrollSearcher({
     (payrollBenefitConsumption) => payrollBenefitConsumption?.benefit?.accountName,
     (payrollBenefitConsumption) => payrollBenefitConsumption?.benefit?.bank,
     (payrollBenefitConsumption) => payrollBenefitConsumption?.benefit?.status,
+    (payrollBenefitConsumption) => payrollBenefitConsumption?.benefit?.code,
+    (payrollBenefitConsumption) => payrollBenefitConsumption?.benefit?.receipt,
     (payrollBenefitConsumption) => payrollBenefitConsumption?.benefit?.dateDue,
     (payrollBenefitConsumption) => payrollBenefitConsumption?.benefit?.amount,
     formatWithdrawalFee,
-    (payrollBenefitConsumption) => payrollBenefitConsumption?.benefit?.amountToPay,
+    (payrollBenefitConsumption) => (payrollBenefitConsumption?.benefit?.amountToPay != null
+      ? formatAmount(payrollBenefitConsumption.benefit.amountToPay)
+      : ''),
     (payrollBenefitConsumption) => payrollBenefitConsumption?.benefit?.type,
     (payrollBenefitConsumption) => checkBenefitDueDate(payrollBenefitConsumption),
     (payrollBenefitConsumption) => (
@@ -124,6 +130,8 @@ function BenefitConsumptionPayrollSearcher({
     null,
     null,
     ['benefit_Status', true],
+    ['benefit_Code', true],
+    ['benefit_Receipt', true],
     ['benefit_DateDue', true],
     ['benefit_Amount', true],
     null,

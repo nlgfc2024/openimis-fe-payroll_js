@@ -93,7 +93,9 @@ function BenefitConsumptionSearcherModal({
     'benefitConsumption.projectName',
     'benefitConsumption.nationalId',
     'benefitConsumption.formNumber',
+    'benefitConsumption.phoneNumber',
     'benefitConsumption.amount',
+    'benefitConsumption.receipt',
     'benefitConsumption.dateDue',
     'benefitConsumption.payedOnTime',
     'benefitConsumption.paymentDate',
@@ -152,7 +154,9 @@ function BenefitConsumptionSearcherModal({
     (benefitAttachment) => benefitAttachment?.benefit?.projectName,
     (benefitAttachment) => benefitAttachment?.benefit?.nationalId,
     (benefitAttachment) => benefitAttachment?.benefit?.formNumber,
+    (benefitAttachment) => benefitAttachment?.benefit?.phoneNumber,
     (benefitAttachment) => benefitAttachment?.bill?.amountTotal,
+    (benefitAttachment) => benefitAttachment?.benefit?.receipt,
     (benefitAttachment) => benefitAttachment?.benefit?.dateDue,
     (benefitAttachment) => checkBenefitDueDate(benefitAttachment),
     (benefitAttachment) => (
@@ -211,6 +215,7 @@ function BenefitConsumptionSearcherModal({
     ['benefit_individual_FirstName', true],
     ['benefit_individual_LastName', true],
     ['bill_amountTotal', true],
+    ['benefit_receipt', true],
     ['benefit_dateDue', true],
   ];
 

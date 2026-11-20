@@ -35,6 +35,7 @@ import {
   fetchPaymentProviders,
   fetchWithdrawalFeeBands,
   savePaymentProviderWithFeeBand,
+  updatePaymentProvider,
 } from '../../actions';
 import {
   DEFAULT_PAGE_SIZE,
@@ -71,6 +72,10 @@ const useStyles = makeStyles((theme) => ({
   formActions: {
     marginTop: theme.spacing(2),
   },
+  actionButtons: {
+    display: 'inline-flex',
+    whiteSpace: 'nowrap',
+  },
 }));
 
 const emptyProvider = {
@@ -103,6 +108,7 @@ function PaymentProviderSettingsPage({
   fetchPaymentProviders,
   fetchWithdrawalFeeBands,
   savePaymentProviderWithFeeBand,
+  updatePaymentProvider,
   deleteWithdrawalFeeBand,
   waitForMutation,
   journalize,
@@ -113,7 +119,7 @@ function PaymentProviderSettingsPage({
 }) {
   const classes = useStyles();
   const modulesManager = useModulesManager();
-  const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
+  const { formatMessage, formatMessageWithValues, formatAmount } = useTranslations(MODULE_NAME, modulesManager);
   const rights = useSelector((store) => store.core.user.i_user.rights ?? []);
   const [providerForm, setProviderForm] = useState(emptyProvider);
   const [providerFormOpen, setProviderFormOpen] = useState(false);
@@ -136,7 +142,8 @@ function PaymentProviderSettingsPage({
           if (result?.status === 2) {
             fetchPaymentProviders();
             setBandSearcherKey((key) => key + 1);
-            if (mutation?.actionType === ACTION_TYPE.SAVE_PROVIDER_WITH_FEE_BAND) {
+            if ([ACTION_TYPE.SAVE_PROVIDER_WITH_FEE_BAND, ACTION_TYPE.UPDATE_PAYMENT_PROVIDER]
+              .includes(mutation?.actionType)) {
               setProviderForm(emptyProvider);
               setBandForm(newFeeBand());
               setProviderFormOpen(false);
@@ -214,10 +221,18 @@ function PaymentProviderSettingsPage({
       );
       return;
     }
+    if (!providerForm.isActive && providerForm.id) {
+      updatePaymentProvider(
+        providerForm,
+        formatMessage('payroll.withdrawalFees.provider.update'),
+      );
+      return;
+    }
     if (
-      !providerForm.isActive
-      || !bandForm.minimumAmount
-      || !bandForm.transferCost
+      bandForm.minimumAmount === ''
+      || bandForm.minimumAmount == null
+      || bandForm.transferCost === ''
+      || bandForm.transferCost == null
       || !bandForm.effectiveFrom
     ) {
       coreAlert(
@@ -233,6 +248,18 @@ function PaymentProviderSettingsPage({
         ? 'payroll.withdrawalFees.provider.saveWithBand'
         : 'payroll.withdrawalFees.provider.createWithBand'),
     );
+  };
+
+  const providerTitle = () => {
+    if (providerForm.id && !providerForm.isActive) return 'payroll.withdrawalFees.provider.update';
+    if (providerForm.id) return 'payroll.withdrawalFees.provider.updateWithBandTitle';
+    return 'payroll.withdrawalFees.provider.createWithBandTitle';
+  };
+
+  const providerSubmitLabel = () => {
+    if (providerForm.id && !providerForm.isActive) return 'payroll.withdrawalFees.provider.save';
+    if (providerForm.id) return 'payroll.withdrawalFees.provider.saveWithBand';
+    return 'payroll.withdrawalFees.provider.createWithBand';
   };
 
   const editBand = (band) => {
@@ -309,13 +336,15 @@ function PaymentProviderSettingsPage({
   const itemFormatters = () => [
     (band) => band.provider?.name ?? '',
     (band) => band.provider?.code ?? '',
-    (band) => `MWK ${band.minimumAmount}`,
-    (band) => (band.maximumAmount ? `MWK ${band.maximumAmount}` : '-'),
-    (band) => `MWK ${band.transferCost}`,
+    (band) => formatAmount(band.minimumAmount),
+    (band) => (band.maximumAmount !== '' && band.maximumAmount != null
+      ? formatAmount(band.maximumAmount)
+      : '-'),
+    (band) => formatAmount(band.transferCost),
     (band) => band.effectiveFrom,
     (band) => band.effectiveTo || '-',
     (band) => (
-      <span style={{ display: 'inline-flex', whiteSpace: 'nowrap' }}>
+      <span className={classes.actionButtons}>
         <Tooltip title={formatMessage('payroll.withdrawalFees.edit')}>
           <span>
             <IconButton
@@ -350,9 +379,7 @@ function PaymentProviderSettingsPage({
         <Paper className={classes.panel}>
           <div className={classes.panelHeader}>
             <Typography variant="h5" className={classes.sectionTitle}>
-              {formatMessage(providerForm.id
-                ? 'payroll.withdrawalFees.provider.updateWithBandTitle'
-                : 'payroll.withdrawalFees.provider.createWithBandTitle')}
+              {formatMessage(providerTitle())}
             </Typography>
           </div>
           <div className={classes.panelContent}>
@@ -489,9 +516,7 @@ function PaymentProviderSettingsPage({
                   onClick={handleProviderSubmit}
                   disabled={submittingMutation}
                 >
-                  {formatMessage(providerForm.id
-                    ? 'payroll.withdrawalFees.provider.saveWithBand'
-                    : 'payroll.withdrawalFees.provider.createWithBand')}
+                  {formatMessage(providerSubmitLabel())}
                 </Button>
                 <Button onClick={() => {
                   setProviderForm(emptyProvider);
@@ -555,6 +580,7 @@ const mapDispatchToProps = (dispatch) => bindActionCreators({
   fetchPaymentProviders,
   fetchWithdrawalFeeBands,
   savePaymentProviderWithFeeBand,
+  updatePaymentProvider,
   deleteWithdrawalFeeBand,
   waitForMutation,
   journalize,

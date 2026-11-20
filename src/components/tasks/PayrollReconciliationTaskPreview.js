@@ -184,6 +184,7 @@ function PayrollReconciliationTaskPreview({
                 <TableCell>{formatMessage('payroll.reconciliationUpload.taskPreview.amount')}</TableCell>
                 <TableCell>{formatMessage('payroll.reconciliationUpload.taskPreview.amountReceived')}</TableCell>
                 <TableCell>{formatMessage('payroll.payrollPaymentFile.paidRecords')}</TableCell>
+                <TableCell>{formatMessage('payroll.reconciliationUpload.taskPreview.receipt')}</TableCell>
                 <TableCell>{formatMessage('payroll.reconciliationUpload.rowsDialog.status')}</TableCell>
               </TableRow>
             </TableHead>
@@ -202,6 +203,7 @@ function PayrollReconciliationTaskPreview({
                   <TableCell>{submittedValue(row, 'amount')}</TableCell>
                   <TableCell>{submittedValue(row, 'amount_received', 'Amount Received')}</TableCell>
                   <TableCell>{submittedValue(row, 'Paid')}</TableCell>
+                  <TableCell>{submittedValue(row, 'receipt')}</TableCell>
                   <TableCell>
                     {row.status}
                     :
