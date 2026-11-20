@@ -119,7 +119,17 @@ function PaymentProviderSettingsPage({
 }) {
   const classes = useStyles();
   const modulesManager = useModulesManager();
-  const { formatMessage, formatMessageWithValues, formatAmount } = useTranslations(MODULE_NAME, modulesManager);
+  const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
+  const amountLocale = modulesManager.getConf('fe-core', 'thousandSeparator', 'en');
+  const amountDecimals = modulesManager.getConf('fe-core', 'numberOfDecimals', 2);
+  const formatFeeAmount = (amount) => {
+    if (!amountLocale) return Number(amount).toFixed(amountDecimals);
+
+    return new Intl.NumberFormat(amountLocale, {
+      minimumFractionDigits: amountDecimals,
+      maximumFractionDigits: amountDecimals,
+    }).format(amount || 0);
+  };
   const rights = useSelector((store) => store.core.user.i_user.rights ?? []);
   const [providerForm, setProviderForm] = useState(emptyProvider);
   const [providerFormOpen, setProviderFormOpen] = useState(false);
@@ -336,11 +346,11 @@ function PaymentProviderSettingsPage({
   const itemFormatters = () => [
     (band) => band.provider?.name ?? '',
     (band) => band.provider?.code ?? '',
-    (band) => formatAmount(band.minimumAmount),
+    (band) => formatFeeAmount(band.minimumAmount),
     (band) => (band.maximumAmount !== '' && band.maximumAmount != null
-      ? formatAmount(band.maximumAmount)
+      ? formatFeeAmount(band.maximumAmount)
       : '-'),
-    (band) => formatAmount(band.transferCost),
+    (band) => formatFeeAmount(band.transferCost),
     (band) => band.effectiveFrom,
     (band) => band.effectiveTo || '-',
     (band) => (
