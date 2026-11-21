@@ -44,7 +44,6 @@ import {
   ROWS_PER_PAGE_OPTIONS,
 } from '../../constants';
 import { ACTION_TYPE } from '../../reducer';
-import { formatAmountWithoutCurrency } from '../../utils/payroll-utils';
 
 const useStyles = makeStyles((theme) => ({
   page: theme.page,
@@ -120,8 +119,9 @@ function PaymentProviderSettingsPage({
 }) {
   const classes = useStyles();
   const modulesManager = useModulesManager();
-  const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
-  const formatFeeAmount = (amount) => formatAmountWithoutCurrency(amount, modulesManager);
+  const {
+    formatMessage, formatMessageWithValues, formatAmount: formatFeeAmount,
+  } = useTranslations(MODULE_NAME, modulesManager);
   const rights = useSelector((store) => store.core.user.i_user.rights ?? []);
   const [providerForm, setProviderForm] = useState(emptyProvider);
   const [providerFormOpen, setProviderFormOpen] = useState(false);

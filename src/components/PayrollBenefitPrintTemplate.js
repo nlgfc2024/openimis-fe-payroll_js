@@ -13,7 +13,6 @@ import {
   useTranslations, useModulesManager,
 } from '@openimis/fe-core';
 import { MODULE_NAME } from '../constants';
-import { formatAmountWithoutCurrency } from '../utils/payroll-utils';
 
 const useStyles = makeStyles(() => ({
   topHeader: {
@@ -83,8 +82,7 @@ const PayrollBenefitPrintTemplate = forwardRef(({ benefitAttachments }, ref) => 
   if (!benefitAttachments) return null;
   const classes = useStyles();
   const modulesManager = useModulesManager();
-  const { formatMessage } = useTranslations(MODULE_NAME, modulesManager);
-  const formatAmount = (amount) => formatAmountWithoutCurrency(amount, modulesManager);
+  const { formatMessage, formatAmount } = useTranslations(MODULE_NAME, modulesManager);
 
   return (
     <div ref={ref} className={classes.printContainer}>

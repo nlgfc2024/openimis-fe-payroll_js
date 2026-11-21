@@ -7,7 +7,6 @@ import {
   Searcher, useModulesManager, useTranslations,
 } from '@openimis/fe-core';
 import { fetchBenefitConsumptions } from '../../actions';
-import { formatAmountWithoutCurrency } from '../../utils/payroll-utils';
 import {
   DEFAULT_PAGE_SIZE,
   ROWS_PER_PAGE_OPTIONS,
@@ -25,8 +24,7 @@ function BenefitConsumptionSearcher({
   payrollUuid,
 }) {
   const modulesManager = useModulesManager();
-  const { formatMessage, formatMessageWithValues } = useTranslations('payroll', modulesManager);
-  const formatAmount = (amount) => formatAmountWithoutCurrency(amount, modulesManager);
+  const { formatMessage, formatMessageWithValues, formatAmount } = useTranslations('payroll', modulesManager);
 
   const fetch = (params) => fetchBenefitConsumptions(modulesManager, params);
 

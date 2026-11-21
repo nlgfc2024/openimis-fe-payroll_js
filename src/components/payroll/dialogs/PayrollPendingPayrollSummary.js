@@ -5,6 +5,7 @@ import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
+import { makeStyles } from '@material-ui/styles';
 import {
   showPageFeedback,
   useModulesManager,
@@ -24,7 +25,16 @@ import {
 import BenefitConsumptionSearcherModal from '../BenefitConsumptionSearcherModal';
 import downloadPayroll from '../../../utils/export';
 import { fetchPayroll, refreshWithdrawalFeeSnapshots } from '../../../actions';
-import { formatAmountWithoutCurrency } from '../../../utils/payroll-utils';
+
+const useStyles = makeStyles((theme) => ({
+  feeSummaryCard: {
+    padding: theme.spacing(2.5),
+  },
+  refreshFeesButton: {
+    margin: theme.spacing(0, 2),
+    marginBottom: theme.spacing(2),
+  },
+}));
 
 function PaymentPendingPayrollPaymentDialog({
   classes,
@@ -36,6 +46,7 @@ function PaymentPendingPayrollPaymentDialog({
   payrollDetail,
   rights,
 }) {
+  const localClasses = useStyles();
   const modulesManager = useModulesManager();
   const [payrollUuid] = useState(payrollDetail?.id ?? null);
   const [isOpen, setIsOpen] = useState(false);
@@ -56,8 +67,7 @@ function PaymentPendingPayrollPaymentDialog({
     setIsOpen(false);
   };
 
-  const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
-  const formatAmount = (amount) => formatAmountWithoutCurrency(amount, modulesManager);
+  const { formatMessage, formatMessageWithValues, formatAmount } = useTranslations(MODULE_NAME, modulesManager);
   const payrollBenefits = payroll?.id === payrollUuid ? payroll.benefitConsumption || [] : [];
   const feeIssues = payrollBenefits.filter((benefit) => benefit.withdrawalFeeError);
   const withdrawalFeeTotal = payrollBenefits.reduce(
@@ -210,7 +220,7 @@ function PaymentPendingPayrollPaymentDialog({
               </Paper>
             </Grid>
             <Grid item xs={3}>
-              <Paper elevation={3} style={{ padding: '20px' }}>
+              <Paper elevation={3} className={localClasses.feeSummaryCard}>
                 <Typography variant="h6" gutterBottom>
                   {formatMessage('payroll.consolidation.withdrawalFees')}
                 </Typography>
@@ -248,10 +258,7 @@ function PaymentPendingPayrollPaymentDialog({
                   variant="contained"
                   color="primary"
                   disabled={refreshingFees}
-                  style={{
-                    margin: '0 16px',
-                    marginBottom: '15px',
-                  }}
+                  className={localClasses.refreshFeesButton}
                 >
                   {formatMessage(refreshingFees
                     ? 'payroll.consolidation.refreshFees.loading'

@@ -17,7 +17,6 @@ import {
   ROWS_PER_PAGE_OPTIONS,
 } from '../../constants';
 import BenefitConsumptionPayrollFilter from './BenefitConsumptionPayrollFilter';
-import { formatAmountWithoutCurrency } from '../../utils/payroll-utils';
 
 function BenefitConsumptionPayrollSearcher({
   fetchPayrollBenefitConsumptions,
@@ -36,8 +35,7 @@ function BenefitConsumptionPayrollSearcher({
   paymentCycleUuid,
 }) {
   const modulesManager = useModulesManager();
-  const { formatMessage, formatMessageWithValues } = useTranslations('payroll', modulesManager);
-  const formatAmount = (amount) => formatAmountWithoutCurrency(amount, modulesManager);
+  const { formatMessage, formatMessageWithValues, formatAmount } = useTranslations('payroll', modulesManager);
   const [totalNumberOfBenefits, setTotalNumberOfBenefits] = useState(0);
 
   const fetch = (params) => fetchPayrollBenefitConsumptions(modulesManager, params);

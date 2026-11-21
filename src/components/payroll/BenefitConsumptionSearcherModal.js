@@ -19,7 +19,6 @@ import ErrorSummaryModal from './dialogs/ErrorSummaryModal';
 import { mutationLabel } from '../../utils/string-utils';
 import AdditionalFieldsDialog from './dialogs/AdditionalFieldsDialog';
 import PayrollBenefitPrintTemplate from '../PayrollBenefitPrintTemplate';
-import { formatAmountWithoutCurrency } from '../../utils/payroll-utils';
 
 function BenefitConsumptionSearcherModal({
   fetchBenefitAttachments,
@@ -38,8 +37,7 @@ function BenefitConsumptionSearcherModal({
   confirmed,
 }) {
   const modulesManager = useModulesManager();
-  const { formatMessage, formatMessageWithValues } = useTranslations('payroll', modulesManager);
-  const formatAmount = (amount) => formatAmountWithoutCurrency(amount, modulesManager);
+  const { formatMessage, formatMessageWithValues, formatAmount } = useTranslations('payroll', modulesManager);
   const [selectedBenefitAttachment, setSelectedBenefitAttachment] = useState(null);
   const [benefitToDelete, setBenefitToDelete] = useState(null);
   const payrollPrintTemplateRef = useRef(null);

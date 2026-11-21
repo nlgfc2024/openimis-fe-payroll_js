@@ -20,7 +20,6 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { createConsolidatedPayroll } from '../../../actions';
 import { MODULE_NAME } from '../../../constants';
-import { formatAmountWithoutCurrency } from '../../../utils/payroll-utils';
 
 const EMPTY_UUID = '00000000-0000-0000-0000-000000000000';
 
@@ -36,8 +35,7 @@ function ConsolidatePayrollsDialog({
     checkedIcon: <CheckBoxIcon color="primary" />,
   };
   const modulesManager = useModulesManager();
-  const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
-  const formatAmount = (amount) => formatAmountWithoutCurrency(amount, modulesManager);
+  const { formatMessage, formatMessageWithValues, formatAmount } = useTranslations(MODULE_NAME, modulesManager);
   const [open, setOpen] = useState(false);
   const [district, setDistrict] = useState(null);
   const [benefitPlan, setBenefitPlan] = useState(null);
