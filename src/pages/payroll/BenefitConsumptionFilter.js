@@ -1,7 +1,9 @@
 import React from 'react';
 import _debounce from 'lodash/debounce';
 
-import { Grid } from '@material-ui/core';
+import {
+  Checkbox, FormControlLabel, Grid,
+} from '@material-ui/core';
 import { makeStyles } from '@material-ui/styles';
 
 import {
@@ -152,6 +154,24 @@ function BenefitConsumptionFilter({ filters, onChangeFilters }) {
           min={0}
           value={filterValue('amount')}
           onChange={onChangeFilter('amount')}
+        />
+      </Grid>
+      <Grid item xs={4} className={classes.item}>
+        <FormControlLabel
+          control={(
+            <Checkbox
+              checked={filterValue('withdrawalFeeError_Isnull') === false}
+              onChange={(event) => onChangeFilters([
+                {
+                  id: 'withdrawalFeeError_Isnull',
+                  value: event.target.checked ? false : null,
+                  filter: event.target.checked ? 'withdrawalFeeError_Isnull: false' : '',
+                },
+              ])}
+              color="primary"
+            />
+          )}
+          label={formatMessage('benefitConsumption.feeIssuesOnly')}
         />
       </Grid>
     </Grid>

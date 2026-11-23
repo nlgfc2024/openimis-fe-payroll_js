@@ -3,7 +3,6 @@ import {
   Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Table, TableBody,
   TableCell, TableHead, TableRow, Typography,
 } from '@material-ui/core';
-import { useTheme } from '@material-ui/core/styles';
 import {
   Autocomplete,
   PublishedComponent,
@@ -31,13 +30,12 @@ function ConsolidatePayrollsDialog({
   buttonClassName,
   buttonSize = 'medium',
 }) {
-  const theme = useTheme();
   const checkboxIcons = {
     icon: <CheckBoxOutlineBlankIcon color="primary" />,
     checkedIcon: <CheckBoxIcon color="primary" />,
   };
   const modulesManager = useModulesManager();
-  const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
+  const { formatMessage, formatMessageWithValues, formatAmount } = useTranslations(MODULE_NAME, modulesManager);
   const [open, setOpen] = useState(false);
   const [district, setDistrict] = useState(null);
   const [benefitPlan, setBenefitPlan] = useState(null);
@@ -60,7 +58,7 @@ function ConsolidatePayrollsDialog({
     `query ConsolidationCandidates($districtId: UUID!, $benefitPlanId: UUID!, $skipCandidates: Boolean!) {
       consolidationCandidates(districtId: $districtId, benefitPlanId: $benefitPlanId) @skip(if: $skipCandidates) {
         id name paymentMethod paymentCycle { code } status
-        benefitConsumption { id amount }
+        benefitConsumption { id amount withdrawalFee amountToPay withdrawalFeeError }
       }
     }`,
     {
@@ -70,18 +68,39 @@ function ConsolidatePayrollsDialog({
     },
     { skip: !open },
   );
-  const candidates = data?.consolidationCandidates || [];
+  const candidates = (data?.consolidationCandidates || []).map((candidate) => ({
+    ...candidate,
+    benefitConsumption: candidate.benefitConsumption || [],
+  }));
+  const totalForBenefits = (benefits, field) => {
+    if (benefits.some((benefit) => (
+      benefit.withdrawalFeeError
+      || benefit[field] === null
+      || benefit[field] === undefined
+    ))) return null;
+
+    return benefits.reduce((sum, benefit) => sum + Number(benefit[field]), 0);
+  };
+  const formatAmountOrUnavailable = (amount) => (
+    amount === null
+      ? formatMessage('payroll.benefitConsumption.withdrawalFeeUnavailable')
+      : formatAmount(amount)
+  );
   useEffect(() => setBenefitPlan(null), [districtId]);
   useEffect(() => setSelected([]), [districtId, benefitPlanId]);
   const toggle = (id) => setSelected((current) => (current.includes(id)
     ? current.filter((item) => item !== id) : [...current, id]));
-  const allSelected = candidates.length > 0 && selected.length === candidates.length;
-  const total = candidates
-    .filter((item) => selected.includes(item.id))
-    .reduce((sum, item) => sum + item.benefitConsumption.reduce(
-      (amount, benefit) => amount + Number(benefit.amount || 0),
-      0,
-    ), 0);
+  const allVisibleSelected = candidates.length > 0
+    && candidates.every((item) => selected.includes(item.id));
+  const selectedCandidates = candidates.filter((item) => selected.includes(item.id));
+  const selectedTotalPayable = selectedCandidates.reduce((sum, item) => {
+    const itemTotal = totalForBenefits(item.benefitConsumption, 'amountToPay');
+    return sum === null || itemTotal === null ? null : sum + itemTotal;
+  }, 0);
+  const selectedWithdrawalFees = selectedCandidates.reduce((sum, item) => {
+    const itemFees = totalForBenefits(item.benefitConsumption, 'withdrawalFee');
+    return sum === null || itemFees === null ? null : sum + itemFees;
+  }, 0);
   const create = async () => {
     try {
       setIsCreating(true);
@@ -191,11 +210,14 @@ function ConsolidatePayrollsDialog({
                   <Checkbox
                     icon={checkboxIcons.icon}
                     checkedIcon={checkboxIcons.checkedIcon}
-                    checked={allSelected}
+                    checked={allVisibleSelected}
                     inputProps={{ 'aria-label': formatMessage('payroll.consolidation.selectAll') }}
-                    onChange={() => setSelected(
-                      allSelected ? [] : candidates.map((item) => item.id),
-                    )}
+                    onChange={() => setSelected((current) => {
+                      const visibleIds = candidates.map((item) => item.id);
+                      return allVisibleSelected
+                        ? current.filter((id) => !visibleIds.includes(id))
+                        : [...new Set([...current, ...visibleIds])];
+                    })}
                   />
                 </TableCell>
                 <TableCell>{formatMessage('payroll.name')}</TableCell>
@@ -203,6 +225,8 @@ function ConsolidatePayrollsDialog({
                 <TableCell>{formatMessage('payroll.paymentMethod')}</TableCell>
                 <TableCell>{formatMessage('payroll.summary.beneficiaries')}</TableCell>
                 <TableCell>{formatMessage('payroll.amount')}</TableCell>
+                <TableCell>{formatMessage('payroll.consolidation.withdrawalFees')}</TableCell>
+                <TableCell>{formatMessage('payroll.benefitConsumption.amountToPay')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -228,10 +252,16 @@ function ConsolidatePayrollsDialog({
                   </TableCell>
                   <TableCell>{item.benefitConsumption.length}</TableCell>
                   <TableCell>
-                    {item.benefitConsumption.reduce(
+                    {formatAmount(item.benefitConsumption.reduce(
                       (sum, benefit) => sum + Number(benefit.amount || 0),
                       0,
-                    )}
+                    ))}
+                  </TableCell>
+                  <TableCell>
+                    {formatAmountOrUnavailable(totalForBenefits(item.benefitConsumption, 'withdrawalFee'))}
+                  </TableCell>
+                  <TableCell>
+                    {formatAmountOrUnavailable(totalForBenefits(item.benefitConsumption, 'amountToPay'))}
                   </TableCell>
                 </TableRow>
               ))}
@@ -241,7 +271,12 @@ function ConsolidatePayrollsDialog({
           <Typography>
             {formatMessageWithValues('payroll.consolidation.selected', {
               count: selected.length,
-              amount: total,
+              amount: formatAmountOrUnavailable(selectedTotalPayable),
+            })}
+          </Typography>
+          <Typography>
+            {formatMessageWithValues('payroll.consolidation.selectedFees', {
+              amount: formatAmountOrUnavailable(selectedWithdrawalFees),
             })}
           </Typography>
         </DialogContent>

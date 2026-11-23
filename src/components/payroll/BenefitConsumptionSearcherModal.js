@@ -10,7 +10,6 @@ import Typography from '@material-ui/core/Typography';
 import {
   Searcher, useModulesManager, useTranslations, coreConfirm, clearConfirm,
 } from '@openimis/fe-core';
-import PhotoCameraOutlinedIcon from '@material-ui/icons/PhotoCameraOutlined';
 import { fetchBenefitAttachments, deleteBenefitConsumption } from '../../actions';
 import {
   DEFAULT_PAGE_SIZE, ROWS_PER_PAGE_OPTIONS, PAYROLL_STATUS,
@@ -38,7 +37,7 @@ function BenefitConsumptionSearcherModal({
   confirmed,
 }) {
   const modulesManager = useModulesManager();
-  const { formatMessage, formatMessageWithValues } = useTranslations('payroll', modulesManager);
+  const { formatMessage, formatMessageWithValues, formatAmount } = useTranslations('payroll', modulesManager);
   const [selectedBenefitAttachment, setSelectedBenefitAttachment] = useState(null);
   const [benefitToDelete, setBenefitToDelete] = useState(null);
   const payrollPrintTemplateRef = useRef(null);
@@ -101,6 +100,8 @@ function BenefitConsumptionSearcherModal({
     'benefitConsumption.payedOnTime',
     'benefitConsumption.paymentDate',
     'benefitConsumption.status',
+    'benefitConsumption.withdrawalFee',
+    'benefitConsumption.amountToPay',
     '',
     '',
   ];
@@ -135,7 +136,7 @@ function BenefitConsumptionSearcherModal({
   }, [confirmed]);
 
   const checkBenefitDueDate = (benefitAttachment) => {
-    if (!benefitAttachment.benefit.receipt) {
+    if (!benefitAttachment.benefit.hasReceipt) {
       return ''; // return empty string if datePayed is null
     }
 
@@ -145,11 +146,7 @@ function BenefitConsumptionSearcherModal({
   };
 
   const itemFormatters = () => [
-    (benefitAttachment) => (
-      benefitAttachment.benefit.receipt ? (
-        <PhotoCameraOutlinedIcon style={{ fontSize: 150 }} />
-      ) : null
-    ),
+    (benefitAttachment) => benefitAttachment?.benefit?.photo,
     (benefitAttachment) => benefitAttachment?.benefit?.individual?.firstName,
     (benefitAttachment) => benefitAttachment?.benefit?.individual?.lastName,
     (benefitAttachment) => benefitAttachment?.benefit?.districtName,
@@ -165,11 +162,26 @@ function BenefitConsumptionSearcherModal({
     (benefitAttachment) => benefitAttachment?.benefit?.dateDue,
     (benefitAttachment) => checkBenefitDueDate(benefitAttachment),
     (benefitAttachment) => (
-      !benefitAttachment.benefit.receipt
+      !benefitAttachment.benefit.hasReceipt
         ? ''
         : benefitAttachment?.bill?.datePayed
     ),
     (benefitAttachment) => benefitAttachment?.benefit?.status,
+    (benefitAttachment) => {
+      const benefit = benefitAttachment?.benefit;
+      if (benefit?.withdrawalFee != null) return formatAmount(benefit.withdrawalFee);
+      if (benefit?.withdrawalFeeError) {
+        return (
+          <span title={benefit.withdrawalFeeError}>
+            {formatMessage('payroll.benefitConsumption.withdrawalFeeUnavailable')}
+          </span>
+        );
+      }
+      return '';
+    },
+    (benefitAttachment) => (benefitAttachment?.benefit?.amountToPay != null
+      ? formatAmount(benefitAttachment.benefit.amountToPay)
+      : ''),
     (benefitAttachment) => (
       <AdditionalFieldsDialog
         jsonExt={benefitAttachment?.benefit?.jsonExt}
@@ -182,7 +194,7 @@ function BenefitConsumptionSearcherModal({
         onClick={() => {}}
         variant="contained"
         color="primary"
-        disabled={!!benefitAttachment.benefit.receipt}
+        disabled={!!benefitAttachment.benefit.hasReceipt}
       >
         {formatMessage('payroll.summary.confirm')}
       </Button>
