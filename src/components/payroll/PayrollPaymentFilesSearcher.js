@@ -67,8 +67,8 @@ function PayrollPaymentFilesSearcher({
     return filters;
   };
 
-  const download = (payrollId, fileName, uploadId) => {
-    downloadPayroll(payrollId, fileName, false, uploadId);
+  const download = (payrollId, fileName, uploadId, reconciliationStatus) => {
+    downloadPayroll(payrollId, fileName, false, uploadId, null, reconciliationStatus);
   };
 
   const fetchFiles = (params) => fetchPayrollPaymentFiles(modulesManager, params);
@@ -113,7 +113,7 @@ function PayrollPaymentFilesSearcher({
     (file) => (
       <Tooltip title={formatMessage('tooltip.download')}>
         <IconButton
-          onClick={() => download(payrollUuid, file.fileName, decodeId(file.id))}
+          onClick={() => download(payrollUuid, file.fileName, decodeId(file.id), file.status)}
           disabled={![PAYROLL_PAYMENT_FILE_STATUS.SUCCESS,
             PAYROLL_PAYMENT_FILE_STATUS.PENDING_REVIEW,
             PAYROLL_PAYMENT_FILE_STATUS.WAITING_FOR_VERIFICATION,

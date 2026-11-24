@@ -301,6 +301,8 @@ function PayrollPaymentDataUploadDialog({
                       feedback.fileName,
                       false,
                       feedback.uploadId,
+                      null,
+                      feedback.status,
                     )}
                   >
                     {feedbackSummary.unmatched_records > 0 || feedback.severity === 'error'
