@@ -1,6 +1,6 @@
 import { apiHeaders, baseApiUrl } from '@openimis/fe-core';
 
-const payrollFileName = (fileName) => `${fileName
+const formatPayrollFileName = (fileName) => `${fileName
   .replace(/^reconciliation_/i, '')
   .replace(/\.csv$/i, '')}.csv`;
 
@@ -29,7 +29,7 @@ export default function downloadPayroll(
       const objectUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = objectUrl;
-      link.download = payrollFileName(payrollFileName);
+      link.download = formatPayrollFileName(payrollFileName);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
