@@ -1,15 +1,17 @@
 import { apiHeaders, baseApiUrl } from '@openimis/fe-core';
 
-const reconciliationFileName = (fileName) => {
-  const nameWithoutExtension = fileName.replace(/\.csv$/i, '');
-  const prefixedName = nameWithoutExtension.startsWith('reconciliation_')
-    ? nameWithoutExtension
-    : `reconciliation_${nameWithoutExtension}`;
-  return `${prefixedName}.csv`;
+const formatPayrollFileName = (fileName, reconciliationStatus = null) => {
+  const nameWithoutExtension = fileName
+    .replace(/^reconciliation_/i, '')
+    .replace(/\.csv$/i, '');
+  const suffix = reconciliationStatus
+    ? (reconciliationStatus === 'SUCCESS' ? '_reconciled' : '_review')
+    : '';
+  return `${nameWithoutExtension}${suffix}.csv`;
 };
 
 export default function downloadPayroll(
-  payrollId, payrollFileName, blank = true, uploadId = null, onError = null,
+  payrollId, payrollFileName, blank = true, uploadId = null, onError = null, reconciliationStatus = null,
 ) {
   const url = new URL(
     `${window.location.origin}${baseApiUrl}/payroll/csv_reconciliation/`,
@@ -33,7 +35,7 @@ export default function downloadPayroll(
       const objectUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = objectUrl;
-      link.download = reconciliationFileName(payrollFileName);
+      link.download = formatPayrollFileName(payrollFileName, reconciliationStatus);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

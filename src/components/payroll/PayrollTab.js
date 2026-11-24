@@ -59,14 +59,15 @@ function PayrollTab({
   const modulesManager = useModulesManager();
   const { formatMessage } = useTranslations(MODULE_NAME, modulesManager);
 
-  const downloadPayrollData = (payrollUuid, payrollName) => {
+  const downloadPayrollData = (payrollUuid, payrollName, payrollStatus) => {
+    const reconciliationStatus = payrollStatus === PAYROLL_STATUS.RECONCILED ? 'SUCCESS' : null;
     downloadPayroll(payrollUuid, payrollName, true, null, () => {
       dispatch(showPageFeedback({
         severity: 'error',
         title: formatMessage('payroll.export.failure.title'),
         message: formatMessage('payroll.export.failure.message'),
       }));
-    });
+    }, reconciliationStatus);
   };
 
   return (
@@ -90,7 +91,7 @@ function PayrollTab({
           <div style={{ float: 'right', paddingRight: '16px' }}>
             {payrollUuid && !isPayrollFromFailedInvoices && (
             <Button
-              onClick={() => downloadPayrollData(payrollUuid, payroll.name)}
+              onClick={() => downloadPayrollData(payrollUuid, payroll.name, payroll.status)}
               color="#DFEDEF"
               className={classes.button}
               style={{
